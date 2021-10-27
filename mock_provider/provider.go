@@ -58,7 +58,7 @@ func main() {
 	fmt.Println("p2pHost id:", h.ID())
 	srcLnkS := legs.MkLinkSystem(srcStore)
 
-	ma, err := multiaddr.NewMultiaddr("/ip4/192.168.1.172/tcp/5003/ipfs/QmZP28EezUd6Lsgxr7W9NxZ9JWFwzDmrntH6TsqFVnnz9z")
+	ma, err := multiaddr.NewMultiaddr("/ip4/192.168.1.172/tcp/5003/ipfs/Qmb7vspPTzngvCh61JPtzJCgytUseJiXnahSTywyz3gTFz")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -79,9 +79,9 @@ func main() {
 			log.Fatal(err)
 		}
 
-		nn := basicnode.NewBytes(taskBytes)
+		nn := basicnode.NewString(string(taskBytes))
 		nodes = append(nodes, nn)
-		fmt.Println(taskBytes)
+		fmt.Println(string(taskBytes))
 	}
 
 	lp, err := golegs.NewPublisher(context.Background(), h, srcStore, srcLnkS, "pandotest")

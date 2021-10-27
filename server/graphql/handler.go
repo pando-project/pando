@@ -61,7 +61,8 @@ func GetHandler(db *dssync.MutexDatastore, accessToken string) (*http.ServeMux, 
 						t := new(task.FinishedTask)
 
 						if err = json.Unmarshal(tsk, t); err != nil {
-							_tsk := strings.Replace(string(tsk), `\`, "", -1)
+							_tsk := strings.Trim(string(tsk), "\"")
+							_tsk = strings.ReplaceAll(_tsk, "\\", "")
 							fmt.Println(_tsk)
 							if err2 := json.Unmarshal([]byte(_tsk), t); err2 != nil {
 								return nil, err

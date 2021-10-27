@@ -21,7 +21,7 @@ var TaskType = graphql.NewObject(
 				Resolve: Task__Miner__resolve,
 			},
 			"MaxPriceAttoFIL": &graphql.Field{
-				Type:    graphql.Int,
+				Type:    graphql.String,
 				Resolve: Task__MPA__resolve,
 			},
 			"Verified": &graphql.Field{

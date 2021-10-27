@@ -56,7 +56,7 @@ func validateReceived(watcher chan cid.Cid, ds *dssync.MutexDatastore) {
 			if v, err := ds.Get(datastore.NewKey(downstream.String())); err != nil {
 				log.Error("data not in receiver store: %v", err)
 			} else {
-				log.Debugf("Received from graphsync:\r\ncid: %s value:%s", downstream.String(), v)
+				log.Debugf("Received from graphsync:\r\n cid: %s len:%d\r\n value:%s", downstream.String(), len(v), v)
 			}
 		}
 	}
