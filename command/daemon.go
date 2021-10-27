@@ -33,11 +33,15 @@ var DaemonCmd = &cli.Command{
 }
 
 func daemonCommand(cctx *cli.Context) error {
-	err := logging.SetLogLevel("core", "debug")
+	err := logging.SetLogLevel("*", "info")
 	if err != nil {
 		return err
 	}
 	err = logging.SetLogLevel("pando", "debug")
+	if err != nil {
+		return err
+	}
+	err = logging.SetLogLevel("core", "debug")
 	if err != nil {
 		return err
 	}
@@ -63,7 +67,10 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	graphSyncServer, err := http.New(cfg.Addresses.GraphSync, legsCore)
+	graphSyncServer, err := http.New(cfg.Addresses.GraphSync, "/ip4/127.0.0.1/tcp/9005", legsCore)
+	if err != nil {
+		return err
+	}
 
 	log.Info("Starting http servers")
 	errChan := make(chan error, 1)
