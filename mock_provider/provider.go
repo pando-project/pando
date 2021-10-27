@@ -69,13 +69,13 @@ func main() {
 	}
 	linkSys := mkLinkSystem(ds)
 
-	lp, err := golegs.NewPublisher(context.Background(), h, ds, linkSys, "pppp")
+	lp, err := golegs.NewPublisher(context.Background(), h, ds, linkSys, "pandotest")
 
 	if err != nil {
 		panic(err)
 	}
 
-	itm1 := basicnode.NewString("dsadasdasssda")
+	itm1 := basicnode.NewString("kkkfakenews")
 	lnk1, err := mkRoot(ds, itm1)
 	if err != nil {
 		panic(err)
@@ -85,6 +85,7 @@ func main() {
 		panic(err)
 	}
 
+	time.Sleep(time.Second * 30)
 	lp.Close()
-	time.Sleep(time.Second * 5)
+
 }

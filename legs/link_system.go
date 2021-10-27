@@ -2,10 +2,17 @@ package legs
 
 import (
 	"bytes"
-	"github.com/ipfs/go-datastore"
-	"github.com/ipld/go-ipld-prime"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"io"
+
+	"github.com/ipfs/go-datastore"
+
+	"github.com/ipld/go-ipld-prime"
+
+	// dagjson codec registered for encoding
+
+	_ "github.com/ipld/go-ipld-prime/codec/dagcbor"
+	_ "github.com/ipld/go-ipld-prime/codec/dagjson"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 )
 
 func MkLinkSystem(ds datastore.Batching) ipld.LinkSystem {

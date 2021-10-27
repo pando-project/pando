@@ -33,8 +33,11 @@ var DaemonCmd = &cli.Command{
 }
 
 func daemonCommand(cctx *cli.Context) error {
-	//err := logging.SetLogLevel("*", cctx.String("log-level"))
-	err := logging.SetLogLevel("*", cctx.String("debug"))
+	err := logging.SetLogLevel("core", "debug")
+	if err != nil {
+		return err
+	}
+	err = logging.SetLogLevel("pando", "debug")
 	if err != nil {
 		return err
 	}
@@ -50,6 +53,8 @@ func daemonCommand(cctx *cli.Context) error {
 
 	ds := dssync.MutexWrap(datastore.NewMapDatastore())
 	p2pHost, err := libp2p.New(context.Background(), libp2p.ListenAddrStrings(cfg.Addresses.P2PAddr))
+	log.Debugf("multiaddr is: %s", p2pHost.Addrs())
+	log.Debugf("peerID is: %s", p2pHost.ID())
 	if err != nil {
 		return err
 	}

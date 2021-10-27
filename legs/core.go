@@ -11,12 +11,13 @@ import (
 	"github.com/libp2p/go-libp2p-core/host"
 )
 
-var log = logging.Logger("graphsync")
+var log = logging.Logger("core")
 
 type LegsCore struct {
 	Host       *host.Host
 	DS         *dssync.MutexDatastore
 	LinkSystem *ipld.LinkSystem
+	subs       []golegs.LegSubscriber
 }
 
 func NewLegsCore(host *host.Host, ds *dssync.MutexDatastore, linkSys *ipld.LinkSystem) (*LegsCore, error) {
@@ -44,6 +45,7 @@ func (core *LegsCore) NewSubscriber(topic string) (golegs.LegSubscriber, error) 
 
 	watcher, _ := ls.OnChange()
 	go validateReceived(watcher, core.DS)
+	core.subs = append(core.subs, ls)
 	return ls, nil
 }
 
@@ -51,8 +53,10 @@ func validateReceived(watcher chan cid.Cid, ds *dssync.MutexDatastore) {
 	for {
 		select {
 		case downstream := <-watcher:
-			if _, err := ds.Get(datastore.NewKey(downstream.String())); err != nil {
+			if v, err := ds.Get(datastore.NewKey(downstream.String())); err != nil {
 				log.Error("data not in receiver store: %v", err)
+			} else {
+				log.Debugf("Received from graphsync:\r\ncid: %s value:%s", downstream.String(), v)
 			}
 		}
 	}
