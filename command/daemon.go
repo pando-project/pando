@@ -7,8 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
+	leveldb "github.com/ipfs/go-ds-leveldb"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p"
 	"github.com/urfave/cli/v2"
@@ -55,19 +55,43 @@ func daemonCommand(cctx *cli.Context) error {
 		return fmt.Errorf("cannot load config file: %w", err)
 	}
 
-	ds := dssync.MutexWrap(datastore.NewMapDatastore())
-	p2pHost, err := libp2p.New(context.Background(), libp2p.ListenAddrStrings(cfg.Addresses.P2PAddr))
+	if cfg.Datastore.Type != "levelds" {
+		return fmt.Errorf("only levelds datastore type supported, %q not supported", cfg.Datastore.Type)
+	}
+
+	// Create datastore
+	dataStorePath, err := config.Path("", cfg.Datastore.Dir)
+	if err != nil {
+		return err
+	}
+	err = checkWritable(dataStorePath)
+	if err != nil {
+		return err
+	}
+	dstore, err := leveldb.NewDatastore(dataStorePath, nil)
+	if err != nil {
+		return err
+	}
+	mds := dssync.MutexWrap(dstore)
+
+	//ds := dssync.MutexWrap(datastore.NewMapDatastore())
+	privKey, err := cfg.Identity.DecodePrivateKey("")
+	p2pHost, err := libp2p.New(
+		context.Background(),
+		libp2p.ListenAddrStrings(cfg.Addresses.P2PAddr),
+		libp2p.Identity(privKey),
+	)
+	if err != nil {
+		return err
+	}
 	log.Debugf("multiaddr is: %s", p2pHost.Addrs())
 	log.Debugf("peerID is: %s", p2pHost.ID())
+	lnkSys := legs.MkLinkSystem(mds)
+	legsCore, err := legs.NewLegsCore(&p2pHost, mds, &lnkSys)
 	if err != nil {
 		return err
 	}
-	lnkSys := legs.MkLinkSystem(ds)
-	legsCore, err := legs.NewLegsCore(&p2pHost, ds, &lnkSys)
-	if err != nil {
-		return err
-	}
-	graphSyncServer, err := http.New(cfg.Addresses.GraphSync, "/ip4/127.0.0.1/tcp/9005", legsCore)
+	graphSyncServer, err := http.New(cfg.Addresses.GraphSync, cfg.Addresses.GraphQL, legsCore)
 	if err != nil {
 		return err
 	}

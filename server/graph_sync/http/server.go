@@ -87,8 +87,11 @@ func (s *Server) Start() error {
 	log.Infow("graphsync http server listening", "listen_addr", s.l.Addr())
 	if s.gserver != nil {
 		go func() {
-			log.Infow("graphQl http server listening", "listen_addr", s.gl.Addr())
-			s.gserver.Serve(s.gl)
+			log.Infow("graphql http server listening", "listen_addr", s.gl.Addr())
+			err := s.gserver.Serve(s.gl)
+			if err != nil {
+				log.Errorf("graphql http server failed to start: %s", err.Error())
+			}
 		}()
 	}
 	err := s.server.Serve(s.l)

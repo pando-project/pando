@@ -7,11 +7,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"io"
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -52,13 +54,17 @@ func mkRoot(srcStore datastore.Batching, n ipld.Node) (ipld.Link, error) {
 }
 
 func main() {
-	srcStore := dssync.MutexWrap(datastore.NewMapDatastore())
+	rand.Seed(time.Now().UnixNano())
+	dstore, err := leveldb.NewDatastore("", nil)
+
+	//srcStore := dssync.MutexWrap(datastore.NewMapDatastore())
+	srcStore := dssync.MutexWrap(dstore)
 	h, _ := libp2p.New(context.Background())
 	fmt.Println("p2pHost addr:", h.Addrs())
 	fmt.Println("p2pHost id:", h.ID())
 	srcLnkS := legs.MkLinkSystem(srcStore)
 
-	ma, err := multiaddr.NewMultiaddr("/ip4/192.168.1.172/tcp/5003/ipfs/Qmb7vspPTzngvCh61JPtzJCgytUseJiXnahSTywyz3gTFz")
+	ma, err := multiaddr.NewMultiaddr("/ip4/192.168.1.172/tcp/5003/ipfs/12D3KooWHAVmpVPYMMS1tkYJZ5v5WHYrKNDm6BmR643EtYXqnyRK")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -96,7 +102,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("Add cid %s to root", lk.String())
+		fmt.Printf("Add cid %s to root\r\n", lk.String())
 		lnks = append(lnks, lk)
 	}
 	time.Sleep(time.Second)

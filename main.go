@@ -35,11 +35,12 @@ func main() {
 	}()
 
 	app := &cli.App{
-		Name:    "indexer",
-		Usage:   "Indexer Node: Filecoin's data indexer",
+		Name:    "pando",
+		Usage:   "Pando: Filecoin's metadata server",
 		Version: version.String(),
 		Commands: []*cli.Command{
 			command.DaemonCmd,
+			command.InitCmd,
 		},
 	}
 

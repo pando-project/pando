@@ -2,7 +2,7 @@ package graphQL
 
 import (
 	task "Pando/mock_provider/task"
-	"fmt"
+	logging "github.com/ipfs/go-log/v2"
 	"strings"
 
 	//"bytes"
@@ -11,18 +11,15 @@ import (
 	"encoding/json"
 	//"fmt"
 	"github.com/ipfs/go-datastore"
-	//"github.com/ipld/go-ipld-prime"
-	//cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	//"google.golang.org/grpc/balancer/grpclb/state"
-	dssync "github.com/ipfs/go-datastore/sync"
 
 	"github.com/graphql-go/graphql"
-	"log"
 	"net/http"
 )
 
 //go:embed index.html
 var index embed.FS
+
+var log = logging.Logger("graphQl")
 
 const nodeLoaderCtxKey = "NodeLoader"
 
@@ -41,7 +38,7 @@ func CorsMiddleware(next http.HandlerFunc) http.Handler {
 	})
 }
 
-func GetHandler(db *dssync.MutexDatastore, accessToken string) (*http.ServeMux, error) {
+func GetHandler(db datastore.Batching, accessToken string) (*http.ServeMux, error) {
 	schema, err := graphql.NewSchema(graphql.SchemaConfig{
 		Query: graphql.NewObject(graphql.ObjectConfig{
 			Name: "Query",
@@ -63,7 +60,7 @@ func GetHandler(db *dssync.MutexDatastore, accessToken string) (*http.ServeMux, 
 						if err = json.Unmarshal(tsk, t); err != nil {
 							_tsk := strings.Trim(string(tsk), "\"")
 							_tsk = strings.ReplaceAll(_tsk, "\\", "")
-							fmt.Println(_tsk)
+
 							if err2 := json.Unmarshal([]byte(_tsk), t); err2 != nil {
 								return nil, err
 							} else {
@@ -80,20 +77,6 @@ func GetHandler(db *dssync.MutexDatastore, accessToken string) (*http.ServeMux, 
 	if err != nil {
 		return nil, err
 	}
-
-	//loader := func(ctx context.Context, cl cidlink.Link, builder ipld.NodeBuilder) (ipld.Node, error) {
-	//	store := db.Store(ctx)
-	//	block, err := store.Get(cl.Cid)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	if err := dagjson.Decoder(builder, bytes.NewBuffer(block.RawData())); err != nil {
-	//		return nil, err
-	//	}
-	//
-	//	n := builder.Build()
-	//	return n, nil
-	//}
 
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.FS(index)))
@@ -121,7 +104,7 @@ func GetHandler(db *dssync.MutexDatastore, accessToken string) (*http.ServeMux, 
 		} else if r.Method == "POST" {
 			err := r.ParseForm()
 			if err != nil {
-				log.Printf("failed to read req: %v", err)
+				log.Warnf("failed to read req: %v", err)
 				return
 			}
 			result = graphql.Do(graphql.Params{
@@ -138,10 +121,10 @@ func GetHandler(db *dssync.MutexDatastore, accessToken string) (*http.ServeMux, 
 		}
 
 		if len(result.Errors) > 0 {
-			log.Printf("Query had errors: %s, %v", r.URL.Query().Get("query"), result.Errors)
+			log.Infof("Query had errors: %s, %v", r.URL.Query().Get("query"), result.Errors)
 		}
 		if err := json.NewEncoder(w).Encode(result); err != nil {
-			log.Printf("Failed to encode response: %s", err)
+			log.Errorf("Failed to encode response: %s", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

@@ -5,7 +5,6 @@ import (
 	golegs "github.com/filecoin-project/go-legs"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
-	dssync "github.com/ipfs/go-datastore/sync"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -15,12 +14,12 @@ var log = logging.Logger("core")
 
 type LegsCore struct {
 	Host       *host.Host
-	DS         *dssync.MutexDatastore
+	DS         datastore.Batching
 	LinkSystem *ipld.LinkSystem
 	subs       []golegs.LegSubscriber
 }
 
-func NewLegsCore(host *host.Host, ds *dssync.MutexDatastore, linkSys *ipld.LinkSystem) (*LegsCore, error) {
+func NewLegsCore(host *host.Host, ds datastore.Batching, linkSys *ipld.LinkSystem) (*LegsCore, error) {
 
 	return &LegsCore{
 		Host:       host,
@@ -49,7 +48,7 @@ func (core *LegsCore) NewSubscriber(topic string) (golegs.LegSubscriber, error) 
 	return ls, nil
 }
 
-func validateReceived(watcher chan cid.Cid, ds *dssync.MutexDatastore) {
+func validateReceived(watcher chan cid.Cid, ds datastore.Batching) {
 	for {
 		select {
 		case downstream := <-watcher:

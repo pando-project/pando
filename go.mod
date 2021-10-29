@@ -11,6 +11,7 @@ require (
 	github.com/ipfs/go-blockservice v0.1.4 // indirect
 	github.com/ipfs/go-cid v0.1.0
 	github.com/ipfs/go-datastore v0.4.6
+	github.com/ipfs/go-ds-leveldb v0.4.2
 	github.com/ipfs/go-ipfs-blockstore v1.0.3 // indirect
 	github.com/ipfs/go-log/v2 v2.3.0
 	github.com/ipld/go-ipld-prime v0.12.3
