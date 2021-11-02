@@ -112,8 +112,8 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	time.Sleep(time.Second * 10)
-
+	time.Sleep(time.Second * 5)
+	lp.Close()
 	return
 }
 
