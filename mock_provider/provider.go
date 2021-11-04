@@ -1,23 +1,27 @@
 package main
 
 import (
+	"Pando/config"
 	"Pando/legs"
 	"Pando/mock_provider/task"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ipfs/go-blockservice"
 	leveldb "github.com/ipfs/go-ds-leveldb"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	offline "github.com/ipfs/go-ipfs-exchange-offline"
+	format "github.com/ipfs/go-ipld-format"
+	"github.com/ipfs/go-merkledag"
+	dag "github.com/ipfs/go-merkledag"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
-	"io"
 	"log"
 	"math/rand"
 	"time"
 
 	"github.com/ipfs/go-cid"
-	"github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
 	"github.com/ipld/go-ipld-prime"
 
@@ -32,7 +36,34 @@ import (
 
 var mockTasksNum = 5
 
-func mkRoot(srcStore datastore.Batching, n ipld.Node) (ipld.Link, error) {
+var TestProviderIdentity = &config.Identity{
+	PeerID:  "12D3KooWDi135q9xcE7xiRN1bBZZGc15dSyFRgm7pajTmt7ndCX5",
+	PrivKey: "CAESQHMFRinebmZ/C2zo8tJfYlWxrW5jUIaNoKndLO/LNuLlOc1eZZUi3InQk7QIx0ggEBtkisx7wd+bFsYJrjkc2Uw=",
+}
+
+var PrivKey, _ = TestProviderIdentity.DecodePrivateKey("")
+
+//func mkRoot(srcStore datastore.Batching, n ipld.Node) (ipld.Link, error) {
+//	linkproto := cidlink.LinkPrototype{
+//		Prefix: cid.Prefix{
+//			Version:  1,
+//			Codec:    uint64(multicodec.DagJson),
+//			MhType:   uint64(multicodec.Sha2_256),
+//			MhLength: 16,
+//		},
+//	}
+//	lsys := cidlink.DefaultLinkSystem()
+//	lsys.StorageWriteOpener = func(_ ipld.LinkContext) (io.Writer, ipld.BlockWriteCommitter, error) {
+//		buf := bytes.NewBuffer(nil)
+//		return buf, func(lnk ipld.Link) error {
+//			c := lnk.(cidlink.Link).Cid
+//			return srcStore.Put(datastore.NewKey(c.String()), buf.Bytes())
+//		}, nil
+//	}
+//
+//	return lsys.Store(ipld.LinkContext{}, linkproto, n)
+//}
+func Store(bs blockstore.Blockstore, n ipld.Node) (ipld.Link, error) {
 	linkproto := cidlink.LinkPrototype{
 		Prefix: cid.Prefix{
 			Version:  1,
@@ -41,16 +72,36 @@ func mkRoot(srcStore datastore.Batching, n ipld.Node) (ipld.Link, error) {
 			MhLength: 16,
 		},
 	}
-	lsys := cidlink.DefaultLinkSystem()
-	lsys.StorageWriteOpener = func(_ ipld.LinkContext) (io.Writer, ipld.BlockWriteCommitter, error) {
-		buf := bytes.NewBuffer(nil)
-		return buf, func(lnk ipld.Link) error {
-			c := lnk.(cidlink.Link).Cid
-			return srcStore.Put(datastore.NewKey(c.String()), buf.Bytes())
-		}, nil
-	}
+	lsys := legs.MkLinkSystem(bs)
 
 	return lsys.Store(ipld.LinkContext{}, linkproto, n)
+}
+
+func AddNodes(ds format.DAGService, nds ...format.Node) {
+	for _, nd := range nds {
+		if err := ds.Add(context.Background(), nd); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func getDagNodes() []format.Node {
+	a := merkledag.NewRawNode([]byte("aaaa"))
+	b := merkledag.NewRawNode([]byte("bbbb"))
+	c := merkledag.NewRawNode([]byte("cccc"))
+
+	nd1 := &merkledag.ProtoNode{}
+	nd1.AddNodeLink("cat", a)
+
+	nd2 := &merkledag.ProtoNode{}
+	nd2.AddNodeLink("first", nd1)
+	nd2.AddNodeLink("dog", b)
+
+	nd3 := &merkledag.ProtoNode{}
+	nd3.AddNodeLink("second", nd2)
+	nd3.AddNodeLink("bear", c)
+
+	return []format.Node{a, b, c, nd1, nd2, nd3}
 }
 
 func main() {
@@ -59,12 +110,16 @@ func main() {
 
 	//srcStore := dssync.MutexWrap(datastore.NewMapDatastore())
 	srcStore := dssync.MutexWrap(dstore)
-	h, _ := libp2p.New(context.Background())
+	h, _ := libp2p.New(context.Background(),
+		libp2p.Identity(PrivKey),
+	)
 	fmt.Println("p2pHost addr:", h.Addrs())
 	fmt.Println("p2pHost id:", h.ID())
-	srcLnkS := legs.MkLinkSystem(srcStore)
+	bs := blockstore.NewBlockstore(srcStore)
+	srcLnkS := legs.MkLinkSystem(bs)
+	dags := dag.NewDAGService(blockservice.New(bs, offline.Exchange(bs)))
 
-	ma, err := multiaddr.NewMultiaddr("/ip4/192.168.1.172/tcp/5003/ipfs/12D3KooWHAVmpVPYMMS1tkYJZ5v5WHYrKNDm6BmR643EtYXqnyRK")
+	ma, err := multiaddr.NewMultiaddr("/ip4/192.168.0.102/tcp/5003/ipfs/12D3KooWHAVmpVPYMMS1tkYJZ5v5WHYrKNDm6BmR643EtYXqnyRK")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,25 +145,41 @@ func main() {
 		fmt.Println(string(taskBytes))
 	}
 
-	lp, err := golegs.NewPublisher(context.Background(), h, srcStore, srcLnkS, "pandotest")
+	lp, err := golegs.NewPublisher(context.Background(), h, srcStore, srcLnkS, "PandoPubSub")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer lp.Close()
 	time.Sleep(time.Second * 3)
-	lnks := make([]ipld.Link, 0)
-	for i := 0; i < len(mockTasks); i++ {
-		lk, err := mkRoot(srcStore, nodes[i])
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("Add cid %s to root\r\n", lk.String())
-		lnks = append(lnks, lk)
-	}
+	//lnks := make([]ipld.Link, 0)
+	//for i := 0; i < len(mockTasks); i++ {
+	//	lk, err := Store(bs, nodes[i])
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//	fmt.Printf("Add cid %s to root\r\n", lk.String())
+	//	lnks = append(lnks, lk)
+	//}
+	a := merkledag.NewRawNode([]byte("aaaa"))
+	b := merkledag.NewRawNode([]byte("bbbb"))
+	c := merkledag.NewRawNode([]byte("cccc"))
+
+	nd1 := &merkledag.ProtoNode{}
+	nd1.AddNodeLink("cat", a)
+
+	nd2 := &merkledag.ProtoNode{}
+	nd2.AddNodeLink("first", nd1)
+	nd2.AddNodeLink("dog", b)
+
+	nd3 := &merkledag.ProtoNode{}
+	nd3.AddNodeLink("second", nd2)
+	nd3.AddNodeLink("bear", c)
+	AddNodes(dags, a, b, c, nd1, nd2, nd3)
+
 	time.Sleep(time.Second)
 
 	for i := 0; i < len(mockTasks); i++ {
-		if err := lp.UpdateRoot(context.Background(), lnks[i].(cidlink.Link).Cid); err != nil {
+		if err := lp.UpdateRoot(context.Background(), nd3.Cid()); err != nil {
 			log.Fatal(err)
 		}
 	}

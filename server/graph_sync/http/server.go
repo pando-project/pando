@@ -51,7 +51,7 @@ func New(listen string, glisten string, core *legs.LegsCore) (*Server, error) {
 
 	h := newHandler(core)
 
-	r.HandleFunc("/graph/sub/{topic}", h.SubTopic)
+	r.HandleFunc("/graph/sub/{peerid}", h.SubProvider)
 	r.HandleFunc("/graph/get/{id}", h.GetGraph)
 
 	if glisten != "" {

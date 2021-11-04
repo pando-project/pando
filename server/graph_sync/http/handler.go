@@ -2,9 +2,11 @@ package http
 
 import (
 	"Pando/legs"
+	"context"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/ipfs/go-datastore"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"net/http"
 )
 
@@ -23,13 +25,13 @@ func newHandler(core *legs.LegsCore) *httpHandler {
 	}
 }
 
-func (h *httpHandler) SubTopic(w http.ResponseWriter, r *http.Request) {
-	topic, err := getTopic(r)
+func (h *httpHandler) SubProvider(w http.ResponseWriter, r *http.Request) {
+	peerID, err := getProviderID(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	_, err = h.graphSyncHandler.Core.NewSubscriber(topic)
+	err = h.graphSyncHandler.Core.Subscribe(context.Background(), peerID)
 	if err != nil {
 		log.Error("cannot create subscriber", "err", err)
 		http.Error(w, "", http.StatusInternalServerError)
@@ -67,15 +69,15 @@ func (h *httpHandler) GetGraph(w http.ResponseWriter, r *http.Request) {
 	//w.WriteHeader(http.StatusOK)
 }
 
-func getTopic(r *http.Request) (string, error) {
+func getProviderID(r *http.Request) (peer.ID, error) {
 	vars := mux.Vars(r)
-	topic := vars["topic"]
-	if topic == "" {
-		return "", fmt.Errorf("invalid topic to subscribe")
+	pid := vars["peerid"]
+	providerID, err := peer.Decode(pid)
+	if err != nil {
+		return providerID, fmt.Errorf("cannot decode provider id: %s", err)
 	}
-	return topic, nil
+	return providerID, nil
 }
-
 func getCid(r *http.Request) (string, error) {
 	vars := mux.Vars(r)
 	id := vars["id"]

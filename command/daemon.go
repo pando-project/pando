@@ -3,12 +3,14 @@ package command
 import (
 	"Pando/config"
 	"Pando/legs"
+	"Pando/metadata"
 	"Pando/server/graph_sync/http"
 	"context"
 	"errors"
 	"fmt"
 	dssync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p"
 	"github.com/urfave/cli/v2"
@@ -45,6 +47,10 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	err = logging.SetLogLevel("meta-manager", "debug")
+	if err != nil {
+		return err
+	}
 
 	cfg, err := config.Load("")
 	if err != nil {
@@ -73,6 +79,7 @@ func daemonCommand(cctx *cli.Context) error {
 		return err
 	}
 	mds := dssync.MutexWrap(dstore)
+	bs := blockstore.NewBlockstore(mds)
 
 	//ds := dssync.MutexWrap(datastore.NewMapDatastore())
 	privKey, err := cfg.Identity.DecodePrivateKey("")
@@ -86,16 +93,17 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 	log.Debugf("multiaddr is: %s", p2pHost.Addrs())
 	log.Debugf("peerID is: %s", p2pHost.ID())
-	lnkSys := legs.MkLinkSystem(mds)
-	legsCore, err := legs.NewLegsCore(&p2pHost, mds, &lnkSys)
-	if err != nil {
-		return err
-	}
-	graphSyncServer, err := http.New(cfg.Addresses.GraphSync, cfg.Addresses.GraphQL, legsCore)
-	if err != nil {
-		return err
-	}
 
+	if err != nil {
+		return err
+	}
+	metaManager, err := metadata.New(context.Background(), mds, bs)
+	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh())
+	graphSyncServer, err := http.New(cfg.Addresses.GraphSync, cfg.Addresses.GraphQL, legsCore)
+
+	if err != nil {
+		return err
+	}
 	log.Info("Starting http servers")
 	errChan := make(chan error, 1)
 	go func() {
