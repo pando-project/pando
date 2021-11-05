@@ -5,6 +5,7 @@ import (
 	"Pando/legs"
 	"Pando/metadata"
 	"Pando/server/graph_sync/http"
+	"Pando/statetree"
 	"context"
 	"errors"
 	"fmt"
@@ -35,11 +36,11 @@ var DaemonCmd = &cli.Command{
 }
 
 func daemonCommand(cctx *cli.Context) error {
-	err := logging.SetLogLevel("*", "info")
-	if err != nil {
-		return err
-	}
-	err = logging.SetLogLevel("pando", "debug")
+	//err := logging.SetLogLevel("*", "info")
+	//if err != nil {
+	//	return err
+	//}
+	err := logging.SetLogLevel("pando", "debug")
 	if err != nil {
 		return err
 	}
@@ -51,6 +52,7 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	err = logging.SetLogLevel("state-tree", "debug")
 
 	cfg, err := config.Load("")
 	if err != nil {
@@ -100,6 +102,10 @@ func daemonCommand(cctx *cli.Context) error {
 	metaManager, err := metadata.New(context.Background(), mds, bs)
 	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh())
 	graphSyncServer, err := http.New(cfg.Addresses.GraphSync, cfg.Addresses.GraphQL, legsCore)
+	_, err = statetree.New(context.Background(), mds, bs, metaManager.GetUpdateOut())
+	if err != nil {
+		return err
+	}
 
 	if err != nil {
 		return err

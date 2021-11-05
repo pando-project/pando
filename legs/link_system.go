@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	blocks "github.com/ipfs/go-block-format"
+	"github.com/ipfs/go-graphsync"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"io"
 
 	"github.com/ipld/go-ipld-prime"
@@ -94,29 +96,29 @@ func (sb *settableBuffer) Bytes() []byte {
 // When we receive a block, if it is not an advertisement it means that we
 // finished storing the list of entries of the advertisement, so we are ready
 // to process them and ingest into the indexer core.
-//func (i *LegsCore) storageHook() graphsync.OnIncomingBlockHook {
-//	return func(p peer.ID, responseData graphsync.ResponseData, blockData graphsync.BlockData, hookActions graphsync.IncomingBlockHookActions) {
-//		log.Debug("hook - Triggering after a block has been stored")
-//		// Get cid of the node received.
-//		c := blockData.Link().(cidlink.Link).Cid
-//
-//		// Get entries node from datastore.
-//		val, err := i.DS.Get(dsKey(c.String()))
-//		if err != nil {
-//			log.Errorf("Error while fetching the node from datastore: %s", err)
-//			return
-//		}
-//
-//		// Decode entries into an IPLD node
-//		nentries, err := decodeIPLDNode(bytes.NewBuffer(val))
-//		if err != nil {
-//			log.Errorf("Error decoding ipldNode: %s", err)
-//			return
-//		}
-//
-//		log.Debugf("[received] block from graphysnc.cid %s\r\n%s", c.String(), nentries.Kind())
-//	}
-//}
+func (i *LegsCore) storageHook() graphsync.OnIncomingBlockHook {
+	return func(p peer.ID, responseData graphsync.ResponseData, blockData graphsync.BlockData, hookActions graphsync.IncomingBlockHookActions) {
+		log.Debug("hook - Triggering after a block has been stored")
+		// Get cid of the node received.
+		c := blockData.Link().(cidlink.Link).Cid
+
+		// Get entries node from datastore.
+		val, err := i.BS.Get(c)
+		if err != nil {
+			log.Errorf("Error while fetching the node from datastore: %s", err)
+			return
+		}
+
+		// Decode entries into an IPLD node
+		nentries, err := decodeIPLDNode(bytes.NewBuffer(val.RawData()))
+		if err != nil {
+			log.Errorf("Error decoding ipldNode: %s", err)
+			return
+		}
+
+		log.Debugf("[recv] block from graphysnc.cid %s\r\n%s", c.String(), nentries.Kind())
+	}
+}
 
 // decodeIPLDNode from a reader
 // This is used to get the ipld.Node from a set of raw bytes.

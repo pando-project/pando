@@ -3,16 +3,12 @@ package legs
 import (
 	"Pando/metadata"
 	"context"
-	"fmt"
 	golegs "github.com/filecoin-project/go-legs"
 	"github.com/gammazero/keymutex"
-	bsrv "github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	logging "github.com/ipfs/go-log/v2"
-	dag "github.com/ipfs/go-merkledag"
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/host"
@@ -66,7 +62,7 @@ func NewLegsCore(ctx context.Context, host *host.Host, ds datastore.Batching, bs
 		receivedMetaCh: outMetaCh,
 	}
 
-	//lms.GraphSync().RegisterIncomingBlockHook(lc.storageHook())
+	lms.GraphSync().RegisterIncomingBlockHook(lc.storageHook())
 	log.Debugf("LegCore started and all hooks and linksystem registered")
 
 	return lc, nil
@@ -194,13 +190,6 @@ func (l *LegsCore) listenSubUpdates(sub *subscriber) {
 			log.Errorf("not received the block for: %s", c.String())
 		}
 		log.Debugf("block value: %s", string(v.RawData()))
-
-		dags := dag.NewDAGService(bsrv.New(l.BS, offline.Exchange(l.BS)))
-		dage, e := dags.Get(context.Background(), c)
-		if e != nil {
-			log.Errorf("not found dag: %s", e.Error())
-		}
-		fmt.Println(string(dage.RawData()))
 
 		l.receivedMetaCh <- &metadata.MetaRecord{
 			Cid:        c,

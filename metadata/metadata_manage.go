@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"Pando/statetree/types"
 	"context"
 	"fmt"
 	dag "github.com/ipfs/go-merkledag"
@@ -25,13 +26,14 @@ var log = logging.Logger("meta-manager")
 const SnapShotDuration = time.Second * 5
 
 type MetaManager struct {
-	flushTime time.Duration
-	recvCh    chan *MetaRecord
-	ds        datastore.Datastore
-	bs        blockstore.Blockstore
-	dagds     format.NodeGetter
-	cache     map[peer.ID][]*MetaRecord
-	mutex     sync.Mutex
+	flushTime      time.Duration
+	recvCh         chan *MetaRecord
+	outStateTreeCh chan map[peer.ID]*types.ProviderState
+	ds             datastore.Datastore
+	bs             blockstore.Blockstore
+	dagds          format.NodeGetter
+	cache          map[peer.ID][]*MetaRecord
+	mutex          sync.Mutex
 }
 
 type MetaRecord struct {
@@ -42,11 +44,12 @@ type MetaRecord struct {
 
 func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore) (*MetaManager, error) {
 	mm := &MetaManager{
-		flushTime: SnapShotDuration,
-		recvCh:    make(chan *MetaRecord),
-		ds:        ds,
-		cache:     make(map[peer.ID][]*MetaRecord),
-		dagds:     dag.NewDAGService(bsrv.New(bs, offline.Exchange(bs))),
+		flushTime:      SnapShotDuration,
+		recvCh:         make(chan *MetaRecord),
+		outStateTreeCh: make(chan map[peer.ID]*types.ProviderState),
+		ds:             ds,
+		cache:          make(map[peer.ID][]*MetaRecord),
+		dagds:          dag.NewDAGService(bsrv.New(bs, offline.Exchange(bs))),
 	}
 
 	go mm.dealReceivedMeta()
@@ -71,15 +74,21 @@ func (mm *MetaManager) dealReceivedMeta() {
 func (mm *MetaManager) flushRegular() {
 
 	for range time.NewTicker(mm.flushTime).C {
+		update := make(map[peer.ID]*types.ProviderState)
 		for peerID, records := range mm.cache {
 			log.Debugf("write metadata to car for provider: %s", peerID.String())
 			cidlist := make([]cid.Cid, 0)
 			for _, r := range records {
 				cidlist = append(cidlist, r.Cid)
 			}
-			exportMetaCar(mm.dagds, cidlist, "./received/"+peerID.String()[:5]+time.Now().String()+".car")
+			// todo
+			//exportMetaCar(mm.dagds, cidlist, "./received/"+peerID.String()[:5]+time.Now().String()+".car")
+			update[peerID] = &types.ProviderState{Cidlist: cidlist}
 		}
-
+		if len(update) > 0 {
+			log.Debugw("send update to state tree")
+			mm.outStateTreeCh <- update
+		}
 		// todo update state...hamt....
 
 		mm.cache = make(map[peer.ID][]*MetaRecord)
@@ -89,6 +98,10 @@ func (mm *MetaManager) flushRegular() {
 
 func (mm *MetaManager) GetMetaInCh() chan<- *MetaRecord {
 	return mm.recvCh
+}
+
+func (mm *MetaManager) GetUpdateOut() <-chan map[peer.ID]*types.ProviderState {
+	return mm.outStateTreeCh
 }
 
 func exportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, path string) {
