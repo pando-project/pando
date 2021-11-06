@@ -17,9 +17,9 @@ jobs:
       - checkout
       - run:
           name: Install Dependencies
-          environment:
-            GO111MODULE: on
-          command: go mod tidy
+          command: |
+            GO111MODULE=on
+            go mod tidy
       - run:
           name: Compile
           command: go build -o pando
