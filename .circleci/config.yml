@@ -17,6 +17,8 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
+      - codecov/token
+      - codecov/upload
       - run:
           name: Install Dependencies
           command: |
@@ -33,5 +35,3 @@ workflows:
     # Inside the workflow, you define the jobs you want to run.
     jobs:
       - build
-      - codecov/token
-      - codecov/upload
