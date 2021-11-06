@@ -17,12 +17,17 @@ jobs:
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
-      - codecov/upload
       - run:
           name: Install Dependencies
           command: |
             GO111MODULE=on
             go mod tidy
+      - run:
+          name: Test and Coverage
+          command: go test -race -coverprofile=coverage.txt -covermode=atomic
+      - run:
+          name: Upload coverage to codecov
+          command: bash <(curl -s https://codecov.io/bash)
       - run:
           name: Compile
           command: go build -o pando
