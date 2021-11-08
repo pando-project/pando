@@ -4,8 +4,10 @@ import (
 	"Pando/config"
 	"Pando/legs"
 	"Pando/metadata"
-	"Pando/server/graph_sync/http"
+	graphserver "Pando/server/graph_sync/http"
+	metaserver "Pando/server/metadata/http"
 	"Pando/statetree"
+	"Pando/statetree/types"
 	"context"
 	"errors"
 	"fmt"
@@ -53,6 +55,13 @@ func daemonCommand(cctx *cli.Context) error {
 		return err
 	}
 	err = logging.SetLogLevel("state-tree", "debug")
+	if err != nil {
+		return err
+	}
+	err = logging.SetLogLevel("meta-server", "debug")
+	if err != nil {
+		return err
+	}
 
 	cfg, err := config.Load("")
 	if err != nil {
@@ -101,8 +110,18 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 	metaManager, err := metadata.New(context.Background(), mds, bs)
 	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh())
-	graphSyncServer, err := http.New(cfg.Addresses.GraphSync, cfg.Addresses.GraphQL, legsCore)
-	_, err = statetree.New(context.Background(), mds, bs, metaManager.GetUpdateOut())
+	graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, cfg.Addresses.GraphQL, legsCore)
+	if err != nil {
+		return err
+	}
+
+	info := new(types.ExtraInfo)
+	info.MultiAddr = p2pHost.Addrs()[0].String()
+	stateTree, err := statetree.New(context.Background(), mds, bs, metaManager.GetUpdateOut(), info)
+	if err != nil {
+		return err
+	}
+	metaDataServer, err := metaserver.New("/ip4/127.0.0.1/tcp/9004", stateTree)
 	if err != nil {
 		return err
 	}
@@ -114,6 +133,9 @@ func daemonCommand(cctx *cli.Context) error {
 	errChan := make(chan error, 1)
 	go func() {
 		errChan <- graphSyncServer.Start()
+	}()
+	go func() {
+		errChan <- metaDataServer.Start()
 	}()
 
 	var finalErr error
@@ -141,6 +163,10 @@ func daemonCommand(cctx *cli.Context) error {
 
 	if err = graphSyncServer.Shutdown(ctx); err != nil {
 		log.Errorw("Error shutting down graphsync server", "err", err)
+		finalErr = ErrDaemonStop
+	}
+	if err = metaDataServer.Shutdown(ctx); err != nil {
+		log.Errorw("Error shutting down metadata server", "err", err)
 		finalErr = ErrDaemonStop
 	}
 

@@ -2,7 +2,7 @@ package http
 
 import (
 	"Pando/legs"
-	"Pando/server/graphql"
+	"Pando/server/graph_sync/http/graphql"
 	"context"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -17,9 +17,9 @@ import (
 
 var log = logging.Logger("graphsync")
 
-type logEcapsulator struct {
-	logger *logging.ZapEventLogger
-}
+//type logEcapsulator struct {
+//	logger *logging.ZapEventLogger
+//}
 
 type Server struct {
 	server  *http.Server
@@ -68,7 +68,7 @@ func New(listen string, glisten string, core *legs.LegsCore) (*Server, error) {
 			return nil, err
 		}
 		s.gl = gl
-		gqHandler, err := graphQL.GetHandler(core.DS, "")
+		gqHandler, err := graphQL.GetHandler(core.BS, "")
 		if err != nil {
 			return nil, err
 		}

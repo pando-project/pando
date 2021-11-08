@@ -1,0 +1,103 @@
+package http
+
+import (
+	"Pando/statetree"
+	"encoding/json"
+	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/ipfs/go-cid"
+	"net/http"
+)
+
+// handler handles requests for the finder resource
+type httpHandler struct {
+	metaHandler *MetaHandler
+}
+
+type MetaHandler struct {
+	StateTree *statetree.StateTree
+}
+
+func newHandler(stateTree *statetree.StateTree) *httpHandler {
+	return &httpHandler{
+		metaHandler: &MetaHandler{StateTree: stateTree},
+	}
+}
+
+func (h *httpHandler) ListSnapShots(w http.ResponseWriter, r *http.Request) {
+	//id, err := getCid(r)
+	//if err != nil {
+	//	w.WriteHeader(http.StatusBadRequest)
+	//	return
+	//}
+	//
+	//v, err := h.graphSyncHandler.Core.DS.Get(datastore.NewKey(id))
+	//if err != nil {
+	//	log.Error("cannot search for cid: ", id, "err", err)
+	//	http.Error(w, "", http.StatusInternalServerError)
+	//	return
+	//}
+	//WriteJsonResponse(w, http.StatusOK, v)
+
+	snapCidList, err := h.metaHandler.StateTree.GetSnapShotCidList()
+	if err != nil {
+		log.Error("cannot list snapshots, err", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	resBytes, err := json.Marshal(snapCidList)
+	if err != nil {
+		log.Error("cannot list snapshots, err", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	WriteJsonResponse(w, http.StatusOK, resBytes)
+}
+
+func (h *httpHandler) ListSnapShotInfo(w http.ResponseWriter, r *http.Request) {
+	cidStr, err := getSsCid(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	ssCid, err := cid.Decode(cidStr)
+	if err != nil {
+		log.Error("cannot decode input cid, err", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	ss, err := h.metaHandler.StateTree.GetSnapShot(ssCid)
+	if err != nil {
+		log.Errorf("cannot get snapshot: %s, err: %s", ssCid.String(), err.Error())
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	resBytes, err := json.Marshal(ss)
+	if err != nil {
+		log.Error("cannot marshal snapshot, err", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	WriteJsonResponse(w, http.StatusOK, resBytes)
+
+}
+
+func getSsCid(r *http.Request) (string, error) {
+	vars := mux.Vars(r)
+	id := vars["sscid"]
+	if id == "" {
+		return "", fmt.Errorf("invalid cid to search")
+	}
+	return id, nil
+}
+
+func WriteJsonResponse(w http.ResponseWriter, status int, body []byte) {
+	w.WriteHeader(status)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	if _, err := w.Write(body); err != nil {
+		log.Errorw("cannot write response", "err", err)
+		http.Error(w, "", http.StatusInternalServerError)
+	}
+}
