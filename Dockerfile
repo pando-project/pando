@@ -1,9 +1,7 @@
-FROM alpine:3.14
+FROM ubuntu
 
 ADD ./pando /opt/pando
 
-RUN chmod +x /opt/pando && \
-    mkdir /lib64 && \
-    ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 \
+RUN chmod +x /opt/pando
 
 CMD /opt/pando daemon
