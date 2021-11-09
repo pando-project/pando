@@ -86,25 +86,6 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, u
 		st.snapShot = cid.Undef
 	}
 
-	//snapShotList, err := ds.Get(datastore.NewKey(SnapShotList))
-	//if err == nil && snapShotList != nil {
-	//	ssCidList := new(SnapShotCidList)
-	//	err := json.Unmarshal(snapShotList, ssCidList)
-	//	if err != nil {
-	//		return nil, fmt.Errorf("failed to load the snapshot cid list from datastore")
-	//	}
-	//
-	//	ss := new(types.SnapShot)
-	//	newestSsCid := (*ssCidList)[len(*ssCidList)-1]
-	//	err = store.Get(ctx, newestSsCid, ss)
-	//	if err != nil {
-	//		return nil, fmt.Errorf("failed to load the newest snapshot: %s", newestSsCid.String())
-	//	}
-	//	st.snapShot = newestSsCid
-	//} else {
-	//	st.snapShot = cid.Undef
-	//}
-
 	// if MetadataManager send metadata update, update the State, save in hamt and change the root cid
 	go st.Update(ctx)
 
@@ -175,7 +156,7 @@ func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update
 	var previousSs cid.Cid
 	if st.snapShot == cid.Undef {
 		// todo
-		height = uint64(1)
+		height = uint64(0)
 		previousSs = newRoot
 	} else {
 		oldSs := new(types.SnapShot)
@@ -262,6 +243,24 @@ func (st *StateTree) GetSnapShotCidList() ([]cid.Cid, error) {
 func (st *StateTree) GetSnapShot(sscid cid.Cid) (shot *types.SnapShot, err error) {
 	ss := new(types.SnapShot)
 	err = st.Store.Get(context.Background(), sscid, ss)
+	if err != nil {
+		return nil, err
+	}
+	return ss, nil
+}
+
+func (st *StateTree) GetSnapShotByHeight(height uint64) (*types.SnapShot, error) {
+	if height < 0 {
+		return nil, fmt.Errorf("height must be positive")
+	}
+	cidlist, err := st.GetSnapShotCidList()
+	if err != nil {
+		return nil, err
+	}
+	if height > uint64(len(cidlist)-1) {
+		return nil, fmt.Errorf("height cannot be bigger than newest")
+	}
+	ss, err := st.GetSnapShot(cidlist[height])
 	if err != nil {
 		return nil, err
 	}

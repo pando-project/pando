@@ -45,6 +45,7 @@ func New(listen string, stateTree *statetree.StateTree) (*Server, error) {
 
 	r.HandleFunc("/meta/list", h.ListSnapShots)
 	r.HandleFunc("/meta/info/{sscid}", h.ListSnapShotInfo)
+	r.HandleFunc("/meta/height/{height}", h.GetSnapShotByHeight)
 
 	return s, nil
 }
