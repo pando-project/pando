@@ -26,6 +26,7 @@ func InitWithIdentity(identity Identity) (*Config, error) {
 			GraphSync: defaultGraphSync,
 			GraphQL:   defaultGraphQl,
 			P2PAddr:   defaultP2PAddr,
+			MetaData:  defaultMetaData,
 		},
 		Identity: identity,
 

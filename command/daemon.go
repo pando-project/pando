@@ -121,7 +121,7 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	metaDataServer, err := metaserver.New("/ip4/127.0.0.1/tcp/9004", stateTree)
+	metaDataServer, err := metaserver.New(cfg.Addresses.MetaData, stateTree)
 	if err != nil {
 		return err
 	}

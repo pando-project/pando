@@ -48,6 +48,7 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore) (
 		recvCh:         make(chan *MetaRecord),
 		outStateTreeCh: make(chan map[peer.ID]*types.ProviderState),
 		ds:             ds,
+		bs:             bs,
 		cache:          make(map[peer.ID][]*MetaRecord),
 		dagds:          dag.NewDAGService(bsrv.New(bs, offline.Exchange(bs))),
 	}
@@ -82,7 +83,7 @@ func (mm *MetaManager) flushRegular() {
 				cidlist = append(cidlist, r.Cid)
 			}
 			// todo
-			//exportMetaCar(mm.dagds, cidlist, "./received/"+peerID.String()[:5]+time.Now().String()+".car")
+			//exportMetaCar(mm.dagds, cidlist, "./received/"+peerID.String()[:5]+time.Now().String()+".car", mm.bs)
 			update[peerID] = &types.ProviderState{Cidlist: cidlist}
 		}
 		if len(update) > 0 {
@@ -104,7 +105,7 @@ func (mm *MetaManager) GetUpdateOut() <-chan map[peer.ID]*types.ProviderState {
 	return mm.outStateTreeCh
 }
 
-func exportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, path string) {
+func exportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, path string, bs blockstore.Blockstore) {
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Errorf("open file error : %s", err.Error())
@@ -115,11 +116,17 @@ func exportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, path string) {
 	//todo debug
 	for _, c := range cidlist {
 		fmt.Println("cid: ", c)
+		vb, e := bs.Get(c)
+		if e != nil {
+			fmt.Println(e)
+		}
+		log.Debugf("[block] block value: ", vb.RawData())
+
 		v, e := dagds.Get(context.Background(), c)
 		if e != nil {
 			fmt.Println(e)
 		}
-		fmt.Println("value: ", v.String())
+		log.Debugf("[dag] block value: ", v.String())
 	}
 
 	err = car.WriteCar(context.Background(), dagds, cidlist, f)
