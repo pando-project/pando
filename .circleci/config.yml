@@ -28,9 +28,23 @@ jobs:
       - run:
           name: Upload coverage to codecov
           command: bash <(curl -s https://codecov.io/bash)
+      - setup_remote_docker:
+          version: 19.03.13
       - run:
-          name: Compile
+          name: Build Service
           command: go build -o pando
+      - run:
+          name: Build and push Docker image
+          command: |
+            DOCKER_STR="${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${DOCKER_REPO}"
+            TAG="${DOCKER_STR}:${CIRCLE_BUILD_NUM}"
+            docker build -t ${TAG} .
+            docker tag ${TAG} ${DOCKER_STR}:latest
+            docker login -u ${DOCKER_ALI_USERNAME} -p ${DOCKER_ALI_PWD} ${DOCKER_REGISTRY}
+            docker push ${TAG}
+            docker push ${DOCKER_STR}:latest
+
+
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -38,4 +52,8 @@ workflows:
   go-build: # This is the name of the workflow, feel free to change it to better match your workflow.
     # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              only:
+                - main
