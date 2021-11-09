@@ -40,7 +40,7 @@ jobs:
             TAG="${DOCKER_STR}:${CIRCLE_BUILD_NUM}"
             docker build -t ${TAG} .
             docker tag ${TAG} ${DOCKER_STR}:latest
-            docker login -u ${DOCKER_ALI_USERNAME} -p ${DOCKER_ALI_PWD}
+            docker login -u ${DOCKER_ALI_USERNAME} -p ${DOCKER_ALI_PWD} ${DOCKER_REGISTRY}
             docker push ${TAG}
             docker push ${DOCKER_STR}:latest
 
