@@ -109,14 +109,14 @@ func (i *LegsCore) storageHook() graphsync.OnIncomingBlockHook {
 			return
 		}
 
-		// Decode entries into an IPLD node
-		nentries, err := decodeIPLDNode(bytes.NewBuffer(val.RawData()))
-		if err != nil {
-			log.Errorf("Error decoding ipldNode: %s", err)
-			return
-		}
+		//// Decode entries into an IPLD node
+		//nentries, err := decodeIPLDNode(bytes.NewBuffer(val.RawData()))
+		//if err != nil {
+		//	log.Errorf("Error decoding ipldNode: %s", err)
+		//	return
+		//}
 
-		log.Debugf("[recv] block from graphysnc.cid %s\r\n%s", c.String(), nentries.Kind())
+		log.Debugf("[recv] block from graphysnc.cid %s\r\n%s", val.Cid())
 	}
 }
 

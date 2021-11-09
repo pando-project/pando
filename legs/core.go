@@ -47,7 +47,7 @@ func NewLegsCore(ctx context.Context, host *host.Host, ds datastore.Batching, bs
 
 	lnkSys := MkLinkSystem(bs)
 
-	lms, err := golegs.NewMultiSubscriber(ctx, *host, ds, lnkSys, PUBSUBTOPIC)
+	lms, err := golegs.NewMultiSubscriber(ctx, *host, ds, lnkSys, PUBSUBTOPIC, nil)
 	if err != nil {
 		return nil, err
 	}

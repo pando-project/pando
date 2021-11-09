@@ -54,6 +54,23 @@ func Store(bs blockstore.Blockstore, n ipld.Node) (ipld.Link, error) {
 	return lsys.Store(ipld.LinkContext{}, linkproto, n)
 }
 
+//func getDagNodes()[]ipld.Node{
+//	a := merkledag.NewRawNode([]byte("aaaa"))
+//	b := merkledag.NewRawNode([]byte("bbbb"))
+//	c := merkledag.NewRawNode([]byte("cccc"))
+//
+//	nd1 := &merkledag.ProtoNode{}
+//	nd1.AddNodeLink("cat", a)
+//
+//	nd2 := &merkledag.ProtoNode{}
+//	nd2.AddNodeLink("first", nd1)
+//	nd2.AddNodeLink("dog", b)
+//
+//	nd3 := &merkledag.ProtoNode{}
+//	nd3.AddNodeLink("second", nd2)
+//	nd3.AddNodeLink("bear", c)
+//}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	dstore, err := leveldb.NewDatastore("", nil)

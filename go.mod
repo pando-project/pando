@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
-	github.com/filecoin-project/go-legs v0.0.0-20211016171708-7a2ce4caf1b2
+	github.com/filecoin-project/go-legs v0.0.0-20211028144321-e83b734027a8
 	github.com/filecoin-project/go-state-types v0.1.1-0.20210810190654-139e0e79e69e
 	github.com/filecoin-project/go-statestore v0.1.1 // indirect
 	github.com/filecoin-project/specs-actors/v5 v5.0.4
@@ -32,7 +32,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/multiformats/go-multiaddr v0.4.0
 	github.com/multiformats/go-multicodec v0.3.1-0.20210902112759-1539a079fd61
-	github.com/multiformats/go-multihash v0.0.15
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/whyrusleeping/cbor-gen v0.0.0-20210713220151-be142a5ae1a8
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
