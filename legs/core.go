@@ -184,13 +184,6 @@ func (l *LegsCore) listenSubUpdates(sub *subscriber) {
 			log.Errorf("Error persisting latest sync: %s", err)
 		}
 
-		//todo debug
-		v, e := l.BS.Get(c)
-		if e != nil {
-			log.Errorf("not received the block for: %s", c.String())
-		}
-		log.Debugf("block value: %s", string(v.RawData()))
-
 		l.receivedMetaCh <- &metadata.MetaRecord{
 			Cid:        c,
 			ProviderID: sub.peerID,

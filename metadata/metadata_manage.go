@@ -82,7 +82,7 @@ func (mm *MetaManager) flushRegular() {
 			for _, r := range records {
 				cidlist = append(cidlist, r.Cid)
 			}
-			// todo
+			// todo: export as car file
 			//exportMetaCar(mm.dagds, cidlist, "./received/"+peerID.String()[:5]+time.Now().String()+".car", mm.bs)
 			update[peerID] = &types.ProviderState{Cidlist: cidlist}
 		}

@@ -38,10 +38,6 @@ var DaemonCmd = &cli.Command{
 }
 
 func daemonCommand(cctx *cli.Context) error {
-	//err := logging.SetLogLevel("*", "info")
-	//if err != nil {
-	//	return err
-	//}
 	err := logging.SetLogLevel("pando", "debug")
 	if err != nil {
 		return err
@@ -126,9 +122,6 @@ func daemonCommand(cctx *cli.Context) error {
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
 	log.Info("Starting http servers")
 	errChan := make(chan error, 1)
 	go func() {

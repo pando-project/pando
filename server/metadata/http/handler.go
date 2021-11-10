@@ -26,20 +26,6 @@ func newHandler(stateTree *statetree.StateTree) *httpHandler {
 }
 
 func (h *httpHandler) ListSnapShots(w http.ResponseWriter, r *http.Request) {
-	//id, err := getCid(r)
-	//if err != nil {
-	//	w.WriteHeader(http.StatusBadRequest)
-	//	return
-	//}
-	//
-	//v, err := h.graphSyncHandler.Core.DS.Get(datastore.NewKey(id))
-	//if err != nil {
-	//	log.Error("cannot search for cid: ", id, "err", err)
-	//	http.Error(w, "", http.StatusInternalServerError)
-	//	return
-	//}
-	//WriteJsonResponse(w, http.StatusOK, v)
-
 	snapCidList, err := h.metaHandler.StateTree.GetSnapShotCidList()
 	if err != nil {
 		log.Error("cannot list snapshots, err", err)

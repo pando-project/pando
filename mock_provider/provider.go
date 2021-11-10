@@ -7,10 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ipfs/go-blockservice"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
 	"github.com/ipld/go-ipld-prime/datamodel"
@@ -34,7 +32,7 @@ import (
 )
 
 var (
-	mockTasksNum         = 0
+	mockTasksNum         = 5
 	TestProviderIdentity = &config.Identity{
 		PeerID:  "12D3KooWDi135q9xcE7xiRN1bBZZGc15dSyFRgm7pajTmt7ndCX5",
 		PrivKey: "CAESQHMFRinebmZ/C2zo8tJfYlWxrW5jUIaNoKndLO/LNuLlOc1eZZUi3InQk7QIx0ggEBtkisx7wd+bFsYJrjkc2Uw=",
@@ -91,7 +89,7 @@ func main() {
 	fmt.Println("p2pHost id:", h.ID())
 	bs := blockstore.NewBlockstore(srcStore)
 	srcLnkS := legs.MkLinkSystem(bs)
-	dags := merkledag.NewDAGService(blockservice.New(bs, offline.Exchange(bs)))
+	//dags := merkledag.NewDAGService(blockservice.New(bs, offline.Exchange(bs)))
 	ma, err := multiaddr.NewMultiaddr(PandoAddrStr + "/ipfs/" + PandoPeerID)
 	if err != nil {
 		log.Fatal(err)
@@ -135,14 +133,14 @@ func main() {
 		lnks = append(lnks, lk)
 	}
 
-	// store test dag
-	dagNodes := getDagNodes()
-	for i := 0; i < len(dagNodes); i++ {
-		err = dags.Add(context.Background(), dagNodes[i])
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+	//// store test dag
+	//dagNodes := getDagNodes()
+	//for i := 0; i < len(dagNodes); i++ {
+	//	err = dags.Add(context.Background(), dagNodes[i])
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+	//}
 
 	for i := 0; i < len(mockTasks); i++ {
 		err = lp.UpdateRoot(context.Background(), lnks[i].(cidlink.Link).Cid)
@@ -150,11 +148,11 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	fmt.Printf("the dag root cid is: %s", dagNodes[0].Cid())
-	err = lp.UpdateRoot(context.Background(), dagNodes[0].Cid())
-	if err != nil {
-		log.Fatal(err)
-	}
+	//fmt.Printf("the dag root cid is: %s", dagNodes[0].Cid())
+	//err = lp.UpdateRoot(context.Background(), dagNodes[0].Cid())
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 
 	time.Sleep(time.Second * 5)
 	lp.Close()

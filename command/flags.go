@@ -18,18 +18,3 @@ var initFlags = []cli.Flag{
 		Required: false,
 	},
 }
-
-var snapShotFlags = []cli.Flag{
-	&cli.StringFlag{
-		Name: "ls",
-		//Usage:    "GraphSync HTTP API listen address",
-		//EnvVars:  []string{"PANDO_LISTEN_GRAPHSYNC"},
-		Required: false,
-	},
-	&cli.StringFlag{
-		Name: "",
-		//Usage:    "GraphQl HTTP API listen address",
-		//EnvVars:  []string{"PANDO_LISTEN_GRAPHQL"},
-		Required: false,
-	},
-}

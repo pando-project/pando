@@ -6,8 +6,6 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-graphsync"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	"github.com/ipld/go-ipld-prime/codec/dagjson"
-	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"io"
 
@@ -19,10 +17,6 @@ import (
 	_ "github.com/ipld/go-ipld-prime/codec/dagjson"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 )
-
-//func dsKey(k string) datastore.Key {
-//	return datastore.NewKey(k)
-//}
 
 func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 	lsys := cidlink.DefaultLinkSystem()
@@ -54,21 +48,6 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 		return &buffer, committer, nil
 	}
 	return lsys
-	//lsys.StorageReadOpener = func(_ ipld.LinkContext, lnk ipld.Link) (io.Reader, error) {
-	//	c := lnk.(cidlink.Link).Cid
-	//	val, err := ds.Get(datastore.NewKey(c.String()))
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	return bytes.NewBuffer(val), nil
-	//}
-	//lsys.StorageWriteOpener = func(_ ipld.LinkContext) (io.Writer, ipld.BlockWriteCommitter, error) {
-	//	buf := bytes.NewBuffer(nil)
-	//	return buf, func(lnk ipld.Link) error {
-	//		c := lnk.(cidlink.Link).Cid
-	//		return ds.Put(datastore.NewKey(c.String()), buf.Bytes())
-	//	}, nil
-	//}
 }
 
 type settableBuffer struct {
@@ -103,33 +82,12 @@ func (i *LegsCore) storageHook() graphsync.OnIncomingBlockHook {
 		c := blockData.Link().(cidlink.Link).Cid
 
 		// Get entries node from datastore.
-		val, err := i.BS.Get(c)
+		_, err := i.BS.Get(c)
 		if err != nil {
 			log.Errorf("Error while fetching the node from datastore: %s", err)
 			return
 		}
 
-		//// Decode entries into an IPLD node
-		//nentries, err := decodeIPLDNode(bytes.NewBuffer(val.RawData()))
-		//if err != nil {
-		//	log.Errorf("Error decoding ipldNode: %s", err)
-		//	return
-		//}
-
-		log.Debugf("[recv] block from graphysnc.cid %s\r\n%s", val.Cid())
+		log.Debugf("[recv] block from graphysnc.cid %s\r\n%s", c.String())
 	}
-}
-
-// decodeIPLDNode from a reader
-// This is used to get the ipld.Node from a set of raw bytes.
-func decodeIPLDNode(r io.Reader) (ipld.Node, error) {
-	// NOTE: Considering using the schema prototypes.
-	// This was failing, using a map gives flexibility.
-	// Maybe is worth revisiting this again in the future.
-	nb := basicnode.Prototype.Any.NewBuilder()
-	err := dagjson.Decode(nb, r)
-	if err != nil {
-		return nil, err
-	}
-	return nb.Build(), nil
 }

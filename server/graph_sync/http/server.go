@@ -17,10 +17,6 @@ import (
 
 var log = logging.Logger("graphsync")
 
-//type logEcapsulator struct {
-//	logger *logging.ZapEventLogger
-//}
-
 type Server struct {
 	server  *http.Server
 	gserver *http.Server
