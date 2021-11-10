@@ -22,7 +22,11 @@ jobs:
           command: |
             GO111MODULE=on
             go mod tidy
-      - codecov/upload
+      - run:
+          name: Test and Coverage
+          command: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+      - codecov/upload:
+          file: coverage.txt
       - setup_remote_docker:
           version: 19.03.13
       - run:
