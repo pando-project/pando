@@ -21,7 +21,7 @@ func TestCreate(t *testing.T) {
 	mds := dssync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 
-	_, err := New(context.Background(), ds, bs)
+	_, err := New(context.Background(), mds, bs)
 	if err != nil {
 		t.Error(err)
 	}
@@ -32,7 +32,7 @@ func TestReceiveRecordAndOutUpadte(t *testing.T) {
 	mds := dssync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 
-	mm, err := New(context.Background(), ds, bs)
+	mm, err := New(context.Background(), mds, bs)
 	if err != nil {
 		t.Error(err)
 	}
