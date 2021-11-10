@@ -77,7 +77,6 @@ func (mm *MetaManager) flushRegular() {
 	for range time.NewTicker(mm.flushTime).C {
 		update := make(map[peer.ID]*types.ProviderState)
 		for peerID, records := range mm.cache {
-			log.Debugf("write metadata to car for provider: %s", peerID.String())
 			cidlist := make([]cid.Cid, 0)
 			for _, r := range records {
 				cidlist = append(cidlist, r.Cid)
