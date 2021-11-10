@@ -80,7 +80,7 @@ func (h *httpHandler) GetSnapShotByHeight(w http.ResponseWriter, r *http.Request
 
 	ss, err := h.metaHandler.StateTree.GetSnapShotByHeight(ssHeight)
 	if err != nil {
-		log.Errorf("cannot get snapshot by height: %d, err: %s", ssHeight, err.Error())
+		log.Warnf("cannot get snapshot by height: %d, err: %s", ssHeight, err.Error())
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}

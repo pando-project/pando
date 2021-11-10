@@ -157,3 +157,74 @@ func TestGetMetaRecord(t *testing.T) {
 	}
 
 }
+
+func TestLegsSync(t *testing.T) {
+	host, err := libp2p.New(context.Background())
+	if err != nil {
+		t.Error(err)
+	}
+	ds := datastore.NewMapDatastore()
+	mds := dssync.MutexWrap(ds)
+	bs := blockstore.NewBlockstore(mds)
+	dags := merkledag.NewDAGService(blockservice.New(bs, offline.Exchange(bs)))
+	outCh := make(chan *metadata.MetaRecord)
+	_, err = NewLegsCore(context.Background(), &host, ds, bs, outCh)
+	if err != nil {
+		t.Error(err)
+	}
+
+	time.Sleep(time.Second)
+
+	// store test dag
+	dagNodes := getDagNodes()
+	for i := 0; i < len(dagNodes); i++ {
+		err = dags.Add(context.Background(), dagNodes[i])
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	// mock provider legs
+	dsthost, err := libp2p.New(context.Background())
+	if err != nil {
+		t.Error(err)
+	}
+	dstds := datastore.NewMapDatastore()
+	dstmds := dssync.MutexWrap(dstds)
+	dstbs := blockstore.NewBlockstore(dstmds)
+	srcLnkS := MkLinkSystem(dstbs)
+	dstdags := merkledag.NewDAGService(blockservice.New(dstbs, offline.Exchange(dstbs)))
+
+	ls, err := golegs.NewSubscriber(context.Background(), dsthost, dstmds, srcLnkS, "PandoPubSub", nil)
+	mastr := host.Addrs()[0].String() + "/ipfs/" + host.ID().String()
+	peerInfo, err := peer.AddrInfoFromString(mastr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = dsthost.Connect(context.Background(), *peerInfo); err != nil {
+		t.Fatal(err)
+	}
+
+	_, _, err = ls.Sync(context.Background(), host.ID(), dagNodes[0].Cid(), golegs.LegSelector(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// wait graphsync to save the block in blockstore
+	time.Sleep(time.Second)
+
+	_, err = dstdags.Get(context.Background(), dagNodes[0].Cid())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; i < len(dagNodes); i++ {
+		v, err := dstbs.Get(dagNodes[i].Cid())
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(string(v.RawData()))
+	}
+
+}

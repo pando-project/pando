@@ -55,7 +55,6 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, u
 			return nil, fmt.Errorf("failed to load the State root from datastore")
 		}
 		log.Debugf("find root cid %s, loading...", rootcid.String())
-		//store := adt.WrapStore(context.TODO(), cst)
 
 		m, err := adt.AsMap(store, rootcid, builtin.DefaultHamtBitwidth)
 		if err != nil {
@@ -174,12 +173,11 @@ func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update
 	}
 
 	newSs := &types.SnapShot{
-		Update:     _update,
-		Height:     height,
-		CreateTime: uint64(time.Now().UnixNano()),
-		Root:       newRoot,
-		PreviousSs: previousSs,
-		ExtraInfo:  st.exinfo,
+		Update:       _update,
+		Height:       height,
+		CreateTime:   uint64(time.Now().UnixNano()),
+		PrevSnapShot: previousSs,
+		ExtraInfo:    st.exinfo,
 	}
 
 	ssCid, err := st.Store.Put(ctx, newSs)
@@ -257,7 +255,7 @@ func (st *StateTree) GetSnapShotByHeight(height uint64) (*types.SnapShot, error)
 	if err != nil {
 		return nil, err
 	}
-	if height > uint64(len(cidlist)-1) {
+	if len(cidlist) == 0 || height > uint64(len(cidlist)-1) {
 		return nil, fmt.Errorf("height cannot be bigger than newest")
 	}
 	ss, err := st.GetSnapShot(cidlist[height])
