@@ -2,6 +2,8 @@ package graphQL
 
 import (
 	task "Pando/mock_provider/task"
+	"github.com/ipfs/go-cid"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
 	"strings"
 
@@ -9,8 +11,6 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
-	//"fmt"
-	"github.com/ipfs/go-datastore"
 
 	"github.com/graphql-go/graphql"
 	"net/http"
@@ -38,7 +38,7 @@ func CorsMiddleware(next http.HandlerFunc) http.Handler {
 	})
 }
 
-func GetHandler(db datastore.Batching, accessToken string) (*http.ServeMux, error) {
+func GetHandler(db blockstore.Blockstore, accessToken string) (*http.ServeMux, error) {
 	schema, err := graphql.NewSchema(graphql.SchemaConfig{
 		Query: graphql.NewObject(graphql.ObjectConfig{
 			Name: "Query",
@@ -51,12 +51,17 @@ func GetHandler(db datastore.Batching, accessToken string) (*http.ServeMux, erro
 					},
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 						uuid := p.Args["UUID"].(string)
-						tsk, err := db.Get(datastore.NewKey(uuid))
+						bcid, err := cid.Decode(uuid)
+						if err != nil {
+							return nil, err
+						}
+						blk, err := db.Get(bcid)
 						if err != nil {
 							return nil, err
 						}
 						t := new(task.FinishedTask)
 
+						tsk := blk.RawData()
 						if err = json.Unmarshal(tsk, t); err != nil {
 							_tsk := strings.Trim(string(tsk), "\"")
 							_tsk = strings.ReplaceAll(_tsk, "\\", "")

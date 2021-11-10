@@ -3,12 +3,17 @@ package command
 import (
 	"Pando/config"
 	"Pando/legs"
-	"Pando/server/graph_sync/http"
+	"Pando/metadata"
+	graphserver "Pando/server/graph_sync/http"
+	metaserver "Pando/server/metadata/http"
+	"Pando/statetree"
+	"Pando/statetree/types"
 	"context"
 	"errors"
 	"fmt"
 	dssync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p"
 	"github.com/urfave/cli/v2"
@@ -33,15 +38,23 @@ var DaemonCmd = &cli.Command{
 }
 
 func daemonCommand(cctx *cli.Context) error {
-	err := logging.SetLogLevel("*", "info")
-	if err != nil {
-		return err
-	}
-	err = logging.SetLogLevel("pando", "debug")
+	err := logging.SetLogLevel("pando", "debug")
 	if err != nil {
 		return err
 	}
 	err = logging.SetLogLevel("core", "debug")
+	if err != nil {
+		return err
+	}
+	err = logging.SetLogLevel("meta-manager", "debug")
+	if err != nil {
+		return err
+	}
+	err = logging.SetLogLevel("state-tree", "debug")
+	if err != nil {
+		return err
+	}
+	err = logging.SetLogLevel("meta-server", "debug")
 	if err != nil {
 		return err
 	}
@@ -73,6 +86,7 @@ func daemonCommand(cctx *cli.Context) error {
 		return err
 	}
 	mds := dssync.MutexWrap(dstore)
+	bs := blockstore.NewBlockstore(mds)
 
 	//ds := dssync.MutexWrap(datastore.NewMapDatastore())
 	privKey, err := cfg.Identity.DecodePrivateKey("")
@@ -86,12 +100,24 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 	log.Debugf("multiaddr is: %s", p2pHost.Addrs())
 	log.Debugf("peerID is: %s", p2pHost.ID())
-	lnkSys := legs.MkLinkSystem(mds)
-	legsCore, err := legs.NewLegsCore(&p2pHost, mds, &lnkSys)
+
 	if err != nil {
 		return err
 	}
-	graphSyncServer, err := http.New(cfg.Addresses.GraphSync, cfg.Addresses.GraphQL, legsCore)
+	metaManager, err := metadata.New(context.Background(), mds, bs)
+	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh())
+	graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, cfg.Addresses.GraphQL, legsCore)
+	if err != nil {
+		return err
+	}
+
+	info := new(types.ExtraInfo)
+	info.MultiAddr = p2pHost.Addrs()[0].String()
+	stateTree, err := statetree.New(context.Background(), mds, bs, metaManager.GetUpdateOut(), info)
+	if err != nil {
+		return err
+	}
+	metaDataServer, err := metaserver.New(cfg.Addresses.MetaData, stateTree)
 	if err != nil {
 		return err
 	}
@@ -100,6 +126,9 @@ func daemonCommand(cctx *cli.Context) error {
 	errChan := make(chan error, 1)
 	go func() {
 		errChan <- graphSyncServer.Start()
+	}()
+	go func() {
+		errChan <- metaDataServer.Start()
 	}()
 
 	var finalErr error
@@ -127,6 +156,10 @@ func daemonCommand(cctx *cli.Context) error {
 
 	if err = graphSyncServer.Shutdown(ctx); err != nil {
 		log.Errorw("Error shutting down graphsync server", "err", err)
+		finalErr = ErrDaemonStop
+	}
+	if err = metaDataServer.Shutdown(ctx); err != nil {
+		log.Errorw("Error shutting down metadata server", "err", err)
 		finalErr = ErrDaemonStop
 	}
 
