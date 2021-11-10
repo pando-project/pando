@@ -24,7 +24,7 @@ jobs:
             go mod tidy
       - run:
           name: Test and Coverage
-          command: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+          command: go test -coverprofile=coverage.txt -covermode=atomic ./...
       - codecov/upload:
           file: coverage.txt
       - setup_remote_docker:
