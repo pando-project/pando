@@ -142,7 +142,7 @@ func (t *ExtraInfo) UnmarshalCBOR(r io.Reader) error {
 	return nil
 }
 
-var lengthBufSnapShot = []byte{134}
+var lengthBufSnapShot = []byte{133}
 
 func (t *SnapShot) MarshalCBOR(w io.Writer) error {
 	if t == nil {
@@ -203,16 +203,10 @@ func (t *SnapShot) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	// t.Root (cid.Cid) (struct)
+	// t.PrevSnapShot (cid.Cid) (struct)
 
-	if err := cbg.WriteCidBuf(scratch, w, t.Root); err != nil {
-		return xerrors.Errorf("failed to write cid field t.Root: %w", err)
-	}
-
-	// t.PreviousSs (cid.Cid) (struct)
-
-	if err := cbg.WriteCidBuf(scratch, w, t.PreviousSs); err != nil {
-		return xerrors.Errorf("failed to write cid field t.PreviousSs: %w", err)
+	if err := cbg.WriteCidBuf(scratch, w, t.PrevSnapShot); err != nil {
+		return xerrors.Errorf("failed to write cid field t.PrevSnapShot: %w", err)
 	}
 
 	// t.ExtraInfo (types.ExtraInfo) (struct)
@@ -236,7 +230,7 @@ func (t *SnapShot) UnmarshalCBOR(r io.Reader) error {
 		return fmt.Errorf("cbor input should be of type array")
 	}
 
-	if extra != 6 {
+	if extra != 5 {
 		return fmt.Errorf("cbor input had wrong number of fields")
 	}
 
@@ -319,28 +313,16 @@ func (t *SnapShot) UnmarshalCBOR(r io.Reader) error {
 		t.CreateTime = uint64(extra)
 
 	}
-	// t.Root (cid.Cid) (struct)
+	// t.PrevSnapShot (cid.Cid) (struct)
 
 	{
 
 		c, err := cbg.ReadCid(br)
 		if err != nil {
-			return xerrors.Errorf("failed to read cid field t.Root: %w", err)
+			return xerrors.Errorf("failed to read cid field t.PrevSnapShot: %w", err)
 		}
 
-		t.Root = c
-
-	}
-	// t.PreviousSs (cid.Cid) (struct)
-
-	{
-
-		c, err := cbg.ReadCid(br)
-		if err != nil {
-			return xerrors.Errorf("failed to read cid field t.PreviousSs: %w", err)
-		}
-
-		t.PreviousSs = c
+		t.PrevSnapShot = c
 
 	}
 	// t.ExtraInfo (types.ExtraInfo) (struct)
