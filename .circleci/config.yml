@@ -25,8 +25,8 @@ jobs:
       - run:
           name: Test and Coverage
           command: |
-          TEST_TARGET=`go list ./... | grep -v statetree/types | grep -v mock_provider`
-          go test -coverprofile=coverage.txt -covermode=atomic $TEST_TARGET
+            TEST_TARGET=`go list ./... | grep -v statetree/types | grep -v mock_provider`
+            go test -coverprofile=coverage.txt -covermode=atomic $TEST_TARGET
       - codecov/upload:
           file: coverage.txt
       - setup_remote_docker:
