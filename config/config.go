@@ -64,11 +64,10 @@ func PathRoot() (string, error) {
 func Load(filePath string) (*Config, error) {
 	var err error
 	if filePath == "" {
-		configRoot, err := homedir.Expand(DefaultPathRoot)
+		filePath, err = Filename("")
 		if err != nil {
 			return nil, err
 		}
-		filePath = filepath.Join(configRoot, DefaultConfigFile)
 	}
 
 	f, err := os.Open(filePath)

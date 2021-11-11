@@ -36,16 +36,21 @@ type StateTree struct {
 	exinfo   *types.ExtraInfo
 	//state        map[peer.ID]*types.ProviderState
 	recvUpdateCh <-chan map[peer.ID]*types.ProviderState
+	ctx          context.Context
+	cncl         func()
 }
 
 func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, updateCh <-chan map[peer.ID]*types.ProviderState, exinfo *types.ExtraInfo) (*StateTree, error) {
+	childCtx, cncl := context.WithCancel(ctx)
 	cs := cbor.NewCborStore(bs)
-	store := adt.WrapStore(context.TODO(), cs)
+	store := adt.WrapStore(childCtx, cs)
 	st := &StateTree{
 		exinfo:       exinfo,
 		ds:           ds,
 		Store:        store,
 		recvUpdateCh: updateCh,
+		ctx:          childCtx,
+		cncl:         cncl,
 	}
 	// get the latest root(cid) from ds
 	root, err := ds.Get(datastore.NewKey(RootKey))
@@ -76,7 +81,7 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, u
 	if snapShotCidList != nil {
 		ss := new(types.SnapShot)
 		newestSsCid := snapShotCidList[len(snapShotCidList)-1]
-		err = store.Get(ctx, newestSsCid, ss)
+		err = store.Get(childCtx, newestSsCid, ss)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load the newest snapshot: %s", newestSsCid.String())
 		}
@@ -86,7 +91,7 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, u
 	}
 
 	// if MetadataManager send metadata update, update the State, save in hamt and change the root cid
-	go st.Update(ctx)
+	go st.Update(childCtx)
 
 	return st, nil
 }
@@ -94,9 +99,14 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, u
 func (st *StateTree) Update(ctx context.Context) {
 	for {
 		select {
+		case _ = <-ctx.Done():
+			log.Warn(ctx.Err().Error())
+			return
 		case update, ok := <-st.recvUpdateCh:
 			if !ok {
 				log.Error("metadata manager close the update channel.")
+				st.cncl()
+				log.Error("exit the state tree")
 				return
 			}
 			rootCid, err := st.UpdateRoot(ctx, update)
@@ -240,7 +250,7 @@ func (st *StateTree) GetSnapShotCidList() ([]cid.Cid, error) {
 
 func (st *StateTree) GetSnapShot(sscid cid.Cid) (shot *types.SnapShot, err error) {
 	ss := new(types.SnapShot)
-	err = st.Store.Get(context.Background(), sscid, ss)
+	err = st.Store.Get(st.ctx, sscid, ss)
 	if err != nil {
 		return nil, err
 	}
@@ -263,4 +273,10 @@ func (st *StateTree) GetSnapShotByHeight(height uint64) (*types.SnapShot, error)
 		return nil, err
 	}
 	return ss, nil
+}
+
+func (st *StateTree) Shutdown() error {
+	st.cncl()
+	log.Warn("shutting down the state tree...")
+	return nil
 }
