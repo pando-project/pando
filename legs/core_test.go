@@ -80,7 +80,7 @@ func TestGetMetaRecord(t *testing.T) {
 	mds := dssync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 	outCh := make(chan *metadata.MetaRecord)
-	core, err := NewLegsCore(context.Background(), &host, ds, bs, outCh)
+	core, err := NewLegsCore(context.Background(), &host, mds, bs, outCh)
 	if err != nil {
 		t.Error(err)
 	}
@@ -144,7 +144,7 @@ func TestGetMetaRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 15)
 
 	for i := 0; i < 2; i++ {
 		select {
