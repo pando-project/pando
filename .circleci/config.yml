@@ -23,13 +23,13 @@ jobs:
           command: |
             GO111MODULE=on
             go mod tidy
-      - run:
-          name: Test and Coverage
-          command: |
-            TEST_TARGET=`go list ./... | grep -v statetree/types | grep -v mock_provider`
-            go test -coverprofile=coverage.txt -covermode=atomic $TEST_TARGET
-      - codecov/upload:
-          file: coverage.txt
+#      - run:
+#          name: Test and Coverage
+#          command: |
+#            TEST_TARGET=`go list ./... | grep -v statetree/types | grep -v mock_provider`
+#            go test -coverprofile=coverage.txt -covermode=atomic $TEST_TARGET
+#      - codecov/upload:
+#          file: coverage.txt
       - setup_remote_docker:
           version: 19.03.13
       - run:
