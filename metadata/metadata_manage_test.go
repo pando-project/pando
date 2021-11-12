@@ -27,7 +27,7 @@ func TestCreate(t *testing.T) {
 	}
 }
 
-func TestReceiveRecordAndOutUpadte(t *testing.T) {
+func TestReceiveRecordAndOutUpdate(t *testing.T) {
 	ds := datastore.NewMapDatastore()
 	mds := dssync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
