@@ -4,6 +4,7 @@ version: 2.1
 
 orbs:
   codecov: codecov/codecov@3.2.0
+  slack: circleci/slack@4.5.0
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
@@ -44,6 +45,12 @@ jobs:
             docker login -u ${DOCKER_ALI_USERNAME} -p ${DOCKER_ALI_PWD} ${DOCKER_REGISTRY}
             docker push ${TAG}
             docker push ${DOCKER_STR}:latest
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+      - slack/notify:
+          event: pass
+          template: basic_success_1
 
 
 
