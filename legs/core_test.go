@@ -144,7 +144,7 @@ func TestGetMetaRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 10)
 
 	for i := 0; i < 2; i++ {
 		select {
@@ -152,7 +152,6 @@ func TestGetMetaRecord(t *testing.T) {
 			t.Log(record)
 		default:
 			t.Error("not receive record rightly")
-
 		}
 	}
 
