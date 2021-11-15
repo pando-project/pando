@@ -106,7 +106,7 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 	metaManager, err := metadata.New(context.Background(), mds, bs)
 	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh())
-	graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, cfg.Addresses.GraphQL, legsCore)
+	graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, legsCore)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	metaDataServer, err := metaserver.New(cfg.Addresses.MetaData, stateTree)
+	metaDataServer, err := metaserver.New(cfg.Addresses.MetaData, cfg.Addresses.GraphQL, stateTree)
 	if err != nil {
 		return err
 	}

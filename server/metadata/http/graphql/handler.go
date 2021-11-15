@@ -1,12 +1,10 @@
 package graphQL
 
 import (
-	task "Pando/mock_provider/task"
+	"Pando/statetree"
 	"github.com/ipfs/go-cid"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
-	"strings"
-
+	"github.com/libp2p/go-libp2p-core/peer"
 	//"bytes"
 	"context"
 	"embed"
@@ -20,8 +18,6 @@ import (
 var index embed.FS
 
 var log = logging.Logger("graphQl")
-
-const nodeLoaderCtxKey = "NodeLoader"
 
 type postData struct {
 	Query     string                 `json:"query"`
@@ -38,41 +34,48 @@ func CorsMiddleware(next http.HandlerFunc) http.Handler {
 	})
 }
 
-func GetHandler(db blockstore.Blockstore, accessToken string) (*http.ServeMux, error) {
+func GetHandler(st *statetree.StateTree) (*http.ServeMux, error) {
 	schema, err := graphql.NewSchema(graphql.SchemaConfig{
 		Query: graphql.NewObject(graphql.ObjectConfig{
 			Name: "Query",
 			Fields: graphql.Fields{
-				"Task": &graphql.Field{
-					Name: "Task",
-					Type: TaskType,
+				"State": &graphql.Field{
+					Name: "State",
+					Type: StateType,
 					Args: graphql.FieldConfigArgument{
-						"UUID": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String), Description: "task uuid"},
+						"PeerID": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String), Description: "peer id of a provider"},
 					},
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-						uuid := p.Args["UUID"].(string)
-						bcid, err := cid.Decode(uuid)
+						peerIDStr := p.Args["PeerID"].(string)
+						peerID, err := peer.Decode(peerIDStr)
 						if err != nil {
 							return nil, err
 						}
-						blk, err := db.Get(bcid)
+						pstate, err := st.GetProviderStateByPeerID(peerID)
 						if err != nil {
 							return nil, err
 						}
-						t := new(task.FinishedTask)
 
-						tsk := blk.RawData()
-						if err = json.Unmarshal(tsk, t); err != nil {
-							_tsk := strings.Trim(string(tsk), "\"")
-							_tsk = strings.ReplaceAll(_tsk, "\\", "")
-
-							if err2 := json.Unmarshal([]byte(_tsk), t); err2 != nil {
-								return nil, err
-							} else {
-								return t, nil
-							}
+						return pstate, nil
+					},
+				},
+				"SnapShot": &graphql.Field{
+					Name: "SnapShot",
+					Type: SnapShotType,
+					Args: graphql.FieldConfigArgument{
+						"cid": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String), Description: "cid of the snapshot"},
+					},
+					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+						cidStr := p.Args["cid"].(string)
+						sscid, err := cid.Decode(cidStr)
+						if err != nil {
+							return nil, err
 						}
-						return t, nil
+						ss, err := st.GetSnapShot(sscid)
+						if err != nil {
+							return nil, err
+						}
+						return ss, nil
 					},
 				},
 			},

@@ -1,15 +1,11 @@
 package types
 
-import (
-	"github.com/ipfs/go-cid"
-)
-
 //go:generate cbor-gen-for ExtraInfo SnapShot
 type SnapShot struct {
 	Update       map[string]*ProviderState
 	Height       uint64
 	CreateTime   uint64
-	PrevSnapShot cid.Cid
+	PrevSnapShot string
 	ExtraInfo    *ExtraInfo
 }
 

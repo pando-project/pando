@@ -10,6 +10,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"gotest.tools/assert"
 	"testing"
 	"time"
 )
@@ -24,6 +25,7 @@ var (
 	testCid1, _ = cid.Decode("bafy2bzaceamp42wmmgr2g2ymg46euououzfyck7szknvfacqscohrvaikwfaa")
 	testCid2, _ = cid.Decode("bafy2bzaceamp42wmmgr2g2ymg46euououzfyck7szknvfacqscohrvaikwfab")
 	testCid3, _ = cid.Decode("bafy2bzaceamp42wmmgr2g2ymg46euououzfyck7szknvfacqscohrvaikwfac")
+	testPeer, _ = peer.Decode("12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV4")
 )
 
 func getMockCore() *MockCore {
@@ -52,7 +54,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestStateTree_Update(t *testing.T) {
+func TestStateTreeRoundTrip(t *testing.T) {
 	core := getMockCore()
 	ex := &types.ExtraInfo{
 		GraphSyncUrl:   "",
@@ -67,8 +69,8 @@ func TestStateTree_Update(t *testing.T) {
 	}
 
 	mockUpdate := map[peer.ID]*types.ProviderState{
-		"12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV4": {
-			[]cid.Cid{testCid1, testCid2, testCid3},
+		testPeer: {
+			Cidlist: []cid.Cid{testCid1, testCid2, testCid3},
 		},
 	}
 
@@ -76,11 +78,18 @@ func TestStateTree_Update(t *testing.T) {
 
 	time.Sleep(time.Millisecond * 500)
 
-	_, err = st.GetSnapShotByHeight(0)
+	ss, err := st.GetSnapShotByHeight(0)
 	if err != nil {
 		t.Error(err)
 	}
+	assert.Equal(t, ss.Height, uint64(0))
+	assert.Equal(t, st.height, uint64(1))
 
+	//p, _ := peer.Decode("12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV4")
+	pstate, err := st.GetProviderStateByPeerID(testPeer)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 	l, err := st.GetSnapShotCidList()
 	if err != nil {
 		t.Error(err)
@@ -90,13 +99,13 @@ func TestStateTree_Update(t *testing.T) {
 	}
 
 	ch <- mockUpdate
-	time.Sleep(time.Millisecond * 500)
+	time.Sleep(time.Millisecond * 800)
 	l, err = st.GetSnapShotCidList()
 	if err != nil {
 		t.Error(err)
 	}
 	if len(l) < 2 {
-		t.Error("wrong snapshot cidlist ", l)
+		t.Fatal("wrong snapshot cidlist ", l)
 	}
 
 	_, err = st.GetSnapShot(l[0])
@@ -108,6 +117,9 @@ func TestStateTree_Update(t *testing.T) {
 		t.Error(err)
 	}
 
+	h := st.height
+	assert.Equal(t, h, uint64(2), "wrong height")
+
 	err = st.Shutdown()
 	if err != nil {
 		t.Error(err)
@@ -116,6 +128,15 @@ func TestStateTree_Update(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
+
+	assert.Equal(t, st.height, uint64(2))
+
+	pstate, err = st.GetProviderStateByPeerID(testPeer)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	assert.Equal(t, pstate.State.LastCommitHeight, uint64(1))
+	t.Log(pstate.NewestUpdate)
 
 }
 

@@ -167,7 +167,7 @@ func TestLegsSync(t *testing.T) {
 	bs := blockstore.NewBlockstore(mds)
 	dags := merkledag.NewDAGService(blockservice.New(bs, offline.Exchange(bs)))
 	outCh := make(chan *metadata.MetaRecord)
-	_, err = NewLegsCore(context.Background(), &host, ds, bs, outCh)
+	_, err = NewLegsCore(context.Background(), &host, mds, bs, outCh)
 	if err != nil {
 		t.Error(err)
 	}
