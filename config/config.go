@@ -12,6 +12,7 @@ type Config struct {
 	Identity  Identity
 	Addresses Addresses
 	Datastore Datastore
+	Discovery Discovery
 }
 
 const (

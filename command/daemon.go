@@ -2,8 +2,11 @@ package command
 
 import (
 	"Pando/config"
+	"Pando/internal/lotus"
+	"Pando/internal/registry"
 	"Pando/legs"
 	"Pando/metadata"
+	httpadminserver "Pando/server/admin/http"
 	graphserver "Pando/server/graph_sync/http"
 	metaserver "Pando/server/metadata/http"
 	"Pando/statetree"
@@ -42,22 +45,13 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	err = logging.SetLogLevel("core", "debug")
-	if err != nil {
-		return err
-	}
-	err = logging.SetLogLevel("meta-manager", "debug")
-	if err != nil {
-		return err
-	}
-	err = logging.SetLogLevel("state-tree", "debug")
-	if err != nil {
-		return err
-	}
-	err = logging.SetLogLevel("meta-server", "debug")
-	if err != nil {
-		return err
-	}
+	_ = logging.SetLogLevel("core", "debug")
+	_ = logging.SetLogLevel("graphsync", "debug")
+	_ = logging.SetLogLevel("meta-manager", "debug")
+	_ = logging.SetLogLevel("state-tree", "debug")
+	_ = logging.SetLogLevel("meta-server", "debug")
+	_ = logging.SetLogLevel("admin", "debug")
+	_ = logging.SetLogLevel("registry", "debug")
 
 	cfg, err := config.Load("")
 	if err != nil {
@@ -88,7 +82,6 @@ func daemonCommand(cctx *cli.Context) error {
 	mds := dssync.MutexWrap(dstore)
 	bs := blockstore.NewBlockstore(mds)
 
-	//ds := dssync.MutexWrap(datastore.NewMapDatastore())
 	privKey, err := cfg.Identity.DecodePrivateKey("")
 	p2pHost, err := libp2p.New(
 		context.Background(),
@@ -105,15 +98,42 @@ func daemonCommand(cctx *cli.Context) error {
 		return err
 	}
 	metaManager, err := metadata.New(context.Background(), mds, bs)
+	if err != nil {
+		return err
+	}
+	info := new(types.ExtraInfo)
+	info.MultiAddr = p2pHost.Addrs()[0].String()
+	stateTree, err := statetree.New(context.Background(), mds, bs, metaManager.GetUpdateOut(), info)
+	if err != nil {
+		return err
+	}
 	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh())
-	graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, legsCore)
 	if err != nil {
 		return err
 	}
 
-	info := new(types.ExtraInfo)
-	info.MultiAddr = p2pHost.Addrs()[0].String()
-	stateTree, err := statetree.New(context.Background(), mds, bs, metaManager.GetUpdateOut(), info)
+	var lotusDiscoverer *lotus.Discoverer
+	if cfg.Discovery.LotusGateway != "" {
+		log.Infow("discovery using lotus", "gateway", cfg.Discovery.LotusGateway)
+		// Create lotus client
+		lotusDiscoverer, err = lotus.NewDiscoverer(cfg.Discovery.LotusGateway)
+		if err != nil {
+			return fmt.Errorf("cannot create lotus client: %s", err)
+		}
+	}
+
+	// Create registry
+	registry, err := registry.NewRegistry(cfg.Discovery, dstore, lotusDiscoverer)
+	if err != nil {
+		return fmt.Errorf("cannot create provider registry: %s", err)
+	}
+
+	// http servers
+	graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, legsCore)
+	if err != nil {
+		return err
+	}
+	adminServer, err := httpadminserver.New(cfg.Addresses.Admin, registry)
 	if err != nil {
 		return err
 	}
@@ -129,6 +149,9 @@ func daemonCommand(cctx *cli.Context) error {
 	}()
 	go func() {
 		errChan <- metaDataServer.Start()
+	}()
+	go func() {
+		errChan <- adminServer.Start()
 	}()
 
 	var finalErr error
@@ -160,6 +183,10 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 	if err = metaDataServer.Shutdown(ctx); err != nil {
 		log.Errorw("Error shutting down metadata server", "err", err)
+		finalErr = ErrDaemonStop
+	}
+	if err = adminServer.Shutdown(ctx); err != nil {
+		log.Errorw("Error shutting down admin server", "err", err)
 		finalErr = ErrDaemonStop
 	}
 

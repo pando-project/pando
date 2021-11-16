@@ -27,8 +27,19 @@ func InitWithIdentity(identity Identity) (*Config, error) {
 			GraphQL:   defaultGraphQl,
 			P2PAddr:   defaultP2PAddr,
 			MetaData:  defaultMetaData,
+			Admin:     defaultAdmin,
 		},
 		Identity: identity,
+		Discovery: Discovery{
+			LotusGateway: defaultLotusGateway,
+			Policy: Policy{
+				Allow: defaultAllow,
+				Trust: defaultTrust,
+			},
+			PollInterval:   defaultPollInterval,
+			RediscoverWait: defaultRediscoverWait,
+			Timeout:        defaultDiscoveryTimeout,
+		},
 
 		Datastore: Datastore{
 			Type: defaultDatastoreType,
