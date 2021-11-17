@@ -41,4 +41,9 @@ var registerFlags = []cli.Flag{
 		Aliases:  []string{"pa"},
 		Required: true,
 	},
+	&cli.StringFlag{
+		Name:     "miner",
+		Usage:    "miner account",
+		Required: false,
+	},
 }

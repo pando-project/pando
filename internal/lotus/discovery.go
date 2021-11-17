@@ -2,18 +2,22 @@ package lotus
 
 import (
 	"Pando/internal/registry/discovery"
-	"Pando/internal/syserr"
 	"context"
 	"errors"
 	"fmt"
+	"github.com/filecoin-project/lotus/chain/actors/builtin/miner"
+	"github.com/filecoin-project/lotus/chain/types"
+	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/filecoin-project/go-address"
+	jsonrpc "github.com/filecoin-project/go-jsonrpc"
+	lotusapi "github.com/filecoin-project/lotus/api"
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
-	jrpc "github.com/ybbus/jsonrpc/v2"
+	//jrpc "github.com/ybbus/jsonrpc/v2"
 )
 
 type Discoverer struct {
@@ -26,20 +30,6 @@ type ExpTipSet struct {
 	//Height abi.ChainEpoch
 	Blocks []interface{}
 	Height int64
-}
-
-type MinerInfo struct {
-	Owner                      address.Address
-	Worker                     address.Address
-	NewWorker                  address.Address
-	ControlAddresses           []address.Address
-	WorkerChangeEpoch          int64
-	PeerId                     *peer.ID
-	Multiaddrs                 [][]byte
-	WindowPoStProofType        int64
-	SectorSize                 uint64
-	WindowPoStPartitionSectors uint64
-	ConsensusFaultElapsed      int64
 }
 
 // New creates a new lotus Discoverer
@@ -56,47 +46,7 @@ func NewDiscoverer(gateway string) (*Discoverer, error) {
 	}, nil
 }
 
-func (d *Discoverer) Discover(ctx context.Context, peerID peer.ID, minerAddr string) (*discovery.Discovered, error) {
-	// Get miner info from lotus
-	minerAddress, err := address.NewFromString(minerAddr)
-	if err != nil {
-		return nil, fmt.Errorf("invalid provider filecoin address: %s", err)
-	}
-
-	jrpcClient := jrpc.NewClient("https://api.chain.love/rpc/v1")
-
-	var ets ExpTipSet
-	err = jrpcClient.CallFor(&ets, "Filecoin.ChainHead")
-	if err != nil {
-		return nil, syserr.New(err, http.StatusBadGateway)
-	}
-
-	var minerInfo MinerInfo
-	err = jrpcClient.CallFor(&minerInfo, "Filecoin.StateMinerInfo", minerAddress, ets.Cids)
-	if err != nil {
-		return nil, syserr.New(err, http.StatusBadGateway)
-	}
-
-	if minerInfo.PeerId == nil {
-		return nil, errors.New("no peer id for miner")
-	}
-	if *minerInfo.PeerId != peerID {
-		return nil, errors.New("provider id mismatch")
-	}
-
-	// Get miner peer ID and addresses from miner info
-	addrInfo, err := d.getMinerPeerAddr(minerInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	return &discovery.Discovered{
-		AddrInfo: addrInfo,
-		Type:     discovery.MinerType,
-	}, nil
-}
-
-func (d *Discoverer) getMinerPeerAddr(minerInfo MinerInfo) (peer.AddrInfo, error) {
+func (d *Discoverer) getMinerPeerAddr(minerInfo miner.MinerInfo) (peer.AddrInfo, error) {
 	multiaddrs := make([]multiaddr.Multiaddr, 0, len(minerInfo.Multiaddrs))
 	for _, a := range minerInfo.Multiaddrs {
 		maddr, err := multiaddr.NewMultiaddrBytes(a)
@@ -110,4 +60,66 @@ func (d *Discoverer) getMinerPeerAddr(minerInfo MinerInfo) (peer.AddrInfo, error
 		ID:    *minerInfo.PeerId,
 		Addrs: multiaddrs,
 	}, nil
+}
+
+func (d *Discoverer) Discover(ctx context.Context, peerID peer.ID, minerAddr string) (*discovery.Discovered, error) {
+	// todo fill
+	authToken := "<value found in ~/.lotus/token>"
+	headers := http.Header{"Authorization": []string{"Bearer " + authToken}}
+
+	var api lotusapi.FullNodeStruct
+	closer, err := jsonrpc.NewMergeClient(context.Background(), "https://api.chain.love/rpc/v1", "Filecoin", []interface{}{&api.Internal, &api.CommonStruct.Internal}, headers)
+	if err != nil {
+		log.Fatalf("connecting with lotus failed: %s", err)
+	}
+	defer closer()
+
+	// Get miner info from lotus
+	minerAddress, err := address.NewFromString(minerAddr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid provider filecoin address: %s", err)
+	}
+
+	balance, err := api.WalletBalance(ctx, minerAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	tsp, err := api.ChainHead(ctx)
+	if err != nil {
+		return nil, err
+	}
+	info, err := api.StateMinerInfo(ctx, minerAddress, tsp.Key())
+	if err != nil {
+		return nil, err
+	}
+
+	if *info.PeerId != peerID {
+		return nil, errors.New("provider id mismatch")
+	}
+
+	addrInfo, err := d.getMinerPeerAddr(info)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get peer addrinfo from minerinfo: %s", err.Error())
+	}
+	balanceType := getBalanceType(balance)
+	if err != nil {
+		return nil, err
+	}
+
+	return &discovery.Discovered{
+		AddrInfo:    addrInfo,
+		Type:        discovery.MinerType,
+		BalanceType: balanceType,
+	}, nil
+}
+
+func getBalanceType(balance types.BigInt) string {
+	if balance.GreaterThan(discovery.LargeAccount) {
+		return discovery.Large
+	} else if balance.GreaterThan(discovery.NormalAccount) {
+		return discovery.Normal
+	} else {
+		return discovery.Little
+	}
 }

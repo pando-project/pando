@@ -65,6 +65,8 @@ type ProviderInfo struct {
 	LastAdvertisement cid.Cid
 	// LastAdvertisementTime is the time the latest advertisement was received.
 	LastAdvertisementTime time.Time
+	// AccountLevel is the level according to the filecoin miner account balance
+	AccountLevel string
 
 	lastContactTime time.Time
 }
@@ -190,6 +192,18 @@ func (r *Registry) Register(info *ProviderInfo) error {
 	// If provider is trusted, register immediately without verification
 	if !r.policy.Trusted(info.AddrInfo.ID) {
 		return syserr.New(ErrNotTrusted, http.StatusUnauthorized)
+	}
+
+	// If provider have miner account, discover it
+	if info.DiscoveryAddr != "" {
+		log.Infow("found miner account, start discovering")
+		discoveredData, err := r.discoverer.Discover(context.Background(), info.AddrInfo.ID, info.DiscoveryAddr)
+		if err != nil {
+			log.Infof("discovering failed: %s", err.Error())
+			return fmt.Errorf("discovering failed: %s", err.Error())
+		}
+		info.AccountLevel = discoveredData.BalanceType
+		log.Debugf("discovering successed, peerID: %s, account level: %s", info.AddrInfo.ID.String(), discoveredData.BalanceType)
 	}
 
 	errCh := make(chan error, 1)
@@ -408,7 +422,7 @@ func (r *Registry) syncNeedDiscover(discoAddr string) error {
 
 func (r *Registry) syncPersistProvider(info *ProviderInfo) error {
 	if r.dstore == nil {
-		return nil
+		return fmt.Errorf("nil datastore")
 	}
 	value, err := json.Marshal(info)
 	if err != nil {

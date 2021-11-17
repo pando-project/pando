@@ -30,6 +30,7 @@ func (h *httpHandler) RegisterProvider(w http.ResponseWriter, r *http.Request) {
 	err = h.adminHandler.RegisterProvider(body)
 	if err != nil {
 		httpserver.HandleError(w, err, "register")
+		log.Warnf("register failed: %s", err.Error())
 		return
 	}
 

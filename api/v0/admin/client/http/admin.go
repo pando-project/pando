@@ -38,8 +38,8 @@ func New(baseURL string, options ...httpclient.Option) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Register(ctx context.Context, providerID peer.ID, privateKey p2pcrypto.PrivKey, addrs []string) error {
-	data, err := model.MakeRegisterRequest(providerID, privateKey, addrs)
+func (c *Client) Register(ctx context.Context, providerID peer.ID, privateKey p2pcrypto.PrivKey, addrs []string, miner string) error {
+	data, err := model.MakeRegisterRequest(providerID, privateKey, addrs, miner)
 	if err != nil {
 		return err
 	}

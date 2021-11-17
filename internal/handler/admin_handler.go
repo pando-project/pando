@@ -1,11 +1,12 @@
 package handler
 
 import (
+	"Pando/api/v0/admin/model"
 	"Pando/internal/registry"
 	"errors"
 	"fmt"
-	"github.com/filecoin-project/storetheindex/api/v0/ingest/model"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/multiformats/go-multiaddr"
 )
 
 type AdminHandler struct {
@@ -30,11 +31,21 @@ func (h *AdminHandler) RegisterProvider(data []byte) error {
 		return err
 	}
 
+	maddrs := make([]multiaddr.Multiaddr, len(peerRec.Addrs))
+	for i, m := range peerRec.Addrs {
+		var err error
+		maddrs[i], err = multiaddr.NewMultiaddr(m)
+		if err != nil {
+			return fmt.Errorf("bad address: %s", err)
+		}
+	}
+
 	info := &registry.ProviderInfo{
 		AddrInfo: peer.AddrInfo{
 			ID:    peerRec.PeerID,
-			Addrs: peerRec.Addrs,
+			Addrs: maddrs,
 		},
+		DiscoveryAddr: peerRec.MinerAccount,
 	}
 	return h.registry.Register(info)
 }

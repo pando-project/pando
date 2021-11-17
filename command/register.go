@@ -34,7 +34,7 @@ func registerCommand(cctx *cli.Context) error {
 		return err
 	}
 
-	err = client.Register(cctx.Context, peerID, privKey, cctx.StringSlice("provider-addr"))
+	err = client.Register(cctx.Context, peerID, privKey, cctx.StringSlice("provider-addr"), cctx.String("miner"))
 	if err != nil {
 		return fmt.Errorf("failed to register providers: %s", err)
 	}

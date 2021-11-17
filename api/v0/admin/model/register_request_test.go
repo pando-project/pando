@@ -18,8 +18,8 @@ func TestRegisterRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	data, err := MakeRegisterRequest(peerID, privKey, addrs)
+	account := "t12345"
+	data, err := MakeRegisterRequest(peerID, privKey, addrs, account)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func TestRegisterRequest(t *testing.T) {
 
 	seq0 := peerRec.Seq
 
-	data, err = MakeRegisterRequest(peerID, privKey, addrs)
+	data, err = MakeRegisterRequest(peerID, privKey, addrs, account)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -3,8 +3,8 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	v0 "github.com/filecoin-project/storetheindex/api/v0"
 
-	"github.com/filecoin-project/storetheindex/api/v0"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/record"
