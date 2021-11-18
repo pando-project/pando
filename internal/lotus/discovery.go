@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/filecoin-project/lotus/chain/actors/builtin/miner"
-	"github.com/filecoin-project/lotus/chain/types"
 	"log"
 	"net/http"
 	"net/url"
@@ -102,24 +101,10 @@ func (d *Discoverer) Discover(ctx context.Context, peerID peer.ID, minerAddr str
 	if err != nil {
 		return nil, fmt.Errorf("failed to get peer addrinfo from minerinfo: %s", err.Error())
 	}
-	balanceType := getBalanceType(balance)
-	if err != nil {
-		return nil, err
-	}
 
 	return &discovery.Discovered{
-		AddrInfo:    addrInfo,
-		Type:        discovery.MinerType,
-		BalanceType: balanceType,
+		AddrInfo: addrInfo,
+		Type:     discovery.MinerType,
+		Balance:  balance.Int,
 	}, nil
-}
-
-func getBalanceType(balance types.BigInt) string {
-	if balance.GreaterThan(discovery.LargeAccount) {
-		return discovery.Large
-	} else if balance.GreaterThan(discovery.NormalAccount) {
-		return discovery.Normal
-	} else {
-		return discovery.Little
-	}
 }

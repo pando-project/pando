@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
 	logging "github.com/ipfs/go-log/v2"
@@ -40,10 +39,11 @@ type Registry struct {
 	providers map[peer.ID]*ProviderInfo
 	sequences *sequences
 
-	discoverer discovery.Discoverer
-	discoWait  sync.WaitGroup
-	discoTimes map[string]time.Time
-	policy     *policy.Policy
+	discoverer   discovery.Discoverer
+	discoWait    sync.WaitGroup
+	discoTimes   map[string]time.Time
+	policy       *policy.Policy
+	accountLevel *config.AccountLevel
 
 	discoveryTimeout time.Duration
 	pollInterval     time.Duration
@@ -61,12 +61,8 @@ type ProviderInfo struct {
 	AddrInfo peer.AddrInfo
 	// DiscoveryAddr is the address that is used for discovery of the provider.
 	DiscoveryAddr string
-	// LastAdvertisement identifies the latest advertizement the indexer has ingested.
-	LastAdvertisement cid.Cid
-	// LastAdvertisementTime is the time the latest advertisement was received.
-	LastAdvertisementTime time.Time
 	// AccountLevel is the level according to the filecoin miner account balance
-	AccountLevel string
+	AccountLevel int
 
 	lastContactTime time.Time
 }
@@ -80,7 +76,11 @@ func (p *ProviderInfo) dsKey() datastore.Key {
 // interface.
 //
 // TODO: It is probably necessary to have multiple discoverer interfaces
-func NewRegistry(cfg config.Discovery, dstore datastore.Datastore, disco discovery.Discoverer) (*Registry, error) {
+func NewRegistry(cfg *config.Discovery, cfglevel *config.AccountLevel, dstore datastore.Datastore, disco discovery.Discoverer) (*Registry, error) {
+	if cfg == nil || cfglevel == nil {
+		return nil, fmt.Errorf("nil config")
+	}
+
 	// Create policy from config
 	discoPolicy, err := policy.New(cfg.Policy)
 	if err != nil {
@@ -97,6 +97,8 @@ func NewRegistry(cfg config.Discovery, dstore datastore.Datastore, disco discove
 		pollInterval:     time.Duration(cfg.PollInterval),
 		rediscoverWait:   time.Duration(cfg.RediscoverWait),
 		discoveryTimeout: time.Duration(cfg.Timeout),
+
+		accountLevel: cfglevel,
 
 		discoverer: disco,
 		discoTimes: map[string]time.Time{},
@@ -193,6 +195,10 @@ func (r *Registry) Register(info *ProviderInfo) error {
 	if !r.policy.Trusted(info.AddrInfo.ID) {
 		return syserr.New(ErrNotTrusted, http.StatusUnauthorized)
 	}
+	// info should not contain the weight before evaluating
+	if info.AccountLevel != 0 {
+		return syserr.New(ErrWrongWeight, http.StatusBadRequest)
+	}
 
 	// If provider have miner account, discover it
 	if info.DiscoveryAddr != "" {
@@ -202,8 +208,12 @@ func (r *Registry) Register(info *ProviderInfo) error {
 			log.Infof("discovering failed: %s", err.Error())
 			return fmt.Errorf("discovering failed: %s", err.Error())
 		}
-		info.AccountLevel = discoveredData.BalanceType
-		log.Debugf("discovering successed, peerID: %s, account level: %s", info.AddrInfo.ID.String(), discoveredData.BalanceType)
+		info.AccountLevel, err = r.getAccountLevel(discoveredData.Balance)
+		if err != nil {
+			log.Warnf("falied to get the account level. %s", err.Error())
+			return fmt.Errorf("falied to get the account level. %s", err.Error())
+		}
+		log.Debugf("discovering successed, peerID: %s, account balance: %s", info.AddrInfo.ID.String(), discoveredData.Balance.String())
 	}
 
 	errCh := make(chan error, 1)
@@ -218,77 +228,6 @@ func (r *Registry) Register(info *ProviderInfo) error {
 
 	log.Infow("registered provider", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
 	return nil
-}
-
-// RegisterOrUpdate attempts to register an unregistered provider, or updates
-// the addresses and latest advertisement of an already registered provider.
-func (r *Registry) RegisterOrUpdate(providerID peer.ID, addrs []string, adID cid.Cid) error {
-	// Check that the provider has been discovered and validated
-	info := r.ProviderInfo(providerID)
-	if info == nil {
-		if len(addrs) == 0 {
-			return errors.New("cannot regiser provider with no address")
-		}
-
-		maddrs, err := stringsToMultiaddrs(addrs)
-		if err != nil {
-			return err
-		}
-
-		now := time.Now()
-		info = &ProviderInfo{
-			AddrInfo: peer.AddrInfo{
-				ID:    providerID,
-				Addrs: maddrs,
-			},
-			lastContactTime: now,
-		}
-
-		if adID != cid.Undef {
-			info.LastAdvertisement = adID
-			info.LastAdvertisementTime = now
-		}
-
-		return r.Register(info)
-	}
-
-	var update bool
-
-	if len(addrs) != 0 {
-		maddrs, err := stringsToMultiaddrs(addrs)
-		if err != nil {
-			return err
-		}
-
-		// If the registered addresses are different than those provided, then
-		// re-register with new address.
-		if len(addrs) != len(info.AddrInfo.Addrs) {
-			info.AddrInfo.Addrs = maddrs
-			update = true
-		} else {
-			for i := range maddrs {
-				if !maddrs[i].Equal(info.AddrInfo.Addrs[i]) {
-					info.AddrInfo.Addrs = maddrs
-					update = true
-					break
-				}
-			}
-		}
-	}
-
-	if !update && adID == cid.Undef {
-		return nil
-	}
-
-	now := time.Now()
-
-	if adID != cid.Undef {
-		info.LastAdvertisement = adID
-		info.LastAdvertisementTime = now
-	}
-	info.lastContactTime = now
-
-	return r.Register(info)
 }
 
 // IsRegistered checks if the provider is in the registry
@@ -359,7 +298,7 @@ func (r *Registry) CheckSequence(peerID peer.ID, seq uint64) error {
 func (r *Registry) syncStartDiscover(peerID peer.ID, discoAddr string, errCh chan<- error) {
 	err := r.syncNeedDiscover(discoAddr)
 	if err != nil {
-		//todo end if error?   bug
+		//todo end if error? bug ?
 		r.syncEndDiscover(discoAddr, nil, err, errCh)
 		return
 	}

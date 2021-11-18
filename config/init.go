@@ -45,6 +45,7 @@ func InitWithIdentity(identity Identity) (*Config, error) {
 			Type: defaultDatastoreType,
 			Dir:  defaultDatastoreDir,
 		},
+		AccountLevel: AccountLevel{defaultThreshold},
 	}
 
 	return conf, nil

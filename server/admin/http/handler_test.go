@@ -3,11 +3,15 @@ package httpadminserver
 import (
 	"Pando/api/v0/admin/model"
 	"Pando/config"
-	"Pando/internal/lotus"
 	"Pando/internal/registry"
+	"Pando/internal/registry/discovery"
 	"bytes"
+	"context"
+	"errors"
 	"github.com/ipfs/go-datastore"
+	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,6 +22,35 @@ const testProtocolID = 0x300000
 var ident = config.Identity{
 	PeerID:  "12D3KooWPw6bfQbJHfKa2o5XpusChoq67iZoqgfnhecygjKsQRmG",
 	PrivKey: "CAESQEQliDSXbU/zR4hrGNgAM0crtmxcZ49F3OwjmptYEFuU0b0TwLTJz/OlSBBuK7QDV2PiyGOCjDkyxSXymuqLu18=",
+}
+
+type mockDiscoverer struct {
+	discoverRsp *discovery.Discovered
+}
+
+func newMockDiscoverer(providerID string) *mockDiscoverer {
+	peerID, err := peer.Decode(providerID)
+	if err != nil {
+		panic(err)
+	}
+
+	return &mockDiscoverer{
+		discoverRsp: &discovery.Discovered{
+			AddrInfo: peer.AddrInfo{
+				ID: peerID,
+			},
+			Type:    discovery.MinerType,
+			Balance: big.NewInt(12321312321),
+		},
+	}
+}
+
+func (m *mockDiscoverer) Discover(ctx context.Context, peerID peer.ID, filecoinAddr string) (*discovery.Discovered, error) {
+	if filecoinAddr == "bad1234" {
+		return nil, errors.New("unknown miner")
+	}
+
+	return m.discoverRsp, nil
 }
 
 var providerID peer.ID
@@ -35,23 +68,23 @@ func init() {
 		},
 		LotusGateway: "api.chain.love",
 	}
-
-	disco, err := lotus.NewDiscoverer(discoveryCfg.LotusGateway)
+	var aclCfg = config.AccountLevel{Threshold: []int{1, 10, 99}}
+	var err error
+	providerID, err = peer.Decode(ident.PeerID)
 	if err != nil {
-		panic(err)
+		panic("Could not decode peer ID")
 	}
+
+	disco := newMockDiscoverer(providerID.String())
+
 	ds := datastore.NewMapDatastore()
-	reg, err = registry.NewRegistry(discoveryCfg, ds, disco)
+	reg, err = registry.NewRegistry(&discoveryCfg, &aclCfg, ds, disco)
 	if err != nil {
 		panic(err)
 	}
 
 	hnd = newHandler(reg)
 
-	providerID, err = peer.Decode(ident.PeerID)
-	if err != nil {
-		panic("Could not decode peer ID")
-	}
 }
 
 func TestRegisterProvider(t *testing.T) {
@@ -60,8 +93,9 @@ func TestRegisterProvider(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	logging.SetLogLevel("*", "debug")
 	addrs := []string{"/ip4/127.0.0.1/tcp/9999"}
-	account := ""
+	account := "t01234"
 	data, err := model.MakeRegisterRequest(peerID, privKey, addrs, account)
 	if err != nil {
 		t.Fatal(err)
@@ -82,4 +116,9 @@ func TestRegisterProvider(t *testing.T) {
 	if pinfo == nil {
 		t.Fatal("provider was not registered")
 	}
+	level, err := reg.GetProviderWeight(peerID)
+	if level != 0 || err != nil {
+		t.Fatal("not get weight rightly")
+	}
+	t.Log(level)
 }

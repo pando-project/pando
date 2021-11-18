@@ -17,6 +17,7 @@ func TestInit(t *testing.T) {
 	assert.Equal(t, cfg.Addresses.GraphQL, defaultGraphQl)
 	assert.Equal(t, cfg.Addresses.MetaData, defaultMetaData)
 	assert.Equal(t, cfg.Addresses.GraphSync, defaultGraphSync)
+	assert.Equal(t, len(cfg.AccountLevel.Threshold), len(defaultThreshold))
 }
 
 func TestSaveLoad(t *testing.T) {

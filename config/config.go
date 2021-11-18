@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	Identity  Identity
-	Addresses Addresses
-	Datastore Datastore
-	Discovery Discovery
+	Identity     Identity
+	Addresses    Addresses
+	Datastore    Datastore
+	Discovery    Discovery
+	AccountLevel AccountLevel
 }
 
 const (

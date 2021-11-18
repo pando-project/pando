@@ -38,6 +38,8 @@ var discoveryCfg = config.Discovery{
 	RediscoverWait: config.Duration(time.Minute),
 }
 
+var aclCfg = config.AccountLevel{Threshold: []int{1, 10, 99}}
+
 func newMockDiscoverer(t *testing.T, providerID string) *mockDiscoverer {
 	peerID, err := peer.Decode(providerID)
 	if err != nil {
@@ -71,7 +73,7 @@ func (m *mockDiscoverer) Discover(ctx context.Context, peerID peer.ID, filecoinA
 func TestNewRegistryDiscovery(t *testing.T) {
 	mockDisco := newMockDiscoverer(t, exceptID)
 
-	r, err := NewRegistry(discoveryCfg, nil, mockDisco)
+	r, err := NewRegistry(&discoveryCfg, &aclCfg, nil, mockDisco)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,7 +114,7 @@ func TestNewRegistryDiscovery(t *testing.T) {
 func TestDiscoveryAllowed(t *testing.T) {
 	mockDisco := newMockDiscoverer(t, exceptID)
 
-	r, err := NewRegistry(discoveryCfg, nil, mockDisco)
+	r, err := NewRegistry(&discoveryCfg, &aclCfg, nil, mockDisco)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +180,7 @@ func TestDiscoveryBlocked(t *testing.T) {
 		discoveryCfg.Policy.Allow = false
 	}()
 
-	r, err := NewRegistry(discoveryCfg, nil, mockDisco)
+	r, err := NewRegistry(&discoveryCfg, &aclCfg, nil, mockDisco)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,7 +236,7 @@ func TestDatastore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r, err := NewRegistry(discoveryCfg, dstore, mockDisco)
+	r, err := NewRegistry(&discoveryCfg, &aclCfg, dstore, mockDisco)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -264,7 +266,7 @@ func TestDatastore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	r, err = NewRegistry(discoveryCfg, dstore, mockDisco)
+	r, err = NewRegistry(&discoveryCfg, &aclCfg, dstore, mockDisco)
 	if err != nil {
 		t.Fatal(err)
 	}

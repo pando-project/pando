@@ -123,7 +123,7 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 
 	// Create registry
-	registry, err := registry.NewRegistry(cfg.Discovery, dstore, lotusDiscoverer)
+	registry, err := registry.NewRegistry(&cfg.Discovery, &cfg.AccountLevel, dstore, lotusDiscoverer)
 	if err != nil {
 		return fmt.Errorf("cannot create provider registry: %s", err)
 	}
