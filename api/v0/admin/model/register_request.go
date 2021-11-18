@@ -65,18 +65,6 @@ func MakeRegisterRequest(providerID peer.ID, privateKey crypto.PrivKey, addrs []
 		return nil, errors.New("missing address")
 	}
 
-	//maddrs := make([]multiaddr.Multiaddr, len(addrs))
-	//for i, m := range addrs {
-	//	var err error
-	//	maddrs[i], err = multiaddr.NewMultiaddr(m)
-	//	if err != nil {
-	//		return nil, fmt.Errorf("bad address: %s", err)
-	//	}
-	//}
-
-	//rec := peer.NewPeerRecord()
-	//rec.PeerID = providerID
-	//rec.Addrs = maddrs
 	rec := &RegisterRequest{}
 	rec.PeerID = providerID
 	rec.Addrs = addrs

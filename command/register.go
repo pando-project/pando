@@ -3,9 +3,10 @@ package command
 import (
 	v0client "Pando/api/v0/admin/client/http"
 	"Pando/config"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"github.com/urfave/cli/v2"
+	"os"
 )
 
 var RegisterCmd = &cli.Command{
@@ -16,15 +17,21 @@ var RegisterCmd = &cli.Command{
 }
 
 func registerCommand(cctx *cli.Context) error {
-	cfg, err := config.Load(cctx.String("config"))
+	f, err := os.Open(cctx.String("config"))
 	if err != nil {
-		if err == config.ErrNotInitialized {
-			err = errors.New("config file not found")
-		}
-		return fmt.Errorf("cannot load config file: %w", err)
+		return err
+	}
+	defer f.Close()
+
+	var cfg config.Identity
+	if err := json.NewDecoder(f).Decode(&cfg); err != nil {
+		return err
 	}
 
-	peerID, privKey, err := cfg.Identity.Decode()
+	if cfg.PrivKey == "" || cfg.PeerID == "" {
+		return fmt.Errorf("valid config")
+	}
+	peerID, privKey, err := cfg.Decode()
 	if err != nil {
 		return err
 	}
@@ -39,6 +46,6 @@ func registerCommand(cctx *cli.Context) error {
 		return fmt.Errorf("failed to register providers: %s", err)
 	}
 
-	fmt.Println("Registered provider", cfg.Identity.PeerID, "at pando", cctx.String("pando"))
+	fmt.Println("Registered provider", cfg.PeerID, "at pando", cctx.String("pando"))
 	return nil
 }

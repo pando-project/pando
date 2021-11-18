@@ -359,6 +359,7 @@ func (r *Registry) CheckSequence(peerID peer.ID, seq uint64) error {
 func (r *Registry) syncStartDiscover(peerID peer.ID, discoAddr string, errCh chan<- error) {
 	err := r.syncNeedDiscover(discoAddr)
 	if err != nil {
+		//todo end if error?   bug
 		r.syncEndDiscover(discoAddr, nil, err, errCh)
 		return
 	}
@@ -422,7 +423,9 @@ func (r *Registry) syncNeedDiscover(discoAddr string) error {
 
 func (r *Registry) syncPersistProvider(info *ProviderInfo) error {
 	if r.dstore == nil {
-		return fmt.Errorf("nil datastore")
+		// todo  why not return error?
+		//return fmt.Errorf("nil datastore")
+		return nil
 	}
 	value, err := json.Marshal(info)
 	if err != nil {

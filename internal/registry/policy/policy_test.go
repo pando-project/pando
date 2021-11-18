@@ -1,9 +1,9 @@
 package policy
 
 import (
+	"Pando/config"
 	"testing"
 
-	"github.com/filecoin-project/storetheindex/config"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 

@@ -61,7 +61,7 @@ func TestRegisterProvider(t *testing.T) {
 	}
 
 	addrs := []string{"/ip4/127.0.0.1/tcp/9999"}
-	account := "t01000"
+	account := ""
 	data, err := model.MakeRegisterRequest(peerID, privKey, addrs, account)
 	if err != nil {
 		t.Fatal(err)
