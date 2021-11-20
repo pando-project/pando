@@ -10,16 +10,16 @@ import (
 )
 
 type RegisterRequest struct {
-	// PeerID is the ID of the peer this record pertains to.
+	// PeerID is the ID of the account this record pertains to.
 	PeerID peer.ID
 
-	// Addrs contains the public addresses of the peer this record pertains to.
+	// Addrs contains the public addresses of the account this record pertains to.
 	Addrs []string
 
 	// Seq is a monotonically-increasing sequence counter that's used to order
 	// PeerRecords in time. The interval between Seq values is unspecified,
 	// but newer PeerRecords MUST have a greater Seq value than older records
-	// for the same peer.
+	// for the same account.
 	Seq uint64
 
 	// filecoin miner account
@@ -76,7 +76,7 @@ func MakeRegisterRequest(providerID peer.ID, privateKey crypto.PrivKey, addrs []
 	return makeRequestEnvelop(rec, privateKey)
 }
 
-// ReadRegisterRequest unmarshals a peer.PeerRequest from bytes, verifies the
+// ReadRegisterRequest unmarshals a account.PeerRequest from bytes, verifies the
 // signature, and returns a peer.PeerRecord
 func ReadRegisterRequest(data []byte) (*RegisterRequest, error) {
 	env, untypedRecord, err := record.ConsumeEnvelope(data, RegisterRequestEnvelopeDomain)

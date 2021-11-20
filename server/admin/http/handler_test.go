@@ -72,7 +72,7 @@ func init() {
 	var err error
 	providerID, err = peer.Decode(ident.PeerID)
 	if err != nil {
-		panic("Could not decode peer ID")
+		panic("Could not decode account ID")
 	}
 
 	disco := newMockDiscoverer(providerID.String())
@@ -116,7 +116,7 @@ func TestRegisterProvider(t *testing.T) {
 	if pinfo == nil {
 		t.Fatal("provider was not registered")
 	}
-	level, err := reg.GetProviderWeight(peerID)
+	level, err := reg.ProviderAccountLevel(peerID)
 	if level != 0 || err != nil {
 		t.Fatal("not get weight rightly")
 	}

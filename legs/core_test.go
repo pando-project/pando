@@ -2,6 +2,7 @@ package legs
 
 import (
 	"Pando/metadata"
+	"Pando/policy"
 	"context"
 	golegs "github.com/filecoin-project/go-legs"
 	"github.com/ipfs/go-blockservice"
@@ -63,7 +64,7 @@ func TestCreate(t *testing.T) {
 	mds := dssync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 	outCh := make(chan<- *metadata.MetaRecord)
-	_, err = NewLegsCore(context.Background(), &host, ds, bs, outCh)
+	_, err = NewLegsCore(context.Background(), &host, ds, bs, outCh, policy.NewLimiter(policy.LimiterConfig{}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -71,7 +72,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestGetMetaRecord(t *testing.T) {
-	// create LegsCore
+	// create Core
 	host, err := libp2p.New(context.Background())
 	if err != nil {
 		t.Error(err)
@@ -80,7 +81,7 @@ func TestGetMetaRecord(t *testing.T) {
 	mds := dssync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 	outCh := make(chan *metadata.MetaRecord)
-	core, err := NewLegsCore(context.Background(), &host, mds, bs, outCh)
+	core, err := NewLegsCore(context.Background(), &host, mds, bs, outCh, policy.NewLimiter(policy.LimiterConfig{}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,7 +98,7 @@ func TestGetMetaRecord(t *testing.T) {
 	dags := merkledag.NewDAGService(blockservice.New(srcbs, offline.Exchange(srcbs)))
 	lp, err := golegs.NewPublisher(context.Background(), srchost, srcmds, srcLnkS, "PandoPubSub")
 
-	// mock provider connect mock LegsCore
+	// mock provider connect mock Core
 	//ma, err := multiaddr.NewMultiaddr(PandoAddrStr + "/ipfs/" + PandoPeerID)
 	//if err != nil {
 	//	log.Fatal(err)
@@ -112,7 +113,7 @@ func TestGetMetaRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// mock LegsCore subscribe the mock provider
+	// mock Core subscribe the mock provider
 	err = core.Subscribe(context.Background(), srchost.ID())
 	if err != nil {
 		t.Error(err)
@@ -167,7 +168,7 @@ func TestLegsSync(t *testing.T) {
 	bs := blockstore.NewBlockstore(mds)
 	dags := merkledag.NewDAGService(blockservice.New(bs, offline.Exchange(bs)))
 	outCh := make(chan *metadata.MetaRecord)
-	_, err = NewLegsCore(context.Background(), &host, mds, bs, outCh)
+	_, err = NewLegsCore(context.Background(), &host, mds, bs, outCh, policy.NewLimiter(policy.LimiterConfig{}))
 	if err != nil {
 		t.Error(err)
 	}

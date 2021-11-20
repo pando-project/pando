@@ -85,7 +85,7 @@ func TestStateTreeRoundTrip(t *testing.T) {
 	assert.Equal(t, ss.Height, uint64(0))
 	assert.Equal(t, st.height, uint64(1))
 
-	//p, _ := peer.Decode("12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV4")
+	//p, _ := account.Decode("12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV4")
 	pstate, err := st.GetProviderStateByPeerID(testPeer)
 	if err != nil {
 		t.Fatal(err.Error())

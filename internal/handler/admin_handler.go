@@ -24,7 +24,7 @@ func (h *AdminHandler) RegisterProvider(data []byte) error {
 	}
 
 	if len(peerRec.PeerID) == 0 {
-		return errors.New("missing peer id")
+		return errors.New("missing account id")
 	}
 
 	if err = h.registry.CheckSequence(peerRec.PeerID, peerRec.Seq); err != nil {

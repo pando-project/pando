@@ -49,7 +49,7 @@ func getExceptPeerIDs(excepts []string) (map[peer.ID]struct{}, error) {
 	for _, except := range excepts {
 		excPeerID, err := peer.Decode(except)
 		if err != nil {
-			return nil, fmt.Errorf("error decoding peer id %q: %s", except, err)
+			return nil, fmt.Errorf("error decoding account id %q: %s", except, err)
 		}
 		exceptIDs[excPeerID] = struct{}{}
 	}

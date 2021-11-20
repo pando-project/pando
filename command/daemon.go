@@ -6,6 +6,7 @@ import (
 	"Pando/internal/registry"
 	"Pando/legs"
 	"Pando/metadata"
+	"Pando/policy"
 	httpadminserver "Pando/server/admin/http"
 	graphserver "Pando/server/graph_sync/http"
 	metaserver "Pando/server/metadata/http"
@@ -20,6 +21,7 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p"
 	"github.com/urfave/cli/v2"
+	"math"
 	"os"
 	"time"
 )
@@ -51,12 +53,12 @@ func daemonCommand(cctx *cli.Context) error {
 	_ = logging.SetLogLevel("state-tree", "debug")
 	_ = logging.SetLogLevel("meta-server", "debug")
 	_ = logging.SetLogLevel("admin", "debug")
-	_ = logging.SetLogLevel("registry", "debug")
+	_ = logging.SetLogLevel("registryInstance", "debug")
 
 	cfg, err := config.Load("")
 	if err != nil {
 		if err == config.ErrNotInitialized {
-			fmt.Fprintln(os.Stderr, "pando is not initialized")
+			_, _ = fmt.Fprintln(os.Stderr, "pando is not initialized")
 			os.Exit(1)
 		}
 		return fmt.Errorf("cannot load config file: %w", err)
@@ -107,11 +109,8 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh())
-	if err != nil {
-		return err
-	}
 
+	// Create registryInstance
 	var lotusDiscoverer *lotus.Discoverer
 	if cfg.Discovery.LotusGateway != "" {
 		log.Infow("discovery using lotus", "gateway", cfg.Discovery.LotusGateway)
@@ -121,11 +120,22 @@ func daemonCommand(cctx *cli.Context) error {
 			return fmt.Errorf("cannot create lotus client: %s", err)
 		}
 	}
-
-	// Create registry
-	registry, err := registry.NewRegistry(&cfg.Discovery, &cfg.AccountLevel, dstore, lotusDiscoverer)
+	registryInstance, err := registry.NewRegistry(&cfg.Discovery, &cfg.AccountLevel, dstore, lotusDiscoverer)
 	if err != nil {
-		return fmt.Errorf("cannot create provider registry: %s", err)
+		return fmt.Errorf("cannot create provider registryInstance: %s", err)
+	}
+
+	tokenRate := (0.8 * float64(cfg.BandWidth)) * cfg.SingleDAGSize
+	rateConfig := &policy.LimiterConfig{
+		TotalRate:     tokenRate,
+		TotalBurst:    int(math.Floor(tokenRate)),
+		BaseTokenRate: 0.8 * cfg.BandWidth * cfg.SingleDAGSize,
+		Registry:      registryInstance,
+	}
+	rateLimiter := policy.NewLimiter(*rateConfig)
+	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh(), rateLimiter)
+	if err != nil {
+		return err
 	}
 
 	// http servers
@@ -133,7 +143,7 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	adminServer, err := httpadminserver.New(cfg.Addresses.Admin, registry)
+	adminServer, err := httpadminserver.New(cfg.Addresses.Admin, registryInstance)
 	if err != nil {
 		return err
 	}

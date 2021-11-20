@@ -19,13 +19,13 @@ const testMinerAddr = "t01000"
 //		t.Fatal(err)
 //	}
 //
-//	var peerID peer.ID
+//	var peerID account.ID
 //	_, err = disco.Discover(ctx, peerID, testMinerAddr)
 //	if err == nil {
 //		t.Fatal("expected provider id mismatch error")
 //	}
 //
-//	peerID, err = peer.Decode("12D3KooWGuQafP1HDkE2ixXZnX6q6LLygsUG1uoxaQEtfPAt5ygp")
+//	peerID, err = account.Decode("12D3KooWGuQafP1HDkE2ixXZnX6q6LLygsUG1uoxaQEtfPAt5ygp")
 //	if err != nil {
 //		t.Fatal(err)
 //	}
@@ -36,7 +36,7 @@ const testMinerAddr = "t01000"
 //	}
 //
 //	if discovered.AddrInfo.ID != peerID {
-//		t.Fatal("returned peer ID did not match requested")
+//		t.Fatal("returned account ID did not match requested")
 //	}
 //
 //	t.Logf("Lotus discovered info for miner %q: %s", testMinerAddr, discovered.AddrInfo.String())

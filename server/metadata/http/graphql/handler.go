@@ -43,7 +43,7 @@ func GetHandler(st *statetree.StateTree) (*http.ServeMux, error) {
 					Name: "State",
 					Type: StateType,
 					Args: graphql.FieldConfigArgument{
-						"PeerID": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String), Description: "peer id of a provider"},
+						"PeerID": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String), Description: "account id of a provider"},
 					},
 					Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 						peerIDStr := p.Args["PeerID"].(string)

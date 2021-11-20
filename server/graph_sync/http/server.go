@@ -20,7 +20,7 @@ type Server struct {
 	l      net.Listener
 }
 
-func New(listen string, core *legs.LegsCore) (*Server, error) {
+func New(listen string, core *legs.Core) (*Server, error) {
 	// Create ingest HTTP server
 	maddr, err := multiaddr.NewMultiaddr(listen)
 	if err != nil {

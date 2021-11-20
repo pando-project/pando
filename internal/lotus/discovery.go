@@ -99,7 +99,7 @@ func (d *Discoverer) Discover(ctx context.Context, peerID peer.ID, minerAddr str
 
 	addrInfo, err := d.getMinerPeerAddr(info)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get peer addrinfo from minerinfo: %s", err.Error())
+		return nil, fmt.Errorf("failed to get account addrinfo from minerinfo: %s", err.Error())
 	}
 
 	return &discovery.Discovered{

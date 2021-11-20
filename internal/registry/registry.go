@@ -57,7 +57,7 @@ type Registry struct {
 // is created to update its contents.  This means existing references remain
 // valid.
 type ProviderInfo struct {
-	// AddrInfo contains a peer.ID and set of Multiaddr addresses.
+	// AddrInfo contains a account.ID and set of Multiaddr addresses.
 	AddrInfo peer.AddrInfo
 	// DiscoveryAddr is the address that is used for discovery of the provider.
 	DiscoveryAddr string
@@ -240,6 +240,11 @@ func (r *Registry) IsRegistered(providerID peer.ID) bool {
 	}
 	<-done
 	return found
+}
+
+// IsTrusted checks if the provider is in the white list
+func (r *Registry) IsTrusted(providerID peer.ID) bool {
+	return r.policy.Trusted(providerID)
 }
 
 // ProviderInfoByAddr finds a registered provider using its discovery address

@@ -25,7 +25,7 @@ func (i Identity) DecodePrivateKey(passphrase string) (ic.PrivKey, error) {
 func (i Identity) Decode() (peer.ID, ic.PrivKey, error) {
 	peerID, err := peer.Decode(i.PeerID)
 	if err != nil {
-		return "", nil, fmt.Errorf("could not decode peer id: %s", err)
+		return "", nil, fmt.Errorf("could not decode account id: %s", err)
 	}
 
 	privKey, err := i.DecodePrivateKey("")

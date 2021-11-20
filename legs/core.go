@@ -2,6 +2,7 @@ package legs
 
 import (
 	"Pando/metadata"
+	"Pando/policy"
 	"context"
 	golegs "github.com/filecoin-project/go-legs"
 	"github.com/gammazero/keymutex"
@@ -18,14 +19,14 @@ import (
 var log = logging.Logger("core")
 
 const (
-	// prefix used to track latest sync in datastore.
-	syncPrefix  = "/sync/"
-	admapPrefix = "/admap/"
+	// syncPrefix used to track the latest sync in datastore.
+	syncPrefix = "/sync/"
+	//admapPrefix = "/admap/"
 
-	PUBSUBTOPIC = "PandoPubSub"
+	PubSubTopic = "PandoPubSub"
 )
 
-type LegsCore struct {
+type Core struct {
 	Host           *host.Host
 	DS             datastore.Batching
 	BS             blockstore.Blockstore
@@ -33,9 +34,10 @@ type LegsCore struct {
 	subs           map[peer.ID]*subscriber
 	sublk          *keymutex.KeyMutex
 	receivedMetaCh chan<- *metadata.MetaRecord
+	rateLimiter    *policy.Limiter
 }
 
-// subscriber datastructure for a peer.
+// subscriber data structure for a account.
 type subscriber struct {
 	peerID  peer.ID
 	ls      golegs.LegSubscriber
@@ -43,16 +45,21 @@ type subscriber struct {
 	cncl    context.CancelFunc
 }
 
-func NewLegsCore(ctx context.Context, host *host.Host, ds datastore.Batching, bs blockstore.Blockstore, outMetaCh chan<- *metadata.MetaRecord) (*LegsCore, error) {
+func NewLegsCore(ctx context.Context,
+	host *host.Host,
+	ds datastore.Batching,
+	bs blockstore.Blockstore,
+	outMetaCh chan<- *metadata.MetaRecord,
+	rateLimiter *policy.Limiter) (*Core, error) {
 
 	lnkSys := MkLinkSystem(bs)
 
-	lms, err := golegs.NewMultiSubscriber(ctx, *host, ds, lnkSys, PUBSUBTOPIC, nil)
+	lms, err := golegs.NewMultiSubscriber(ctx, *host, ds, lnkSys, PubSubTopic, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	lc := &LegsCore{
+	lc := &Core{
 		Host:           host,
 		DS:             ds,
 		BS:             bs,
@@ -60,6 +67,7 @@ func NewLegsCore(ctx context.Context, host *host.Host, ds datastore.Batching, bs
 		subs:           make(map[peer.ID]*subscriber),
 		sublk:          keymutex.New(0),
 		receivedMetaCh: outMetaCh,
+		rateLimiter:    rateLimiter,
 	}
 
 	lms.GraphSync().RegisterIncomingBlockHook(lc.storageHook())
@@ -68,7 +76,7 @@ func NewLegsCore(ctx context.Context, host *host.Host, ds datastore.Batching, bs
 	return lc, nil
 }
 
-func (l *LegsCore) Subscribe(ctx context.Context, peerID peer.ID) error {
+func (l *Core) Subscribe(ctx context.Context, peerID peer.ID) error {
 	log.Infow("Subscribing to advertisement pub-sub channel", "host_id", peerID)
 	sctx, cancel := context.WithCancel(ctx)
 	sub, err := l.newPeerSubscriber(sctx, peerID)
@@ -95,48 +103,50 @@ func (l *LegsCore) Subscribe(ctx context.Context, peerID peer.ID) error {
 }
 
 // Unsubscribe to stop listening to advertisement from a specific provider.
-func (i *LegsCore) Unsubscribe(ctx context.Context, peerID peer.ID) error {
+func (l *Core) Unsubscribe(ctx context.Context, peerID peer.ID) error {
 	log.Debugf("Unsubscribing from provider %s", peerID)
-	i.sublk.Lock(string(peerID))
-	defer i.sublk.Unlock(string(peerID))
+	l.sublk.Lock(string(peerID))
+	defer l.sublk.Unlock(string(peerID))
 	// Check if subscriber exists.
-	sub, ok := i.subs[peerID]
+	sub, ok := l.subs[peerID]
 	if !ok {
 		log.Infof("Not subscribed to provider %s. Nothing to do", peerID)
 		// If not we have nothing to do.
 		return nil
 	}
 	// Close subscriber
-	sub.ls.Close()
+	if err := sub.ls.Close(); err != nil {
+		return err
+	}
 	// Check if we are subscribed
 	if sub.cncl != nil {
 		// If yes, run cancel
 		sub.cncl()
 	}
 	// Delete from map
-	delete(i.subs, peerID)
+	delete(l.subs, peerID)
 	log.Infof("Unsubscribed from provider %s successfully", peerID)
 
 	return nil
 }
 
-// Creates a new subscriber for a peer according to its latest sync.
-func (l *LegsCore) newPeerSubscriber(ctx context.Context, peerID peer.ID) (*subscriber, error) {
+// Creates a new subscriber for a account according to its latest sync.
+func (l *Core) newPeerSubscriber(ctx context.Context, peerID peer.ID) (*subscriber, error) {
 	l.sublk.Lock(string(peerID))
 	defer l.sublk.Unlock(string(peerID))
 	sub, ok := l.subs[peerID]
-	// If there is already a subscriber for the peer, do nothing.
+	// If there is already a subscriber for the account, do nothing.
 	if ok {
 		return sub, nil
 	}
 
-	// See if we already synced with this peer.
+	// See if we already synced with this account.
 	c, err := l.getLatestSync(peerID)
 	if err != nil {
 		return nil, err
 	}
 
-	// If not synced start a brand new subscriber
+	// If not synced start a brand-new subscriber
 	var ls golegs.LegSubscriber
 	if c == cid.Undef {
 		ls, err = l.lms.NewSubscriber(golegs.FilterPeerPolicy(peerID))
@@ -155,8 +165,8 @@ func (l *LegsCore) newPeerSubscriber(ctx context.Context, peerID peer.ID) (*subs
 	return sub, nil
 }
 
-// Get the latest cid synced for the peer.
-func (l *LegsCore) getLatestSync(peerID peer.ID) (cid.Cid, error) {
+// Get the latest cid synced for the account.
+func (l *Core) getLatestSync(peerID peer.ID) (cid.Cid, error) {
 	b, err := l.DS.Get(datastore.NewKey(syncPrefix + peerID.String()))
 	if err != nil {
 		if err == datastore.ErrNotFound {
@@ -168,7 +178,7 @@ func (l *LegsCore) getLatestSync(peerID peer.ID) (cid.Cid, error) {
 	return c, err
 }
 
-// cancelfunc for subscribers. Combines context cancel and LegSubscriber
+// cancelFunc for subscribers. Combines context cancel and LegSubscriber
 // cancel function.
 func cancelFunc(c1, c2 context.CancelFunc) context.CancelFunc {
 	return func() {
@@ -177,7 +187,7 @@ func cancelFunc(c1, c2 context.CancelFunc) context.CancelFunc {
 	}
 }
 
-func (l *LegsCore) listenSubUpdates(sub *subscriber) {
+func (l *Core) listenSubUpdates(sub *subscriber) {
 	for c := range sub.watcher {
 		// Persist the latest sync
 		if err := l.putLatestSync(sub.peerID, c); err != nil {
@@ -192,8 +202,8 @@ func (l *LegsCore) listenSubUpdates(sub *subscriber) {
 	}
 }
 
-// Tracks latest sync for a specific peer.
-func (l *LegsCore) putLatestSync(peerID peer.ID, c cid.Cid) error {
+// Tracks the latest sync for a specific account.
+func (l *Core) putLatestSync(peerID peer.ID, c cid.Cid) error {
 	// Do not save if empty CIDs are received. Closing the channel
 	// may lead to receiving empty CIDs.
 	if c == cid.Undef {

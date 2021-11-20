@@ -89,17 +89,17 @@ func TestPolicyAccess(t *testing.T) {
 	}
 
 	if p.Allowed(trustedID) {
-		t.Error("peer ID should not be allowed by policy")
+		t.Error("account ID should not be allowed by policy")
 	}
 	if !p.Allowed(exceptID) {
-		t.Error("peer ID should be allowed")
+		t.Error("account ID should be allowed")
 	}
 
 	if p.Trusted(exceptID) {
-		t.Error("peer ID should not be trusted")
+		t.Error("account ID should not be trusted")
 	}
 	if !p.Trusted(trustedID) {
-		t.Error("peer ID", trustedID, "should be trusted")
+		t.Error("account ID", trustedID, "should be trusted")
 	}
 
 	policyCfg.Allow = true
@@ -110,16 +110,16 @@ func TestPolicyAccess(t *testing.T) {
 	}
 
 	if !p.Allowed(trustedID) {
-		t.Error("peer ID should be allowed by policy")
+		t.Error("account ID should be allowed by policy")
 	}
 	if p.Allowed(exceptID) {
-		t.Error("peer ID should not be allowed")
+		t.Error("account ID should not be allowed")
 	}
 
 	if !p.Trusted(exceptID) {
-		t.Error("peer ID should not be trusted")
+		t.Error("account ID should not be trusted")
 	}
 	if p.Trusted(trustedID) {
-		t.Error("peer ID", trustedID, "should be trusted")
+		t.Error("account ID", trustedID, "should be trusted")
 	}
 }

@@ -27,10 +27,14 @@ func (r *Registry) getAccountLevel(balance *big.Int) (int, error) {
 	return level, nil
 }
 
-func (r *Registry) GetProviderWeight(provider peer.ID) (int, error) {
+func (r *Registry) ProviderAccountLevel(provider peer.ID) (int, error) {
 	info := r.ProviderInfo(provider)
 	if info == nil {
 		return -1, fmt.Errorf("not register provider")
 	}
 	return info.AccountLevel, nil
+}
+
+func (r *Registry) AccountLevelCount() int {
+	return len(r.accountLevel.Threshold)
 }

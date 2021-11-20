@@ -31,7 +31,7 @@ var pandoHostFlag = altsrc.NewStringFlag(&cli.StringFlag{
 var registerFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     "config",
-		Usage:    "Config file containing provider's peer ID and private key",
+		Usage:    "Config file containing provider's account ID and private key",
 		Required: true,
 	},
 	pandoHostFlag,
