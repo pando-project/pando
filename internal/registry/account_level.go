@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	attoFIl = big.NewInt(1)
+	attoFIL = big.NewInt(1)
 	FIL     = big.NewInt(1).Exp(big.NewInt(10), big.NewInt(18), nil)
 )
 
