@@ -110,6 +110,7 @@ func (l *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
 			//go l.pauseRequest(request.ID())
 			log.Warnf(limitError)
 			//go l.unpauseRequest(request.ID())
+			log.Debugf("leave rateLimitHook")
 			return
 		}
 		log.Debugf("request %d from peer %s allowed", request.ID(), p)
@@ -119,8 +120,9 @@ func (l *Core) cancelRequest(request graphsync.RequestID) {
 	if err := l.lms.GraphSync().CancelRequest(context.Background(), request); err != nil {
 		log.Warnf("cancel request failed, error: %s", err.Error())
 	}
-
+	log.Debugf("request %d canceled", request)
 }
+
 func (l *Core) pauseRequest(request graphsync.RequestID) {
 	if err := l.lms.GraphSync().PauseRequest(request); err != nil {
 		log.Warnf("pause request failed, error: %s", err.Error())
