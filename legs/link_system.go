@@ -120,7 +120,7 @@ func (l *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
 	}
 }
 func (l *Core) cancelRequest(request graphsync.RequestID) {
-	if err := l.lms.GraphSync().CancelRequest(context.Background(), request.ID()); err != nil {
+	if err := l.lms.GraphSync().CancelRequest(context.Background(), request); err != nil {
 		log.Warnf("cancel request failed, error: %s", err.Error())
 	}
 
