@@ -128,5 +128,5 @@ func (l *Core) addPeerLimiter(peerID peer.ID, peerType account.PeerType, account
 func (l *Core) registeredPeerTokenRate(accountLevel int) float64 {
 	levelCount := l.rateLimiter.Config().Registry.AccountLevelCount()
 	weight := float64(accountLevel / levelCount)
-	return weight * l.rateLimiter.Config().BaseTokenRate
+	return weight * 0.4 * l.rateLimiter.Config().BaseTokenRate
 }
