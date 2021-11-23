@@ -11,6 +11,7 @@ import (
 	"github.com/ipfs/go-datastore"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/stretchr/testify/assert"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -40,7 +41,7 @@ func newMockDiscoverer(providerID string) *mockDiscoverer {
 				ID: peerID,
 			},
 			Type:    discovery.MinerType,
-			Balance: big.NewInt(12321312321),
+			Balance: new(big.Int).Mul(registry.FIL, big.NewInt(10)),
 		},
 	}
 }
@@ -117,8 +118,6 @@ func TestRegisterProvider(t *testing.T) {
 		t.Fatal("provider was not registered")
 	}
 	level, err := reg.ProviderAccountLevel(peerID)
-	if level != 0 || err != nil {
-		t.Fatal("not get weight rightly")
-	}
-	t.Log(level)
+	assert.NoError(t, err)
+	assert.Equal(t, level, 2, "not get weight rightly")
 }
