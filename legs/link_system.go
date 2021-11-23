@@ -7,13 +7,12 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-graphsync"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	"github.com/ipld/go-ipld-prime"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"golang.org/x/time/rate"
 	"io"
 	"math"
 	"time"
-
-	"github.com/ipld/go-ipld-prime"
 
 	// dagjson codec registered for encoding
 
@@ -96,8 +95,8 @@ func (l *Core) storageHook() graphsync.OnIncomingBlockHook {
 	}
 }
 
-func (l *Core) rateLimitHook() graphsync.OnIncomingBlockHook {
-	return func(p peer.ID, responseData graphsync.ResponseData, blockData graphsync.BlockData, hookActions graphsync.IncomingBlockHookActions) {
+func (l *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
+	return func(p peer.ID, request graphsync.RequestData, hookActions graphsync.OutgoingRequestHookActions) {
 		accountInfo := account.FetchPeerType(p, l.rateLimiter.Config().Registry)
 		peerRateLimiter := l.rateLimiter.PeerLimiter(p)
 		if peerRateLimiter == nil {
@@ -106,17 +105,22 @@ func (l *Core) rateLimitHook() graphsync.OnIncomingBlockHook {
 		log.Debugf("rate limit for peer %s is %f Mbps", p, peerRateLimiter.Limit())
 		if !l.rateLimiter.Allow() || !peerRateLimiter.Allow() {
 			const limitError = "your request was paused because of the rate limit policy"
-			hookActions.PauseRequest()
+			if err := l.lms.GraphSync().PauseRequest(request.ID()); err != nil {
+				log.Warnf("pause request failed, error: %s", err.Error())
+			}
 			log.Warnf(limitError)
+			go l.unpauseRequest(request.ID())
 		}
-		log.Debugf("request %s from peer %s allowed", responseData.RequestID().Tag(), p)
+		log.Debugf("request %d from peer %s allowed", request.ID(), p)
 	}
 }
 
-func (l *Core) playPausedBlockTransfer() graphsync.OnRequestUpdatedHook {
-	return func(p peer.ID, request graphsync.RequestData, updateRequest graphsync.RequestData, hookActions graphsync.RequestUpdatedHookActions) {
-		time.Sleep(time.Second * 5)
-		hookActions.UnpauseResponse()
+func (l *Core) unpauseRequest(request graphsync.RequestID) {
+	time.Sleep(5 * time.Second)
+	if err := l.lms.GraphSync().UnpauseRequest(request); err != nil {
+		log.Warnf("unpause request %d failed, error: %s", request, err.Error())
+	} else {
+		log.Debugf("request %d unpaused", request)
 	}
 }
 
