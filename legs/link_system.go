@@ -132,6 +132,7 @@ func (l *Core) pauseRequest(request graphsync.RequestID) {
 
 func (l *Core) unpauseRequest(request graphsync.RequestID, peerRateLimiter *rate.Limiter) {
 	time.Sleep(time.Millisecond)
+	log.Debugf("token for request %d = %f", request, peerRateLimiter.Limit())
 	if l.rateLimiter.Allow() && peerRateLimiter.Allow() {
 		if err := l.lms.GraphSync().UnpauseRequest(request); err != nil {
 			log.Warnf("unpause request %d failed, error: %s", request, err.Error())
