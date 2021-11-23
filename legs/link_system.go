@@ -3,6 +3,7 @@ package legs
 import (
 	"Pando/internal/account"
 	"bytes"
+	"context"
 	"fmt"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-graphsync"
@@ -105,15 +106,25 @@ func (l *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
 		log.Debugf("rate limit for peer %s is %f token/s, accountLevel is %v", p, peerRateLimiter.Limit(), accountInfo.AccountLevel)
 		if !l.rateLimiter.Allow() || !peerRateLimiter.Allow() {
 			const limitError = "your request was paused because of the rate limit policy"
-			go l.pauseRequest(request.ID())
+			err := l.lms.GraphSync().CancelRequest(context.Background(), request.ID())
+			if err != nil {
+				return
+			}
+			go l.cancelRequest(request.ID())
+			//go l.pauseRequest(request.ID())
 			log.Warnf(limitError)
-			go l.unpauseRequest(request.ID())
+			//go l.unpauseRequest(request.ID())
 			return
 		}
 		log.Debugf("request %d from peer %s allowed", request.ID(), p)
 	}
 }
+func (l *Core) cancelRequest(request graphsync.RequestID) {
+	if err := l.lms.GraphSync().CancelRequest(context.Background(), request.ID()); err != nil {
+		log.Warnf("cancel request failed, error: %s", err.Error())
+	}
 
+}
 func (l *Core) pauseRequest(request graphsync.RequestID) {
 	if err := l.lms.GraphSync().PauseRequest(request); err != nil {
 		log.Warnf("pause request failed, error: %s", err.Error())
