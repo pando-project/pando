@@ -41,6 +41,11 @@ func (i *Limiter) Allow() bool {
 	return i.control.Allow()
 }
 
+func (i *Limiter) GateLimiter() *rate.Limiter {
+	return i.control
+}
+
+// AddPeerLimiter append a new rate-limiter for a peer into the peers array of Limiter
 func (i *Limiter) AddPeerLimiter(peerID peer.ID, peerRate float64, peerBurst int) *rate.Limiter {
 	i.mu.Lock()
 	defer i.mu.Unlock()

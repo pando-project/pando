@@ -28,7 +28,9 @@ func FetchInternetSpeed() float64 {
 	targetCount := len(targets)
 	spin := spinner.New(spinner.CharSets[43], 100*time.Millisecond)
 	spin.Prefix = "\ttesting"
-	fmt.Printf("start speed test on %d targets, this step may take a while...\n", targetCount)
+
+	timeStart := time.Now()
+	fmt.Printf("start speed test on %d targets, this step may take a while(about 2~3 minitues)...\n", targetCount)
 	for i, target := range targets {
 		fmt.Printf("[%d/%d]test target server - %s in %s:\n", i+1, len(targets), target.Host, target.Country)
 		// skip abroad target
@@ -50,11 +52,12 @@ func FetchInternetSpeed() float64 {
 
 		fmt.Printf("\tdownload speed = %.2f Mbps\n", target.DLSpeed)
 	}
+	timeDuration := time.Since(timeStart).Round(time.Second)
 
 	sort.Float64s(downloadSpeedList)
 	medianSpeed, err := stats.Median(downloadSpeedList)
 	medianSpeed, _ = decimal.NewFromFloat(medianSpeed).Round(2).Float64()
-	fmt.Printf("speed test complete, median download speed is %f Mbps\n", medianSpeed)
+	fmt.Printf("speed test complete(takes %s in total), median download speed is %f Mbps\n", timeDuration, medianSpeed)
 	return medianSpeed
 }
 
