@@ -16,10 +16,10 @@ type httpHandler struct {
 }
 
 type GraphSyncHandler struct {
-	Core *legs.LegsCore
+	Core *legs.Core
 }
 
-func newHandler(core *legs.LegsCore) *httpHandler {
+func newHandler(core *legs.Core) *httpHandler {
 	return &httpHandler{
 		graphSyncHandler: &GraphSyncHandler{core},
 	}

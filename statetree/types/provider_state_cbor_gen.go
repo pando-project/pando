@@ -18,7 +18,7 @@ var _ = cid.Undef
 var _ = math.E
 var _ = sort.Sort
 
-var lengthBufProviderState = []byte{129}
+var lengthBufProviderState = []byte{130}
 
 func (t *ProviderState) MarshalCBOR(w io.Writer) error {
 	if t == nil {
@@ -44,6 +44,13 @@ func (t *ProviderState) MarshalCBOR(w io.Writer) error {
 			return xerrors.Errorf("failed writing cid field t.Cidlist: %w", err)
 		}
 	}
+
+	// t.LastCommitHeight (uint64) (uint64)
+
+	if err := cbg.WriteMajorTypeHeaderBuf(scratch, w, cbg.MajUnsignedInt, uint64(t.LastCommitHeight)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -61,7 +68,7 @@ func (t *ProviderState) UnmarshalCBOR(r io.Reader) error {
 		return fmt.Errorf("cbor input should be of type array")
 	}
 
-	if extra != 1 {
+	if extra != 2 {
 		return fmt.Errorf("cbor input had wrong number of fields")
 	}
 
@@ -93,5 +100,19 @@ func (t *ProviderState) UnmarshalCBOR(r io.Reader) error {
 		t.Cidlist[i] = c
 	}
 
+	// t.LastCommitHeight (uint64) (uint64)
+
+	{
+
+		maj, extra, err = cbg.CborReadHeaderBuf(br, scratch)
+		if err != nil {
+			return err
+		}
+		if maj != cbg.MajUnsignedInt {
+			return fmt.Errorf("wrong type for uint64 field")
+		}
+		t.LastCommitHeight = uint64(extra)
+
+	}
 	return nil
 }

@@ -14,6 +14,7 @@ import (
 	cbor "github.com/ipfs/go-ipld-cbor"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"sync"
 	"time"
 )
 
@@ -22,6 +23,8 @@ const (
 	RootKey = "PandoStateTree"
 	// SnapShotList saves the snapshots' cids in ds (bytes of []cid.Cid , not save cid of cidlist)
 	SnapShotList = "PandoSnapShotList"
+	// Reinitialize means if failed to load old tree, will initialize again
+	Reinitialize = true
 )
 
 var log = logging.Logger("state-tree")
@@ -29,15 +32,18 @@ var log = logging.Logger("state-tree")
 type SnapShotCidList []cid.Cid
 
 type StateTree struct {
-	ds       datastore.Batching
-	Store    cbor.IpldStore
-	root     hamt.Map
-	snapShot cid.Cid
-	exinfo   *types.ExtraInfo
-	//state        map[peer.ID]*types.ProviderState
+	ds    datastore.Batching
+	Store cbor.IpldStore
+	root  hamt.Map
+	// the height of next snapshot. eg: height is 0 after initializing
+	height       uint64
+	snapShot     cid.Cid
+	exinfo       *types.ExtraInfo
 	recvUpdateCh <-chan map[peer.ID]*types.ProviderState
 	ctx          context.Context
 	cncl         func()
+	// lock while updating hamt
+	mtx sync.Mutex
 }
 
 func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, updateCh <-chan map[peer.ID]*types.ProviderState, exinfo *types.ExtraInfo) (*StateTree, error) {
@@ -62,10 +68,17 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, u
 		log.Debugf("find root cid %s, loading...", rootcid.String())
 
 		m, err := adt.AsMap(store, rootcid, builtin.DefaultHamtBitwidth)
-		if err != nil {
+		if err != nil && !Reinitialize {
 			return nil, fmt.Errorf("failed to create hamt root by cid: %s\r\n%s", rootcid.String(), err.Error())
+		} else if err != nil {
+			emptyRoot, err := adt.MakeEmptyMap(store, builtin.DefaultHamtBitwidth)
+			if err != nil {
+				return nil, err
+			}
+			st.root = emptyRoot
+		} else {
+			st.root = m
 		}
-		st.root = m
 	} else {
 		emptyRoot, err := adt.MakeEmptyMap(store, builtin.DefaultHamtBitwidth)
 		if err != nil {
@@ -86,8 +99,10 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, u
 			return nil, fmt.Errorf("failed to load the newest snapshot: %s", newestSsCid.String())
 		}
 		st.snapShot = newestSsCid
+		st.height = uint64(len(snapShotCidList))
 	} else {
 		st.snapShot = cid.Undef
+		st.height = 0
 	}
 
 	// if MetadataManager send metadata update, update the State, save in hamt and change the root cid
@@ -112,17 +127,22 @@ func (st *StateTree) Update(ctx context.Context) {
 			rootCid, err := st.UpdateRoot(ctx, update)
 			if err != nil {
 				log.Errorf("while updating the state tree, some errors happened!\r\n%s", err.Error())
+				st.cncl()
 			}
 			err = st.CreateSnapShot(ctx, rootCid, update)
 			if err != nil {
 				log.Errorf("while creating and saving snapshot, some errors happened!\r\n%s", err.Error())
+				st.cncl()
 			}
+			st.height += 1
 		}
 	}
 }
 
 func (st *StateTree) UpdateRoot(ctx context.Context, update map[peer.ID]*types.ProviderState) (cid.Cid, error) {
 	log.Debug("start updating the state tree")
+	st.mtx.Lock()
+	defer st.mtx.Unlock()
 	for p, cidlist := range update {
 		state := new(types.ProviderState)
 		found, err := st.root.Get(hamt.ProviderKey{ID: p}, state)
@@ -130,12 +150,13 @@ func (st *StateTree) UpdateRoot(ctx context.Context, update map[peer.ID]*types.P
 			return cid.Undef, fmt.Errorf("failed to get provider state from hamt, %s", err.Error())
 		}
 		if !found {
-			err = st.root.Put(hamt.ProviderKey{ID: p}, &types.ProviderState{Cidlist: cidlist.Cidlist})
+			err = st.root.Put(hamt.ProviderKey{ID: p}, &types.ProviderState{Cidlist: cidlist.Cidlist, LastCommitHeight: st.height})
 			if err != nil {
 				return cid.Undef, fmt.Errorf("failed to put provider state into hamt, %s", err.Error())
 			}
 		} else {
 			state.Cidlist = append(state.Cidlist, cidlist.Cidlist...)
+			state.LastCommitHeight = st.height
 			err = st.root.Put(hamt.ProviderKey{ID: p}, state)
 			if err != nil {
 				return cid.Undef, fmt.Errorf("failed to put provider state into hamt, %s", err.Error())
@@ -168,25 +189,28 @@ func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update
 		height = uint64(0)
 		previousSs = newRoot
 	} else {
-		oldSs := new(types.SnapShot)
-		err := st.Store.Get(ctx, st.snapShot, oldSs)
-		if err != nil {
-			return fmt.Errorf("failed to load the old snapshot root from datastore")
-		}
-		height = oldSs.Height + 1
+		//oldSs := new(types.SnapShot)
+		//err := st.Store.Get(ctx, st.snapShot, oldSs)
+		//if err != nil {
+		//	return fmt.Errorf("failed to load the old snapshot root from datastore")
+		//}
+		//height = oldSs.Height + 1
+		height = st.height
 		previousSs = st.snapShot
 	}
 
 	_update := make(map[string]*types.ProviderState)
-	for p, cidlist := range update {
-		_update[p.String()] = cidlist
+	for p, state := range update {
+		_update[p.String()] = state
+		// there is no height info from metamanager
+		_update[p.String()].LastCommitHeight = st.height
 	}
 
 	newSs := &types.SnapShot{
 		Update:       _update,
 		Height:       height,
 		CreateTime:   uint64(time.Now().UnixNano()),
-		PrevSnapShot: previousSs,
+		PrevSnapShot: previousSs.String(),
 		ExtraInfo:    st.exinfo,
 	}
 
@@ -273,6 +297,48 @@ func (st *StateTree) GetSnapShotByHeight(height uint64) (*types.SnapShot, error)
 		return nil, err
 	}
 	return ss, nil
+}
+
+// GetProviderStateByPeerID for graphql
+func (st *StateTree) GetProviderStateByPeerID(id peer.ID) (*types.ProviderStateRes, error) {
+	st.mtx.Lock()
+	defer st.mtx.Unlock()
+	state := new(types.ProviderState)
+	found, err := st.root.Get(hamt.ProviderKey{ID: id}, state)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get provider state from hamt, %s", err.Error())
+	}
+
+	if !found {
+		return nil, NotFoundErr
+	} else {
+		res := new(types.ProviderStateRes)
+		lastUpdateHeight := state.LastCommitHeight
+		cidlist, err := st.GetSnapShotCidList()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get snapshot cidlist")
+		}
+		sscid := cidlist[lastUpdateHeight]
+		ss, err := st.GetSnapShot(sscid)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get snapshot")
+		}
+		res.State = *state
+		res.NewestUpdate = ss.Update[id.String()].Cidlist
+		return res, nil
+	}
+}
+
+func (st *StateTree) DeleteInfo() error {
+	err := st.ds.Delete(datastore.NewKey(RootKey))
+	if err != nil {
+		return err
+	}
+	err = st.ds.Delete(datastore.NewKey(SnapShotList))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (st *StateTree) Shutdown() error {

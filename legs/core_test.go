@@ -2,6 +2,7 @@ package legs
 
 import (
 	"Pando/metadata"
+	"Pando/policy"
 	"context"
 	golegs "github.com/filecoin-project/go-legs"
 	"github.com/ipfs/go-blockservice"
@@ -18,6 +19,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multicodec"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -63,7 +65,7 @@ func TestCreate(t *testing.T) {
 	mds := dssync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 	outCh := make(chan<- *metadata.MetaRecord)
-	_, err = NewLegsCore(context.Background(), &host, ds, bs, outCh)
+	_, err = NewLegsCore(context.Background(), &host, ds, bs, outCh, policy.NewLimiter(policy.LimiterConfig{}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -71,7 +73,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestGetMetaRecord(t *testing.T) {
-	// create LegsCore
+	// create Core
 	host, err := libp2p.New(context.Background())
 	if err != nil {
 		t.Error(err)
@@ -80,7 +82,7 @@ func TestGetMetaRecord(t *testing.T) {
 	mds := dssync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 	outCh := make(chan *metadata.MetaRecord)
-	core, err := NewLegsCore(context.Background(), &host, mds, bs, outCh)
+	core, err := NewLegsCore(context.Background(), &host, mds, bs, outCh, policy.NewLimiter(policy.LimiterConfig{}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,11 +99,6 @@ func TestGetMetaRecord(t *testing.T) {
 	dags := merkledag.NewDAGService(blockservice.New(srcbs, offline.Exchange(srcbs)))
 	lp, err := golegs.NewPublisher(context.Background(), srchost, srcmds, srcLnkS, "PandoPubSub")
 
-	// mock provider connect mock LegsCore
-	//ma, err := multiaddr.NewMultiaddr(PandoAddrStr + "/ipfs/" + PandoPeerID)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 	mastr := host.Addrs()[0].String() + "/ipfs/" + host.ID().String()
 	peerInfo, err := peer.AddrInfoFromString(mastr)
 	if err != nil {
@@ -112,7 +109,7 @@ func TestGetMetaRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// mock LegsCore subscribe the mock provider
+	// mock Core subscribe the mock provider
 	err = core.Subscribe(context.Background(), srchost.ID())
 	if err != nil {
 		t.Error(err)
@@ -144,15 +141,30 @@ func TestGetMetaRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(time.Second * 15)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 
-	for i := 0; i < 2; i++ {
-		select {
-		case record := <-outCh:
-			t.Log(record)
-		default:
-			t.Error("not receive record rightly")
-		}
+	t.Cleanup(func() {
+		cancel()
+		lp.Close()
+		core.Close(context.Background())
+	})
+
+	select {
+	case _ = <-ctx.Done():
+		t.Fatal("timeout!not receive record rightly")
+	case record := <-outCh:
+		assert.Equal(t, record.Cid, dagNodes[0].Cid())
+		assert.Equal(t, record.ProviderID, srchost.ID())
+		t.Log(record)
+	}
+
+	select {
+	case _ = <-ctx.Done():
+		t.Fatal("timeout!not receive record rightly")
+	case record := <-outCh:
+		assert.Equal(t, record.Cid, nlink.(cidlink.Link).Cid, "expected: ", nlink.(cidlink.Link).Cid.String(), " received:", record.Cid.String())
+		assert.Equal(t, record.ProviderID, srchost.ID())
+		t.Log(record)
 	}
 
 }
@@ -167,7 +179,7 @@ func TestLegsSync(t *testing.T) {
 	bs := blockstore.NewBlockstore(mds)
 	dags := merkledag.NewDAGService(blockservice.New(bs, offline.Exchange(bs)))
 	outCh := make(chan *metadata.MetaRecord)
-	_, err = NewLegsCore(context.Background(), &host, ds, bs, outCh)
+	_, err = NewLegsCore(context.Background(), &host, mds, bs, outCh, policy.NewLimiter(policy.LimiterConfig{}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -219,11 +231,8 @@ func TestLegsSync(t *testing.T) {
 	}
 
 	for i := 0; i < len(dagNodes); i++ {
-		v, err := dstbs.Get(dagNodes[i].Cid())
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Log(string(v.RawData()))
+		_, err := dstbs.Get(dagNodes[i].Cid())
+		assert.NoError(t, err)
 	}
 
 }

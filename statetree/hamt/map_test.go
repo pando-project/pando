@@ -3,6 +3,8 @@ package hamt
 import (
 	"Pando/statetree/types"
 	"context"
+	"github.com/stretchr/testify/assert"
+
 	//"Pando/statetree/hamt"
 
 	"fmt"
@@ -37,35 +39,27 @@ func TestMapSaveAndLoad(t *testing.T) {
 	state2.Cidlist = append(state2.Cidlist, testCid3)
 
 	err = emptyRoot.Put(ProviderKey{ID: "12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV6"}, state1)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
 	err = emptyRoot.Put(ProviderKey{ID: "12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV4"}, state2)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
 	newRootCid, err := emptyRoot.Root()
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
 	fmt.Println(newRootCid.String())
 	err = ds.Put(datastore.NewKey("TESTROOTKEY"), newRootCid.Bytes())
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
 	rootCidBytest, err := ds.Get(datastore.NewKey("TESTROOTKEY"))
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
 	_, rootcid, err := cid.CidFromBytes(rootCidBytest)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
 	fmt.Println(rootcid.String())
 
 	_, err = adt.AsMap(store, rootcid, builtin.DefaultHamtBitwidth)
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
 }

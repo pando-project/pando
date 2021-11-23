@@ -1,6 +1,7 @@
 package config
 
 const (
+	defaultAdmin     = "/ip4/127.0.0.1/tcp/9001"
 	defaultGraphSync = "/ip4/127.0.0.1/tcp/9002"
 	defaultGraphQl   = "/ip4/127.0.0.1/tcp/9003"
 	defaultMetaData  = "/ip4/127.0.0.1/tcp/9004"
@@ -9,6 +10,8 @@ const (
 
 // Addresses stores the (string) multiaddr addresses for the node.
 type Addresses struct {
+	// Admin is the admin http server listen address
+	Admin string
 	// MetaData is the state tree http listen address
 	MetaData string
 	// Admin is the admin http listen address

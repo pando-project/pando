@@ -2,8 +2,12 @@ package command
 
 import (
 	"Pando/config"
+	"Pando/internal/lotus"
+	"Pando/internal/registry"
 	"Pando/legs"
 	"Pando/metadata"
+	"Pando/policy"
+	httpadminserver "Pando/server/admin/http"
 	graphserver "Pando/server/graph_sync/http"
 	metaserver "Pando/server/metadata/http"
 	"Pando/statetree"
@@ -17,6 +21,7 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p"
 	"github.com/urfave/cli/v2"
+	"math"
 	"os"
 	"time"
 )
@@ -42,27 +47,18 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	err = logging.SetLogLevel("core", "debug")
-	if err != nil {
-		return err
-	}
-	err = logging.SetLogLevel("meta-manager", "debug")
-	if err != nil {
-		return err
-	}
-	err = logging.SetLogLevel("state-tree", "debug")
-	if err != nil {
-		return err
-	}
-	err = logging.SetLogLevel("meta-server", "debug")
-	if err != nil {
-		return err
-	}
+	_ = logging.SetLogLevel("core", "debug")
+	_ = logging.SetLogLevel("graphsync", "debug")
+	_ = logging.SetLogLevel("meta-manager", "debug")
+	_ = logging.SetLogLevel("state-tree", "debug")
+	_ = logging.SetLogLevel("meta-server", "debug")
+	_ = logging.SetLogLevel("admin", "debug")
+	_ = logging.SetLogLevel("registryInstance", "debug")
 
 	cfg, err := config.Load("")
 	if err != nil {
 		if err == config.ErrNotInitialized {
-			fmt.Fprintln(os.Stderr, "pando is not initialized")
+			_, _ = fmt.Fprintln(os.Stderr, "pando is not initialized")
 			os.Exit(1)
 		}
 		return fmt.Errorf("cannot load config file: %w", err)
@@ -88,7 +84,6 @@ func daemonCommand(cctx *cli.Context) error {
 	mds := dssync.MutexWrap(dstore)
 	bs := blockstore.NewBlockstore(mds)
 
-	//ds := dssync.MutexWrap(datastore.NewMapDatastore())
 	privKey, err := cfg.Identity.DecodePrivateKey("")
 	p2pHost, err := libp2p.New(
 		context.Background(),
@@ -105,19 +100,54 @@ func daemonCommand(cctx *cli.Context) error {
 		return err
 	}
 	metaManager, err := metadata.New(context.Background(), mds, bs)
-	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh())
-	graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, cfg.Addresses.GraphQL, legsCore)
 	if err != nil {
 		return err
 	}
-
 	info := new(types.ExtraInfo)
 	info.MultiAddr = p2pHost.Addrs()[0].String()
 	stateTree, err := statetree.New(context.Background(), mds, bs, metaManager.GetUpdateOut(), info)
 	if err != nil {
 		return err
 	}
-	metaDataServer, err := metaserver.New(cfg.Addresses.MetaData, stateTree)
+
+	// Create registryInstance
+	var lotusDiscoverer *lotus.Discoverer
+	if cfg.Discovery.LotusGateway != "" {
+		log.Infow("discovery using lotus", "gateway", cfg.Discovery.LotusGateway)
+		// Create lotus client
+		lotusDiscoverer, err = lotus.NewDiscoverer(cfg.Discovery.LotusGateway)
+		if err != nil {
+			return fmt.Errorf("cannot create lotus client: %s", err)
+		}
+	}
+	registryInstance, err := registry.NewRegistry(&cfg.Discovery, &cfg.AccountLevel, dstore, lotusDiscoverer)
+	if err != nil {
+		return fmt.Errorf("cannot create provider registryInstance: %s", err)
+	}
+
+	tokenRate := math.Ceil((0.8 * float64(cfg.BandWidth)) * cfg.SingleDAGSize)
+	rateConfig := &policy.LimiterConfig{
+		TotalRate:     tokenRate,
+		TotalBurst:    int(math.Ceil(tokenRate)),
+		BaseTokenRate: tokenRate,
+		Registry:      registryInstance,
+	}
+	rateLimiter := policy.NewLimiter(*rateConfig)
+	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh(), rateLimiter)
+	if err != nil {
+		return err
+	}
+
+	// http servers
+	graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, legsCore)
+	if err != nil {
+		return err
+	}
+	adminServer, err := httpadminserver.New(cfg.Addresses.Admin, registryInstance)
+	if err != nil {
+		return err
+	}
+	metaDataServer, err := metaserver.New(cfg.Addresses.MetaData, cfg.Addresses.GraphQL, stateTree)
 	if err != nil {
 		return err
 	}
@@ -129,6 +159,9 @@ func daemonCommand(cctx *cli.Context) error {
 	}()
 	go func() {
 		errChan <- metaDataServer.Start()
+	}()
+	go func() {
+		errChan <- adminServer.Start()
 	}()
 
 	var finalErr error
@@ -160,6 +193,10 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 	if err = metaDataServer.Shutdown(ctx); err != nil {
 		log.Errorw("Error shutting down metadata server", "err", err)
+		finalErr = ErrDaemonStop
+	}
+	if err = adminServer.Shutdown(ctx); err != nil {
+		log.Errorw("Error shutting down admin server", "err", err)
 		finalErr = ErrDaemonStop
 	}
 

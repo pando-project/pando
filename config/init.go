@@ -1,6 +1,7 @@
 package config
 
 import (
+	"Pando/speedtester"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -27,13 +28,27 @@ func InitWithIdentity(identity Identity) (*Config, error) {
 			GraphQL:   defaultGraphQl,
 			P2PAddr:   defaultP2PAddr,
 			MetaData:  defaultMetaData,
+			Admin:     defaultAdmin,
 		},
 		Identity: identity,
+		Discovery: Discovery{
+			LotusGateway: defaultLotusGateway,
+			Policy: Policy{
+				Allow: defaultAllow,
+				Trust: defaultTrust,
+			},
+			PollInterval:   defaultPollInterval,
+			RediscoverWait: defaultRediscoverWait,
+			Timeout:        defaultDiscoveryTimeout,
+		},
 
 		Datastore: Datastore{
 			Type: defaultDatastoreType,
 			Dir:  defaultDatastoreDir,
 		},
+		BandWidth:     speedtester.FetchInternetSpeed(),
+		AccountLevel:  AccountLevel{defaultThreshold},
+		SingleDAGSize: defaultSingleDAGSize,
 	}
 
 	return conf, nil
@@ -46,12 +61,12 @@ func CreateIdentity(out io.Writer) (Identity, error) {
 	var sk crypto.PrivKey
 	var pk crypto.PubKey
 
-	fmt.Fprintf(out, "generating ED25519 keypair...")
+	_, _ = fmt.Fprintf(out, "generating ED25519 keypair...")
 	priv, pub, err := crypto.GenerateEd25519Key(rand.Reader)
 	if err != nil {
 		return ident, err
 	}
-	fmt.Fprintf(out, "done\n")
+	_, _ = fmt.Fprintf(out, "done\n")
 
 	sk = priv
 	pk = pub
@@ -69,6 +84,6 @@ func CreateIdentity(out io.Writer) (Identity, error) {
 		return ident, err
 	}
 	ident.PeerID = id.Pretty()
-	fmt.Fprintf(out, "peer identity: %s\n", ident.PeerID)
+	_, _ = fmt.Fprintf(out, "account identity: %s\n", ident.PeerID)
 	return ident, nil
 }
