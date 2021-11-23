@@ -11,6 +11,7 @@ import (
 	"golang.org/x/time/rate"
 	"io"
 	"math"
+	"time"
 
 	"github.com/ipld/go-ipld-prime"
 
@@ -102,12 +103,20 @@ func (l *Core) rateLimitHook() graphsync.OnIncomingBlockHook {
 		if peerRateLimiter == nil {
 			peerRateLimiter = l.addPeerLimiter(p, accountInfo.PeerType, accountInfo.AccountLevel)
 		}
+		log.Debugf("rate limit for peer %s is %f Mbps", p, peerRateLimiter.Limit())
 		if !l.rateLimiter.Allow() || !peerRateLimiter.Allow() {
-			const limitError = "your request was rejected because of the rate limit policy"
-			hookActions.TerminateWithError(fmt.Errorf(limitError))
+			const limitError = "your request was paused because of the rate limit policy"
+			hookActions.PauseRequest()
 			log.Warnf(limitError)
 		}
 		log.Debugf("request %s from peer %s allowed", responseData.RequestID().Tag(), p)
+	}
+}
+
+func (l *Core) playPausedBlockTransfer() graphsync.OnRequestUpdatedHook {
+	return func(p peer.ID, request graphsync.RequestData, updateRequest graphsync.RequestData, hookActions graphsync.RequestUpdatedHookActions) {
+		time.Sleep(time.Second * 5)
+		hookActions.UnpauseResponse()
 	}
 }
 
