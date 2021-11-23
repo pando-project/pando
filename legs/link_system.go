@@ -109,7 +109,7 @@ func (l *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
 			//go l.cancelRequest(request.ID())
 			go l.pauseRequest(request.ID())
 			log.Warnf(limitError)
-			go l.unpauseRequest(request.ID())
+			go l.unpauseRequest(request.ID(), peerRateLimiter)
 			log.Debugf("leave rateLimitHook")
 			return
 		}
@@ -130,12 +130,16 @@ func (l *Core) pauseRequest(request graphsync.RequestID) {
 	}
 }
 
-func (l *Core) unpauseRequest(request graphsync.RequestID) {
-	time.Sleep(5 * time.Second)
-	if err := l.lms.GraphSync().UnpauseRequest(request); err != nil {
-		log.Warnf("unpause request %d failed, error: %s", request, err.Error())
+func (l *Core) unpauseRequest(request graphsync.RequestID, peerRateLimiter *rate.Limiter) {
+	time.Sleep(time.Millisecond)
+	if l.rateLimiter.Allow() && peerRateLimiter.Allow() {
+		if err := l.lms.GraphSync().UnpauseRequest(request); err != nil {
+			log.Warnf("unpause request %d failed, error: %s", request, err.Error())
+		} else {
+			log.Debugf("request %d unpaused", request)
+		}
 	} else {
-		log.Debugf("request %d unpaused", request)
+		l.unpauseRequest(request, peerRateLimiter)
 	}
 }
 
