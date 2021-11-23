@@ -106,16 +106,17 @@ func (l *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
 		log.Debugf("rate limit for peer %s is %f token/s, accountLevel is %v", p, peerRateLimiter.Limit(), accountInfo.AccountLevel)
 		if !l.rateLimiter.Allow() || !peerRateLimiter.Allow() {
 			const limitError = "your request was canceled because of the rate limit policy"
-			go l.cancelRequest(request.ID())
-			//go l.pauseRequest(request.ID())
+			//go l.cancelRequest(request.ID())
+			go l.pauseRequest(request.ID())
 			log.Warnf(limitError)
-			//go l.unpauseRequest(request.ID())
+			go l.unpauseRequest(request.ID())
 			log.Debugf("leave rateLimitHook")
 			return
 		}
 		log.Debugf("request %d from peer %s allowed", request.ID(), p)
 	}
 }
+
 func (l *Core) cancelRequest(request graphsync.RequestID) {
 	if err := l.lms.GraphSync().CancelRequest(context.Background(), request); err != nil {
 		log.Warnf("cancel request failed, error: %s", err.Error())
