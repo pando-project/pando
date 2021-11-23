@@ -95,8 +95,8 @@ func (l *Core) storageHook() graphsync.OnIncomingBlockHook {
 	}
 }
 
-func (l *Core) rateLimitHook() graphsync.OnIncomingRequestHook {
-	return func(p peer.ID, request graphsync.RequestData, hookActions graphsync.IncomingRequestHookActions) {
+func (l *Core) rateLimitHook() graphsync.OnIncomingBlockHook {
+	return func(p peer.ID, responseData graphsync.ResponseData, blockData graphsync.BlockData, hookActions graphsync.IncomingBlockHookActions) {
 		accountInfo := account.FetchPeerType(p, l.rateLimiter.Config().Registry)
 		peerRateLimiter := l.rateLimiter.PeerLimiter(p)
 		if peerRateLimiter == nil {
@@ -107,7 +107,7 @@ func (l *Core) rateLimitHook() graphsync.OnIncomingRequestHook {
 			hookActions.TerminateWithError(fmt.Errorf(limitError))
 			log.Warnf(limitError)
 		}
-		log.Debugf("request %s from peer %s allowed", request.ID().Tag(), p)
+		log.Debugf("request %s from peer %s allowed", responseData.RequestID().Tag(), p)
 	}
 }
 
