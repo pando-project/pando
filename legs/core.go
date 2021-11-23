@@ -212,3 +212,16 @@ func (l *Core) putLatestSync(peerID peer.ID, c cid.Cid) error {
 
 	return l.DS.Put(datastore.NewKey(syncPrefix+peerID.String()), c.Bytes())
 }
+
+func (l *Core) Close(ctx context.Context) error {
+	// Unsubscribe from all peers
+	for k := range l.subs {
+		err := l.Unsubscribe(ctx, k)
+		if err != nil {
+			return err
+		}
+	}
+	// Close leg transport.
+	err := l.lms.Close(ctx)
+	return err
+}

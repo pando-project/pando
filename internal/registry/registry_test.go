@@ -5,6 +5,7 @@ import (
 	"Pando/internal/registry/discovery"
 	"context"
 	"errors"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
@@ -42,14 +43,10 @@ var aclCfg = config.AccountLevel{Threshold: []int{1, 10, 99}}
 
 func newMockDiscoverer(t *testing.T, providerID string) *mockDiscoverer {
 	peerID, err := peer.Decode(providerID)
-	if err != nil {
-		t.Fatal("bad provider ID:", err)
-	}
+	assert.NoError(t, err, "bad provider ID")
 
 	maddr, err := multiaddr.NewMultiaddr(minerAddr)
-	if err != nil {
-		t.Fatal("bad miner address:", err)
-	}
+	assert.NoError(t, err, "bad miner address")
 
 	return &mockDiscoverer{
 		discoverRsp: &discovery.Discovered{
@@ -74,19 +71,15 @@ func TestNewRegistryDiscovery(t *testing.T) {
 	mockDisco := newMockDiscoverer(t, exceptID)
 
 	r, err := NewRegistry(&discoveryCfg, &aclCfg, nil, mockDisco)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
+
 	t.Log("created new registry")
 
 	peerID, err := peer.Decode(trustedID)
-	if err != nil {
-		t.Fatal("bad provider ID:", err)
-	}
+	assert.NoError(t, err, "bad provider ID")
+
 	maddr, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/3002")
-	if err != nil {
-		t.Fatalf("Cannot create multiaddr: %s", err)
-	}
+	assert.NoErrorf(t, err, "Cannot create multiaddr: %s", err)
 	info := &ProviderInfo{
 		AddrInfo: peer.AddrInfo{
 			ID:    peerID,
@@ -138,9 +131,7 @@ func TestDiscoveryAllowed(t *testing.T) {
 	}
 	t.Log("got provider info for miner")
 
-	if info.AddrInfo.ID != peerID {
-		t.Error("did not get correct porvider id")
-	}
+	assert.Equal(t, info.AddrInfo.ID, peerID, "did not get correct porvider id")
 
 	peerID, err = peer.Decode(trustedID)
 	if err != nil {
@@ -165,6 +156,7 @@ func TestDiscoveryAllowed(t *testing.T) {
 	if len(infos) != 2 {
 		t.Fatal("expected 2 provider infos")
 	}
+
 }
 
 func TestDiscoveryBlocked(t *testing.T) {

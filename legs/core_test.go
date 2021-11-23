@@ -19,6 +19,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multicodec"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -98,11 +99,6 @@ func TestGetMetaRecord(t *testing.T) {
 	dags := merkledag.NewDAGService(blockservice.New(srcbs, offline.Exchange(srcbs)))
 	lp, err := golegs.NewPublisher(context.Background(), srchost, srcmds, srcLnkS, "PandoPubSub")
 
-	// mock provider connect mock Core
-	//ma, err := multiaddr.NewMultiaddr(PandoAddrStr + "/ipfs/" + PandoPeerID)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 	mastr := host.Addrs()[0].String() + "/ipfs/" + host.ID().String()
 	peerInfo, err := peer.AddrInfoFromString(mastr)
 	if err != nil {
@@ -145,15 +141,30 @@ func TestGetMetaRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(time.Second * 15)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 
-	for i := 0; i < 2; i++ {
-		select {
-		case record := <-outCh:
-			t.Log(record)
-		default:
-			t.Error("not receive record rightly")
-		}
+	t.Cleanup(func() {
+		cancel()
+		lp.Close()
+		core.Close(context.Background())
+	})
+
+	select {
+	case _ = <-ctx.Done():
+		t.Fatal("timeout!not receive record rightly")
+	case record := <-outCh:
+		assert.Equal(t, record.Cid, dagNodes[0].Cid())
+		assert.Equal(t, record.ProviderID, srchost.ID())
+		t.Log(record)
+	}
+
+	select {
+	case _ = <-ctx.Done():
+		t.Fatal("timeout!not receive record rightly")
+	case record := <-outCh:
+		assert.Equal(t, record.Cid, nlink.(cidlink.Link).Cid, "expected: ", nlink.(cidlink.Link).Cid.String(), " received:", record.Cid.String())
+		assert.Equal(t, record.ProviderID, srchost.ID())
+		t.Log(record)
 	}
 
 }
@@ -220,11 +231,8 @@ func TestLegsSync(t *testing.T) {
 	}
 
 	for i := 0; i < len(dagNodes); i++ {
-		v, err := dstbs.Get(dagNodes[i].Cid())
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Log(string(v.RawData()))
+		_, err := dstbs.Get(dagNodes[i].Cid())
+		assert.NoError(t, err)
 	}
 
 }

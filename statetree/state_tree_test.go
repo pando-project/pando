@@ -10,7 +10,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -23,8 +23,8 @@ type MockCore struct {
 
 var (
 	testCid1, _ = cid.Decode("bafy2bzaceamp42wmmgr2g2ymg46euououzfyck7szknvfacqscohrvaikwfaa")
-	testCid2, _ = cid.Decode("bafy2bzaceamp42wmmgr2g2ymg46euououzfyck7szknvfacqscohrvaikwfab")
-	testCid3, _ = cid.Decode("bafy2bzaceamp42wmmgr2g2ymg46euououzfyck7szknvfacqscohrvaikwfac")
+	testCid2, _ = testCid1.Prefix().Sum([]byte("testdata2"))
+	testCid3, _ = testCid1.Prefix().Sum([]byte("testdata3"))
 	testPeer, _ = peer.Decode("12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV4")
 )
 
@@ -49,9 +49,7 @@ func TestNew(t *testing.T) {
 	}
 	ch := make(<-chan map[peer.ID]*types.ProviderState)
 	_, err := New(context.Background(), core.DS, core.BS, ch, ex)
-	if err != nil {
-		t.Error(err.Error())
-	}
+	assert.NoError(t, err)
 }
 
 func TestStateTreeRoundTrip(t *testing.T) {
@@ -64,9 +62,7 @@ func TestStateTreeRoundTrip(t *testing.T) {
 	}
 	ch := make(chan map[peer.ID]*types.ProviderState)
 	st, err := New(context.Background(), core.DS, core.BS, ch, ex)
-	if err != nil {
-		t.Error(err.Error())
-	}
+	assert.NoError(t, err)
 
 	mockUpdate := map[peer.ID]*types.ProviderState{
 		testPeer: {
@@ -85,15 +81,10 @@ func TestStateTreeRoundTrip(t *testing.T) {
 	assert.Equal(t, ss.Height, uint64(0))
 	assert.Equal(t, st.height, uint64(1))
 
-	//p, _ := account.Decode("12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV4")
 	pstate, err := st.GetProviderStateByPeerID(testPeer)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	assert.NoError(t, err)
 	l, err := st.GetSnapShotCidList()
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 	if len(l) < 1 {
 		t.Error("wrong snapshot cidlist ", l)
 	}
@@ -101,40 +92,32 @@ func TestStateTreeRoundTrip(t *testing.T) {
 	ch <- mockUpdate
 	time.Sleep(time.Millisecond * 800)
 	l, err = st.GetSnapShotCidList()
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
 	if len(l) < 2 {
 		t.Fatal("wrong snapshot cidlist ", l)
 	}
 
 	_, err = st.GetSnapShot(l[0])
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
 	_, err = st.GetSnapShot(l[1])
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
 
 	h := st.height
 	assert.Equal(t, h, uint64(2), "wrong height")
 
 	err = st.Shutdown()
-	if err != nil {
-		t.Error(err)
-	}
+	assert.NoError(t, err)
+
 	st, err = New(context.Background(), core.DS, core.BS, ch, ex)
-	if err != nil {
-		t.Error(err.Error())
-	}
+	assert.NoError(t, err)
 
 	assert.Equal(t, st.height, uint64(2))
 
 	pstate, err = st.GetProviderStateByPeerID(testPeer)
-	if err != nil {
-		t.Fatal(err.Error())
-	}
+	assert.NoError(t, err)
+
 	assert.Equal(t, pstate.State.LastCommitHeight, uint64(1))
 	t.Log(pstate.NewestUpdate)
 
@@ -150,9 +133,8 @@ func TestCloseUpdateCh(t *testing.T) {
 	}
 	ch := make(chan map[peer.ID]*types.ProviderState)
 	_, err := New(context.Background(), core.DS, core.BS, ch, ex)
-	if err != nil {
-		t.Error(err.Error())
-	}
+	assert.NoError(t, err)
+
 	close(ch)
 
 	time.Sleep(time.Second)
