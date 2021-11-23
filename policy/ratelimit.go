@@ -4,6 +4,7 @@ import (
 	"Pando/internal/registry"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"golang.org/x/time/rate"
+	"math"
 	"sync"
 )
 
@@ -19,7 +20,11 @@ type LimiterConfig struct {
 }
 
 type Limiter struct {
-	control *rate.Limiter
+	gateLimiter         *rate.Limiter
+	whitelistLimiter    *rate.Limiter
+	unregisteredLimiter *rate.Limiter
+
+	registeredLimiter map[int]*rate.Limiter
 
 	peers map[peer.ID]*rate.Limiter
 	mu    *sync.RWMutex
@@ -29,28 +34,69 @@ type Limiter struct {
 
 func NewLimiter(c LimiterConfig) *Limiter {
 	return &Limiter{
-		control: rate.NewLimiter(rate.Limit(c.TotalRate), c.TotalBurst),
-		mu:      &sync.RWMutex{},
-		peers:   make(map[peer.ID]*rate.Limiter),
+		gateLimiter: rate.NewLimiter(rate.Limit(c.TotalRate), c.TotalBurst),
+		mu:          &sync.RWMutex{},
+		peers:       make(map[peer.ID]*rate.Limiter),
 
 		config: c,
 	}
 }
 
 func (i *Limiter) Allow() bool {
-	return i.control.Allow()
+	return i.gateLimiter.Allow()
 }
 
 func (i *Limiter) GateLimiter() *rate.Limiter {
-	return i.control
+	return i.gateLimiter
 }
 
-// AddPeerLimiter append a new rate-limiter for a peer into the peers array of Limiter
-func (i *Limiter) AddPeerLimiter(peerID peer.ID, peerRate float64, peerBurst int) *rate.Limiter {
+func (i *Limiter) UnregisteredLimiter(baseTokenRate float64) *rate.Limiter {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	limiter := rate.NewLimiter(rate.Limit(peerRate), peerBurst)
+	if i.unregisteredLimiter != nil {
+		return i.unregisteredLimiter
+	}
+
+	tokenRate := math.Ceil(0.1 * baseTokenRate)
+	i.unregisteredLimiter = rate.NewLimiter(rate.Limit(tokenRate), int(tokenRate))
+
+	return i.unregisteredLimiter
+}
+
+func (i *Limiter) WhitelistLimiter(baseTokenRate float64) *rate.Limiter {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	if i.whitelistLimiter != nil {
+		return i.whitelistLimiter
+	}
+
+	tokenRate := math.Ceil(0.5 * baseTokenRate)
+	i.whitelistLimiter = rate.NewLimiter(rate.Limit(tokenRate), int(tokenRate))
+
+	return i.whitelistLimiter
+}
+
+func (i *Limiter) RegisteredLimiter(baseTokenRate float64, accountLevel int, levelCount int) *rate.Limiter {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	limiter, exists := i.registeredLimiter[accountLevel]
+	if !exists {
+		weight := float64(accountLevel / levelCount)
+		tokenRate := math.Ceil(0.4 * weight * baseTokenRate)
+		limiter = rate.NewLimiter(rate.Limit(tokenRate), int(tokenRate))
+		i.registeredLimiter[accountLevel] = limiter
+	}
+
+	return limiter
+}
+
+// AddPeerLimiter append a new rate-limiter for a peer into the peers array of Limiter
+func (i *Limiter) AddPeerLimiter(peerID peer.ID, limiter *rate.Limiter) *rate.Limiter {
+	i.mu.Lock()
+	defer i.mu.Unlock()
 
 	i.peers[peerID] = limiter
 

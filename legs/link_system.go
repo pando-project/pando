@@ -12,7 +12,6 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"golang.org/x/time/rate"
 	"io"
-	"math"
 	"time"
 
 	// dagjson codec registered for encoding
@@ -144,23 +143,16 @@ func (l *Core) unpauseRequest(request graphsync.RequestID, peerRateLimiter *rate
 }
 
 func (l *Core) addPeerLimiter(peerID peer.ID, peerType account.PeerType, accountLevel int) *rate.Limiter {
-	var tokenRate float64
+	var limiter *rate.Limiter
+	baseTokenRate := l.rateLimiter.Config().BaseTokenRate
 	switch peerType {
 	case account.UnregisteredPeer:
-		tokenRate = 0.1 * l.rateLimiter.Config().BaseTokenRate
+		limiter = l.rateLimiter.UnregisteredLimiter(baseTokenRate)
 	case account.WhiteListPeer:
-		tokenRate = 0.5 * l.rateLimiter.Config().BaseTokenRate
+		limiter = l.rateLimiter.WhitelistLimiter(baseTokenRate)
 	case account.RegisteredPeer:
-		tokenRate = l.registeredPeerTokenRate(accountLevel)
+		limiter = l.rateLimiter.RegisteredLimiter(baseTokenRate, accountLevel, l.rateLimiter.Config().Registry.AccountLevelCount())
 	}
 
-	tokenRate = math.Ceil(tokenRate)
-
-	return l.rateLimiter.AddPeerLimiter(peerID, tokenRate, int(tokenRate))
-}
-
-func (l *Core) registeredPeerTokenRate(accountLevel int) float64 {
-	levelCount := l.rateLimiter.Config().Registry.AccountLevelCount()
-	weight := float64(accountLevel / levelCount)
-	return weight * 0.4 * l.rateLimiter.Config().BaseTokenRate
+	return l.rateLimiter.AddPeerLimiter(peerID, limiter)
 }
