@@ -53,7 +53,6 @@ func NewLegsCore(ctx context.Context,
 	rateLimiter *policy.Limiter) (*Core, error) {
 
 	lnkSys := MkLinkSystem(bs)
-
 	lms, err := golegs.NewMultiSubscriber(ctx, *host, ds, lnkSys, PubSubTopic, nil)
 	if err != nil {
 		return nil, err
@@ -71,6 +70,7 @@ func NewLegsCore(ctx context.Context,
 	}
 
 	lms.GraphSync().RegisterIncomingBlockHook(lc.storageHook())
+	lms.GraphSync().RegisterIncomingRequestHook(lc.rateLimitHook())
 	log.Debugf("LegCore started and all hooks and linksystem registered")
 
 	return lc, nil

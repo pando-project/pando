@@ -107,6 +107,7 @@ func (l *Core) rateLimitHook() graphsync.OnIncomingRequestHook {
 			hookActions.TerminateWithError(fmt.Errorf(limitError))
 			log.Warnf(limitError)
 		}
+		log.Debugf("request %s from peer %s allowed", request.ID().Tag(), p)
 	}
 }
 
