@@ -21,8 +21,8 @@ type Info struct {
 
 func FetchPeerType(peerID peer.ID, registry *registry.Registry) *Info {
 	peerType := UnregisteredPeer
-	peerAccountLevel, err := registry.ProviderAccountLevel(peerID)
-	if err != nil {
+	peerAccountLevel, _ := registry.ProviderAccountLevel(peerID)
+	if peerAccountLevel != -1 {
 		peerType = RegisteredPeer
 	}
 	if registry.IsTrusted(peerID) {

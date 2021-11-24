@@ -1,14 +1,19 @@
 package legs
 
 import (
+	"Pando/config"
+	"Pando/internal/lotus"
+	"Pando/internal/registry"
 	"Pando/metadata"
 	"Pando/policy"
 	"context"
+	"fmt"
 	golegs "github.com/filecoin-project/go-legs"
 	"github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
+	leveldb "github.com/ipfs/go-ds-leveldb"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	format "github.com/ipfs/go-ipld-format"
@@ -20,8 +25,19 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multicodec"
 	"github.com/stretchr/testify/assert"
+	"math"
 	"testing"
 	"time"
+)
+
+var (
+	tokenRate  = math.Ceil((0.8 * float64(1)) * 1)
+	rateConfig = &policy.LimiterConfig{
+		TotalRate:     tokenRate,
+		TotalBurst:    int(math.Ceil(tokenRate)),
+		BaseTokenRate: tokenRate,
+		Registry:      newRegistry(),
+	}
 )
 
 func Store(n ipld.Node, lsys ipld.LinkSystem) (ipld.Link, error) {
@@ -35,6 +51,18 @@ func Store(n ipld.Node, lsys ipld.LinkSystem) (ipld.Link, error) {
 	}
 
 	return lsys.Store(ipld.LinkContext{}, linkproto, n)
+}
+
+func newRegistry() *registry.Registry {
+	dstore, err := leveldb.NewDatastore("/tmp", nil)
+	lotusDiscoverer, err := lotus.NewDiscoverer("https://api.chain.love")
+	registryInstance, err := registry.NewRegistry(
+		&config.Discovery{Policy: config.Policy{Allow: true}},
+		&config.AccountLevel{Threshold: []int{1, 10}}, dstore, lotusDiscoverer)
+	if err != nil {
+		panic(fmt.Errorf("new registry failed, error: %v", err))
+	}
+	return registryInstance
 }
 
 func getDagNodes() []format.Node {
@@ -65,7 +93,8 @@ func TestCreate(t *testing.T) {
 	mds := dssync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 	outCh := make(chan<- *metadata.MetaRecord)
-	_, err = NewLegsCore(context.Background(), &host, ds, bs, outCh, policy.NewLimiter(policy.LimiterConfig{}))
+	_, err = NewLegsCore(context.Background(), &host, ds, bs, outCh,
+		policy.NewLimiter(policy.LimiterConfig{}))
 	if err != nil {
 		t.Error(err)
 	}
@@ -82,7 +111,8 @@ func TestGetMetaRecord(t *testing.T) {
 	mds := dssync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 	outCh := make(chan *metadata.MetaRecord)
-	core, err := NewLegsCore(context.Background(), &host, mds, bs, outCh, policy.NewLimiter(policy.LimiterConfig{}))
+	core, err := NewLegsCore(context.Background(), &host, mds, bs, outCh,
+		policy.NewLimiter(*rateConfig))
 	if err != nil {
 		t.Error(err)
 	}

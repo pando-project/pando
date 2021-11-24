@@ -103,7 +103,7 @@ func (i *Limiter) AddPeerLimiter(peerID peer.ID, limiter *rate.Limiter) *rate.Li
 	return limiter
 }
 
-// PeerLimiter return a rate-limiter for specified account if exists, or return nil
+// PeerLimiter return a rate-limiter for specified peer if exists, or return nil
 func (i *Limiter) PeerLimiter(peerID peer.ID) *rate.Limiter {
 	i.mu.Lock()
 	limiter, exists := i.peers[peerID]
