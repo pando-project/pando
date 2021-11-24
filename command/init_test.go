@@ -24,17 +24,12 @@ func TestInit(t *testing.T) {
 	}
 
 	badAddr := "ip3/127.0.0.1/tcp/9999"
-	err := app.RunContext(ctx, []string{"pando", "init", "-listen-graphsync", badAddr})
+	err := app.RunContext(ctx, []string{"pando", "init", "-listen-graphsync", badAddr, "-speedtest=false"})
 	if err == nil {
 		log.Fatal("expected error")
 	}
 
-	err = app.RunContext(ctx, []string{"pando", "init", "-listen-graphql", badAddr})
-	if err == nil {
-		log.Fatal("expected error")
-	}
-
-	err = app.RunContext(ctx, []string{"pando", "init", "-listen-ingest", badAddr})
+	err = app.RunContext(ctx, []string{"pando", "init", "-listen-graphql", badAddr, "-speedtest=false"})
 	if err == nil {
 		log.Fatal("expected error")
 	}
@@ -45,6 +40,7 @@ func TestInit(t *testing.T) {
 		"pando", "init",
 		"-listen-graphql", goodAddr,
 		"-listen-graphsync", goodAddr2,
+		"-speedtest=0",
 	}
 	err = app.RunContext(ctx, args)
 	if err != nil {
