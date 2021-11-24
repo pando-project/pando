@@ -119,5 +119,5 @@ func TestRegisterProvider(t *testing.T) {
 	}
 	level, err := reg.ProviderAccountLevel(peerID)
 	assert.NoError(t, err)
-	assert.Equal(t, level, 2, "not get weight rightly")
+	assert.Equal(t, level, 3, "not get weight rightly")
 }
