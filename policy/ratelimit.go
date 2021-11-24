@@ -37,8 +37,7 @@ func NewLimiter(c LimiterConfig) *Limiter {
 		gateLimiter: rate.NewLimiter(rate.Limit(c.TotalRate), c.TotalBurst),
 		mu:          &sync.RWMutex{},
 		peers:       make(map[peer.ID]*rate.Limiter),
-
-		config: c,
+		config:      c,
 	}
 }
 
@@ -82,9 +81,13 @@ func (i *Limiter) RegisteredLimiter(baseTokenRate float64, accountLevel int, lev
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
+	if i.registeredLimiter == nil {
+		i.registeredLimiter = make(map[int]*rate.Limiter)
+	}
+
 	limiter, exists := i.registeredLimiter[accountLevel]
 	if !exists {
-		weight := float64(accountLevel / levelCount)
+		weight := float64(accountLevel) / float64(levelCount)
 		tokenRate := math.Ceil(0.4 * weight * baseTokenRate)
 		limiter = rate.NewLimiter(rate.Limit(tokenRate), int(tokenRate))
 		i.registeredLimiter[accountLevel] = limiter
