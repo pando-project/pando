@@ -6,7 +6,7 @@ The gate rate limiter limits the request rate of all peer, and the peer rate lim
 
 All rate limiter are implemented using token bucket algorithm, and the generation rate of token is:
 
-`k * bandwidth * single DAG size`
+`k * bandwidth / single DAG size`
 
 This rate is called the `base rate`.
 
