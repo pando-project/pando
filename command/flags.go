@@ -32,7 +32,17 @@ var registerFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:     "config",
 		Usage:    "Config file containing provider's account ID and private key",
-		Required: true,
+		Required: false,
+	},
+	&cli.StringFlag{
+		Name:     "privkey",
+		Usage:    "private key string, used for sign the register request",
+		Required: false,
+	},
+	&cli.StringFlag{
+		Name:     "peerid",
+		Usage:    "peerid, used for register",
+		Required: false,
 	},
 	pandoHostFlag,
 	&cli.StringSliceFlag{

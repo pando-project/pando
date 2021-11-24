@@ -5,6 +5,8 @@ import (
 	"Pando/config"
 	"encoding/json"
 	"fmt"
+	p2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/urfave/cli/v2"
 	"os"
 )
@@ -17,23 +19,41 @@ var RegisterCmd = &cli.Command{
 }
 
 func registerCommand(cctx *cli.Context) error {
-	f, err := os.Open(cctx.String("config"))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
+	privkeyStr := cctx.String("privkey")
+	peeridStr := cctx.String("peerid")
+	configPath := cctx.String("config")
 
-	var cfg config.Identity
-	if err := json.NewDecoder(f).Decode(&cfg); err != nil {
-		return err
+	if (privkeyStr == "" || peeridStr == "") && configPath == "" {
+		return fmt.Errorf("please input private key and peerid or config file path")
 	}
 
-	if cfg.PrivKey == "" || cfg.PeerID == "" {
-		return fmt.Errorf("valid config")
-	}
-	peerID, privKey, err := cfg.Decode()
-	if err != nil {
-		return err
+	var peerID peer.ID
+	var privKey p2pcrypto.PrivKey
+	var err error
+	if configPath == "" {
+		peerID, privKey, err = config.Identity{
+			PeerID:  peeridStr,
+			PrivKey: privkeyStr,
+		}.Decode()
+		if err != nil {
+			return err
+		}
+	} else {
+		f, err := os.Open(cctx.String("config"))
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		var cfg config.Identity
+		if err := json.NewDecoder(f).Decode(&cfg); err != nil {
+			return err
+		}
+
+		peerID, privKey, err = cfg.Decode()
+		if err != nil {
+			return err
+		}
 	}
 
 	client, err := v0client.New(cctx.String("pando"))
@@ -46,6 +66,6 @@ func registerCommand(cctx *cli.Context) error {
 		return fmt.Errorf("failed to register providers: %s", err)
 	}
 
-	fmt.Println("Registered provider", cfg.PeerID, "at pando", cctx.String("pando"))
+	fmt.Println("Registered provider", peerID.String(), "at pando", cctx.String("pando"))
 	return nil
 }
