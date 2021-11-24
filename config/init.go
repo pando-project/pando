@@ -11,16 +11,18 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-func Init(out io.Writer) (*Config, error) {
+type Option func(*Config)
+
+func Init(out io.Writer, opts ...Option) (*Config, error) {
 	identity, err := CreateIdentity(out)
 	if err != nil {
 		return nil, err
 	}
 
-	return InitWithIdentity(identity)
+	return InitWithIdentity(identity, opts...)
 }
 
-func InitWithIdentity(identity Identity) (*Config, error) {
+func InitWithIdentity(identity Identity, opts ...Option) (*Config, error) {
 	conf := &Config{
 		// setup the node's default addresses.
 		Addresses: Addresses{
@@ -46,9 +48,18 @@ func InitWithIdentity(identity Identity) (*Config, error) {
 			Type: defaultDatastoreType,
 			Dir:  defaultDatastoreDir,
 		},
-		BandWidth:     speedtester.FetchInternetSpeed(),
 		AccountLevel:  AccountLevel{defaultThreshold},
 		SingleDAGSize: defaultSingleDAGSize,
+	}
+	for _, opt := range opts {
+		opt(conf)
+	}
+
+	// disable by option
+	if conf.BandWidth != -1 {
+		conf.BandWidth = speedtester.FetchInternetSpeed()
+	} else {
+		conf.BandWidth = 10
 	}
 
 	return conf, nil

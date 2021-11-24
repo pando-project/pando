@@ -39,7 +39,13 @@ func initCommand(cctx *cli.Context) error {
 		return config.ErrInitialized
 	}
 
-	cfg, err := config.Init(os.Stderr)
+	var cfg *config.Config
+	speedTest := cctx.Bool("speedtest")
+	if !speedTest {
+		cfg, err = config.Init(os.Stderr, config.DisableTestSpeed())
+	} else {
+		cfg, err = config.Init(os.Stderr)
+	}
 	if err != nil {
 		return err
 	}

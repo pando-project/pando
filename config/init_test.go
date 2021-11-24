@@ -9,7 +9,9 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	cfg, err := Init(io.Discard)
+	disSpeed := DisableTestSpeed()
+
+	cfg, err := Init(io.Discard, disSpeed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,8 +32,8 @@ func TestSaveLoad(t *testing.T) {
 	if filepath.Dir(cfgFile) != tmpDir {
 		t.Fatal("wrong root dir", cfgFile)
 	}
-
-	cfg, err := Init(io.Discard)
+	disSpeed := DisableTestSpeed()
+	cfg, err := Init(io.Discard, disSpeed)
 	if err != nil {
 		t.Fatal(err)
 	}

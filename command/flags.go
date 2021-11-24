@@ -18,6 +18,12 @@ var initFlags = []cli.Flag{
 		EnvVars:  []string{"PANDO_LISTEN_GRAPHQL"},
 		Required: false,
 	},
+	&cli.BoolFlag{
+		Name:     "speedtest",
+		Usage:    "switch of speedtest",
+		Value:    true,
+		Required: false,
+	},
 }
 
 var pandoHostFlag = altsrc.NewStringFlag(&cli.StringFlag{
