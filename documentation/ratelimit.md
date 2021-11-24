@@ -1,16 +1,16 @@
 # Rate Limit in Pando
 
-There are 2 types of rate limiter in Pando, gate rate limiter and  peer rate limiters.
+There are 2 types of rate limiter in Pando, gate rate limiter and  peer rate limiter.
 
-The gate rate limiter limits the speed of all peer, and the peer rate limiters is given different rate limits according to different peer types.
+The gate rate limiter limits the request rate of all peer, and the peer rate limiters is given different rate limits according to different peer types.
 
 All rate limiter are implemented using token bucket algorithm, and the generation rate of token is:
 
-`k * bandwidth* single DAG size`
+`k * bandwidth * single DAG size`
 
 This rate is called the `base rate`.
 
-We set `k=0.8` because we considered that we might need to reserve at least 20% of the bandwidth for use by other processes on the server.
+We set `k=0.8` because we considered that it is necessary to reserve at least 20% of the bandwidth for use by other processes on the server.
 
 `bandwidth` is the bandwidth of the environment in which Pando is located. Pando will measure the bandwidth during `pando init` command execution.
 
