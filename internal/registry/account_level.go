@@ -36,5 +36,5 @@ func (r *Registry) ProviderAccountLevel(provider peer.ID) (int, error) {
 }
 
 func (r *Registry) AccountLevelCount() int {
-	return len(r.accountLevel.Threshold)
+	return len(r.accountLevel.Threshold) + 1
 }

@@ -84,7 +84,7 @@ func (i *Limiter) RegisteredLimiter(baseTokenRate float64, accountLevel int, lev
 
 	limiter, exists := i.registeredLimiter[accountLevel]
 	if !exists {
-		weight := float64(accountLevel / (levelCount + 1))
+		weight := float64(accountLevel / levelCount)
 		tokenRate := math.Ceil(0.4 * weight * baseTokenRate)
 		limiter = rate.NewLimiter(rate.Limit(tokenRate), int(tokenRate))
 		i.registeredLimiter[accountLevel] = limiter
