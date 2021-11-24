@@ -26,7 +26,7 @@ We set `k=0.8` because we considered that it is necessary to reserve at least 20
 
 ## Gate Limiter
 
-The token generation rate of Gate limiter is the base rate which mentioned above. It imposes a rate limit on all graph sync requests. A request must meet two conditions at the same time to be granted: it can get tokens from both Gate limiter and Peer limiter. Otherwise, the request will be paused until it can get tokens from the token buckets above.
+The token generation rate of Gate limiter is the base rate which mentioned above. It imposes a rate limit on all graph sync requests. A request must meet two conditions at the same time to be allowed to send: it can get tokens from both Gate limiter and Peer limiter. Otherwise, the request will be paused until it can get tokens from the token buckets above.
 
 ![pando rate limit (2)](https://raw.githubusercontent.com/bsjohnson01/resources/master/pando%20rate%20limit%20(2).png)
 
