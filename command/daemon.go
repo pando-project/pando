@@ -127,7 +127,7 @@ func daemonCommand(cctx *cli.Context) error {
 		return fmt.Errorf("cannot create provider registryInstance: %s", err)
 	}
 
-	tokenRate := math.Ceil((0.8 * float64(cfg.BandWidth)) * cfg.SingleDAGSize)
+	tokenRate := math.Ceil((0.8 * float64(cfg.BandWidth)) / cfg.SingleDAGSize)
 	rateConfig := &policy.LimiterConfig{
 		TotalRate:     tokenRate,
 		TotalBurst:    int(math.Ceil(tokenRate)),

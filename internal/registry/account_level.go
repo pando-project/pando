@@ -12,7 +12,7 @@ var (
 )
 
 func (r *Registry) getAccountLevel(balance *big.Int) (int, error) {
-	level := 0
+	level := 1
 	ok := big.NewInt(1).Div(balance, FIL).IsUint64()
 	if !ok {
 		return -1, fmt.Errorf("valid balance: %s", balance.String())
@@ -36,5 +36,5 @@ func (r *Registry) ProviderAccountLevel(provider peer.ID) (int, error) {
 }
 
 func (r *Registry) AccountLevelCount() int {
-	return len(r.accountLevel.Threshold)
+	return len(r.accountLevel.Threshold) + 1
 }
