@@ -14,7 +14,7 @@ We set `k=0.8` because we considered that it is necessary to reserve at least 20
 
 `bandwidth` is the bandwidth of the environment in which Pando is located. Pando will measure the bandwidth during `pando init` command execution.
 
-`single DAG size` is the size of the data to be transferred in a request, default value is `1Mb`
+`single DAG size` is the size of the data to be transferred of a DAG sync request, default value is `1Mb`
 
 ## Table of Contents
 
