@@ -2,7 +2,6 @@ package registry
 
 import (
 	"Pando/config"
-	"Pando/internal/metrics"
 	"Pando/internal/registry/discovery"
 	"Pando/internal/registry/policy"
 	"Pando/internal/syserr"
@@ -20,7 +19,6 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
-	"go.opencensus.io/stats"
 )
 
 const (
@@ -268,7 +266,6 @@ func (r *Registry) ProviderInfoByAddr(discoAddr string) *ProviderInfo {
 func (r *Registry) ProviderInfo(providerID peer.ID) *ProviderInfo {
 	infoChan := make(chan *ProviderInfo)
 	r.actions <- func() {
-		stats.Record(context.Background(), metrics.ProviderCount.M(int64(len(r.providers))))
 		info, ok := r.providers[providerID]
 		if ok {
 			infoChan <- info
