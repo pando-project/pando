@@ -5,7 +5,7 @@ const (
 	defaultGraphSync = "/ip4/127.0.0.1/tcp/9002"
 	defaultGraphQl   = "/ip4/127.0.0.1/tcp/9003"
 	defaultMetaData  = "/ip4/127.0.0.1/tcp/9004"
-	defaultP2PAddr   = "/ip4/0.0.0.0/tcp/5003"
+	defaultP2PAddr   = "/ip4/0.0.0.0/tcp/9000"
 )
 
 // Addresses stores the (string) multiaddr addresses for the node.
