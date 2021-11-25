@@ -1,9 +1,9 @@
 package main
 
 import (
-	"Pando/config"
 	"Pando/legs"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"github.com/ipfs/go-blockservice"
 	leveldb "github.com/ipfs/go-ds-leveldb"
@@ -11,84 +11,81 @@ import (
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
+	ic "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"log"
 	"math/rand"
 	"os"
+	"strconv"
 	"time"
 
-	"github.com/ipfs/go-cid"
-	dssync "github.com/ipfs/go-datastore/sync"
-	"github.com/ipld/go-ipld-prime"
-
 	golegs "github.com/filecoin-project/go-legs"
+	dssync "github.com/ipfs/go-datastore/sync"
 	_ "github.com/ipld/go-ipld-prime/codec/dagcbor"
 	_ "github.com/ipld/go-ipld-prime/codec/dagjson"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/libp2p/go-libp2p"
-	"github.com/multiformats/go-multicodec"
 )
 
-var (
-	mockTasksNum         = 5
-	TestProviderIdentity = &config.Identity{
-		PeerID:  "12D3KooWDi135q9xcE7xiRN1bBZZGc15dSyFRgm7pajTmt7ndCX5",
-		PrivKey: "CAESQHMFRinebmZ/C2zo8tJfYlWxrW5jUIaNoKndLO/LNuLlOc1eZZUi3InQk7QIx0ggEBtkisx7wd+bFsYJrjkc2Uw=",
-	}
-	PrivKey, _ = TestProviderIdentity.DecodePrivateKey("")
-	// PandoAddrStr Pando Info
-	//PandoAddrStr = "/ip4/192.168.0.101/tcp/5003"
-	//PandoPeerID  = "12D3KooWCjMkPdoB9vWQwC2e98yBB9fK6t4mb9c7tZeDuMpSDmq3"
-)
+func getDagNodes(n int) [][]format.Node {
+	var dags [][]format.Node
+	for i := 0; i < n; i++ {
+		a := merkledag.NewRawNode([]byte("aaaaa" + string(rune(rand.Intn(100000)))))
+		b := merkledag.NewRawNode([]byte("bbbbb" + string(rune(rand.Intn(100000)))))
+		c := merkledag.NewRawNode([]byte("ccccc" + string(rune(rand.Intn(100000)))))
 
-func Store(bs blockstore.Blockstore, n ipld.Node) (ipld.Link, error) {
-	linkproto := cidlink.LinkPrototype{
-		Prefix: cid.Prefix{
-			Version:  1,
-			Codec:    uint64(multicodec.DagJson),
-			MhType:   uint64(multicodec.Sha2_256),
-			MhLength: 16,
-		},
-	}
-	lsys := legs.MkLinkSystem(bs)
+		nd1 := &merkledag.ProtoNode{}
+		nd1.AddNodeLink("cat", a)
 
-	return lsys.Store(ipld.LinkContext{}, linkproto, n)
+		nd2 := &merkledag.ProtoNode{}
+		nd2.AddNodeLink("first", nd1)
+		nd2.AddNodeLink("dog", b)
+
+		nd3 := &merkledag.ProtoNode{}
+		nd3.AddNodeLink("second", nd2)
+		nd3.AddNodeLink("bear", c)
+		dags = append(dags, []format.Node{nd3, nd2, nd1, c, b, a})
+	}
+
+	return dags
 }
 
-func getDagNodes() []format.Node {
-	a := merkledag.NewRawNode([]byte("aaaaa" + string(rune(rand.Intn(100000)))))
-	b := merkledag.NewRawNode([]byte("bbbbb" + string(rune(rand.Intn(100000)))))
-	c := merkledag.NewRawNode([]byte("ccccc" + string(rune(rand.Intn(100000)))))
-
-	nd1 := &merkledag.ProtoNode{}
-	nd1.AddNodeLink("cat", a)
-
-	nd2 := &merkledag.ProtoNode{}
-	nd2.AddNodeLink("first", nd1)
-	nd2.AddNodeLink("dog", b)
-
-	nd3 := &merkledag.ProtoNode{}
-	nd3.AddNodeLink("second", nd2)
-	nd3.AddNodeLink("bear", c)
-
-	return []format.Node{nd3, nd2, nd1, c, b, a}
-}
-
+// eg: CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w= 1 12D3KooWC3jxxw4TdQtoZDv3QNwmh9rtuiyVL8CADpnJYKHh9AiA /ip4/52.14.211.248/tcp/9000 30
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("please input:\r\n 1. Pando PeerID 3. Pando MultiAddr")
+	if len(os.Args) < 5 {
+		fmt.Println("please input:\r\n1. provider private key\n2. mock dag number\n3. Pando PeerID\n4. Pando MultiAddr\n5. Time wait for data transferring[optional, int]")
 		os.Exit(1)
 	}
 
-	PandoPeerID := os.Args[1]
-	PandoAddrStr := os.Args[2]
+	privstr := os.Args[1]
+	dagnum, err := strconv.Atoi(os.Args[2])
+	if err != nil {
+		log.Fatal("dag number must be integer, not: ", os.Args[2])
+	}
+	PandoPeerID := os.Args[3]
+	PandoAddrStr := os.Args[4]
+	var timesleep int
+	if len(os.Args) > 5 {
+		timesleep, err = strconv.Atoi(os.Args[5])
+		if err != nil {
+			timesleep = -1
+		}
+	}
+
+	pkb, err := base64.StdEncoding.DecodeString(privstr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	privkey, err := ic.UnmarshalPrivateKey(pkb)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	rand.Seed(time.Now().UnixNano())
 	dstore, err := leveldb.NewDatastore("", nil)
 	srcStore := dssync.MutexWrap(dstore)
 	h, _ := libp2p.New(context.Background(),
-		libp2p.Identity(PrivKey),
+		libp2p.Identity(privkey),
 	)
 	fmt.Println("p2pHost addr:", h.Addrs())
 	fmt.Println("p2pHost id:", h.ID())
@@ -116,22 +113,30 @@ func main() {
 	time.Sleep(time.Second * 2)
 
 	// store test dag
-	dagNodes := getDagNodes()
-	for i := 0; i < len(dagNodes); i++ {
-		err = dags.Add(context.Background(), dagNodes[i])
-		if err != nil {
-			log.Fatal(err)
+	dagsNodes := getDagNodes(dagnum)
+	for _, dagNodes := range dagsNodes {
+		for i := 0; i < len(dagNodes); i++ {
+			err = dags.Add(context.Background(), dagNodes[i])
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 
 	time.Sleep(time.Second)
-	fmt.Printf("the dag root cid is: %s", dagNodes[0].Cid())
-	err = lp.UpdateRoot(context.Background(), dagNodes[0].Cid())
-	if err != nil {
-		log.Fatal(err)
+	for _, dagNodes := range dagsNodes {
+		fmt.Printf("the dag root cid is: %s\r\n", dagNodes[0].Cid())
+		err = lp.UpdateRoot(context.Background(), dagNodes[0].Cid())
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+	fmt.Println("waiting for data transferring completed")
 
-	time.Sleep(time.Second * 5)
-	lp.Close()
+	if timesleep > 0 {
+		time.Sleep(time.Second * time.Duration(timesleep))
+	} else {
+		time.Sleep(time.Second * 30)
+	}
 	return
 }
