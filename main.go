@@ -42,6 +42,7 @@ func main() {
 			command.DaemonCmd,
 			command.InitCmd,
 			command.RegisterCmd,
+			command.IngestCmd,
 		},
 	}
 

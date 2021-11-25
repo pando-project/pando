@@ -63,3 +63,13 @@ var registerFlags = []cli.Flag{
 		Required: false,
 	},
 }
+
+var ingestFlags = []cli.Flag{
+	&cli.StringFlag{
+		Name:     "provider",
+		Usage:    "Provider to interact with",
+		Aliases:  []string{"prov"},
+		Required: true,
+	},
+	pandoHostFlag,
+}
