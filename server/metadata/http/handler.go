@@ -50,13 +50,13 @@ func (h *httpHandler) ListSnapShotInfo(w http.ResponseWriter, r *http.Request) {
 	ssCid, err := cid.Decode(cidStr)
 	if err != nil {
 		log.Error("cannot decode input cid, err", err)
-		http.Error(w, "", http.StatusInternalServerError)
+		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 	ss, err := h.metaHandler.StateTree.GetSnapShot(ssCid)
 	if err != nil {
 		log.Errorf("cannot get snapshot: %s, err: %s", ssCid.String(), err.Error())
-		http.Error(w, "", http.StatusInternalServerError)
+		http.Error(w, "", http.StatusNotFound)
 		return
 	}
 
@@ -81,7 +81,7 @@ func (h *httpHandler) GetSnapShotByHeight(w http.ResponseWriter, r *http.Request
 	ss, err := h.metaHandler.StateTree.GetSnapShotByHeight(ssHeight)
 	if err != nil {
 		log.Warnf("cannot get snapshot by height: %d, err: %s", ssHeight, err.Error())
-		http.Error(w, "", http.StatusInternalServerError)
+		http.Error(w, "", http.StatusNotFound)
 		return
 	}
 
@@ -114,7 +114,7 @@ func getSsHeight(r *http.Request) (uint64, error) {
 	if err != nil {
 		return uint64(0), fmt.Errorf("invalid height to search, %s", id)
 	}
-	return uint64(uint64(height)), nil
+	return uint64(height), nil
 }
 
 func WriteJsonResponse(w http.ResponseWriter, status int, body []byte) {
