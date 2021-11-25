@@ -6,6 +6,7 @@ import (
 	"Pando/internal/registry"
 	"fmt"
 	leveldb "github.com/ipfs/go-ds-leveldb"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/time/rate"
 	"math"
@@ -13,10 +14,12 @@ import (
 )
 
 var (
-	Bandwidth     = 100.0
-	SingleDAGSize = 2.0
-	BaseTokenRate = math.Ceil(0.8 * Bandwidth / SingleDAGSize)
-	testLimiter   *Limiter
+	Bandwidth        = 100.0
+	SingleDAGSize    = 2.0
+	BaseTokenRate    = math.Ceil(0.8 * Bandwidth / SingleDAGSize)
+	RegistryInstance = newRegistry()
+
+	testLimiter *Limiter
 )
 
 func newRegistry() *registry.Registry {
@@ -35,6 +38,7 @@ func TestNewLimiter(t *testing.T) {
 	limiterConf := LimiterConfig{
 		TotalRate:  BaseTokenRate,
 		TotalBurst: int(BaseTokenRate),
+		Registry:   RegistryInstance,
 	}
 	limiter := NewLimiter(limiterConf)
 
@@ -52,6 +56,7 @@ func TestLimiter_UnregisteredLimiter(t *testing.T) {
 	unregisteredPeerRate := rate.Limit(4.0)
 	limiter := testLimiter.UnregisteredLimiter(BaseTokenRate)
 	assert.Equal(t, unregisteredPeerRate, limiter.Limit())
+	assert.Exactly(t, limiter, testLimiter.UnregisteredLimiter(BaseTokenRate))
 }
 
 func TestLimiter_WhitelistLimiter(t *testing.T) {
@@ -59,6 +64,7 @@ func TestLimiter_WhitelistLimiter(t *testing.T) {
 	whitelistPeerRate := rate.Limit(20.0)
 	limiter := testLimiter.WhitelistLimiter(BaseTokenRate)
 	assert.Equal(t, whitelistPeerRate, limiter.Limit())
+	assert.Exactly(t, limiter, testLimiter.WhitelistLimiter(BaseTokenRate))
 }
 
 func TestLimiter_RegisteredLimiter(t *testing.T) {
@@ -69,4 +75,48 @@ func TestLimiter_RegisteredLimiter(t *testing.T) {
 	accountLevel1 := 1
 	limiter := testLimiter.RegisteredLimiter(BaseTokenRate, accountLevel1, levelCount)
 	assert.Equal(t, rate.Limit(4), limiter.Limit())
+}
+
+func TestLimiter_Allow(t *testing.T) {
+	limitBackup := testLimiter.GateLimiter().Limit()
+	burstBackup := testLimiter.GateLimiter().Burst()
+
+	assert.Equal(t, true, testLimiter.Allow())
+
+	testLimiter.GateLimiter().SetLimit(0)
+	testLimiter.GateLimiter().SetBurst(0)
+	assert.Equal(t, false, testLimiter.Allow())
+
+	testLimiter.GateLimiter().SetLimit(limitBackup)
+	testLimiter.GateLimiter().SetBurst(burstBackup)
+}
+
+func TestLimiter_AddPeerLimiter(t *testing.T) {
+	const testPeerID = "12D3KooWJfFoQ2D1nukmG84DEh6gGEEE49yG6rPCdHoCqhF7YyL1"
+
+	peerID, err := peer.Decode(testPeerID)
+	if err != nil {
+		t.Errorf("decode peer id failed, error: %v", err)
+	}
+	limiter := rate.NewLimiter(1, 1)
+	addedLimiter := testLimiter.AddPeerLimiter(peerID, limiter)
+	assert.Equal(t, limiter, addedLimiter)
+}
+
+func TestLimiter_PeerLimiter(t *testing.T) {
+	peerID := peer.NewPeerRecord().PeerID
+	limiter := rate.NewLimiter(1, 1)
+
+	addedLimiter := testLimiter.AddPeerLimiter(peerID, limiter)
+	peerLimiter := testLimiter.PeerLimiter(peerID)
+	assert.Equal(t, addedLimiter, peerLimiter)
+
+	assert.Nil(t, testLimiter.PeerLimiter("呵呵"))
+}
+
+func TestLimiter_Config(t *testing.T) {
+	limiterConf := testLimiter.Config()
+	assert.Equal(t, BaseTokenRate, limiterConf.TotalRate)
+	assert.Equal(t, int(BaseTokenRate), limiterConf.TotalBurst)
+	assert.Equal(t, RegistryInstance, limiterConf.Registry)
 }
