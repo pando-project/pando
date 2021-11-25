@@ -143,16 +143,27 @@ func (l *Core) unpauseRequest(request graphsync.RequestID, peerRateLimiter *rate
 }
 
 func (l *Core) addPeerLimiter(peerID peer.ID, peerType account.PeerType, accountLevel int) *rate.Limiter {
+	const action = "add peer limiter"
 	var limiter *rate.Limiter
+	var err error
 	baseTokenRate := l.rateLimiter.Config().BaseTokenRate
 	switch peerType {
 	case account.UnregisteredPeer:
-		limiter = l.rateLimiter.UnregisteredLimiter(baseTokenRate)
+		limiter, err = l.rateLimiter.UnregisteredLimiter(baseTokenRate)
+		checkError(action, err)
 	case account.WhiteListPeer:
-		limiter = l.rateLimiter.WhitelistLimiter(baseTokenRate)
+		limiter, err = l.rateLimiter.WhitelistLimiter(baseTokenRate)
+		checkError(action, err)
 	case account.RegisteredPeer:
-		limiter = l.rateLimiter.RegisteredLimiter(baseTokenRate, accountLevel, l.rateLimiter.Config().Registry.AccountLevelCount())
+		limiter, err = l.rateLimiter.RegisteredLimiter(baseTokenRate, accountLevel, l.rateLimiter.Config().Registry.AccountLevelCount())
+		checkError(action, err)
 	}
 
 	return l.rateLimiter.AddPeerLimiter(peerID, limiter)
+}
+
+func checkError(action string, e error) {
+	if e != nil {
+		log.Errorf("%s failed, error: %v", action, e)
+	}
 }

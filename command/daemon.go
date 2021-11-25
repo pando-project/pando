@@ -134,7 +134,10 @@ func daemonCommand(cctx *cli.Context) error {
 		BaseTokenRate: tokenRate,
 		Registry:      registryInstance,
 	}
-	rateLimiter := policy.NewLimiter(*rateConfig)
+	rateLimiter, err := policy.NewLimiter(*rateConfig)
+	if err != nil {
+		return err
+	}
 	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh(), rateLimiter)
 	if err != nil {
 		return err
