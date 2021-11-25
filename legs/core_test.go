@@ -8,19 +8,19 @@ import (
 	"Pando/policy"
 	"context"
 	"fmt"
-	golegs "github.com/filecoin-project/go-legs"
+	goLegs "github.com/filecoin-project/go-legs"
 	"github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
-	dssync "github.com/ipfs/go-datastore/sync"
+	datastoreSync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
 	"github.com/ipld/go-ipld-prime"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	basicnode "github.com/ipld/go-ipld-prime/node/basic"
+	cidLink "github.com/ipld/go-ipld-prime/linking/cid"
+	basicNode "github.com/ipld/go-ipld-prime/node/basic"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multicodec"
@@ -40,8 +40,8 @@ var (
 	}
 )
 
-func Store(n ipld.Node, lsys ipld.LinkSystem) (ipld.Link, error) {
-	linkproto := cidlink.LinkPrototype{
+func Store(n ipld.Node, linkSystem ipld.LinkSystem) (ipld.Link, error) {
+	linkPrototype := cidLink.LinkPrototype{
 		Prefix: cid.Prefix{
 			Version:  1,
 			Codec:    uint64(multicodec.DagJson),
@@ -50,7 +50,7 @@ func Store(n ipld.Node, lsys ipld.LinkSystem) (ipld.Link, error) {
 		},
 	}
 
-	return lsys.Store(ipld.LinkContext{}, linkproto, n)
+	return linkSystem.Store(ipld.LinkContext{}, linkPrototype, n)
 }
 
 func newRegistry() *registry.Registry {
@@ -71,15 +71,26 @@ func getDagNodes() []format.Node {
 	c := merkledag.NewRawNode([]byte("cccc"))
 
 	nd1 := &merkledag.ProtoNode{}
-	nd1.AddNodeLink("cat", a)
+	err := nd1.AddNodeLink("cat", a)
+	if err != nil {
+		return nil
+	}
 
 	nd2 := &merkledag.ProtoNode{}
-	nd2.AddNodeLink("first", nd1)
-	nd2.AddNodeLink("dog", b)
+	if err = nd2.AddNodeLink("first", nd1); err != nil {
+		return nil
+	}
+	if err := nd2.AddNodeLink("dog", b); err != nil {
+		return nil
+	}
 
 	nd3 := &merkledag.ProtoNode{}
-	nd3.AddNodeLink("second", nd2)
-	nd3.AddNodeLink("bear", c)
+	if err := nd3.AddNodeLink("second", nd2); err != nil {
+		return nil
+	}
+	if err := nd3.AddNodeLink("bear", c); err != nil {
+		return nil
+	}
 
 	return []format.Node{nd3, nd2, nd1, c, b, a}
 }
@@ -90,11 +101,17 @@ func TestCreate(t *testing.T) {
 		t.Error(err)
 	}
 	ds := datastore.NewMapDatastore()
-	mds := dssync.MutexWrap(ds)
+	mds := datastoreSync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 	outCh := make(chan<- *metadata.MetaRecord)
-	_, err = NewLegsCore(context.Background(), &host, ds, bs, outCh,
-		policy.NewLimiter(policy.LimiterConfig{}))
+	limiter, err := policy.NewLimiter(policy.LimiterConfig{
+		TotalRate:  1,
+		TotalBurst: 1,
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = NewLegsCore(context.Background(), &host, ds, bs, outCh, limiter)
 	if err != nil {
 		t.Error(err)
 	}
@@ -108,39 +125,41 @@ func TestGetMetaRecord(t *testing.T) {
 		t.Error(err)
 	}
 	ds := datastore.NewMapDatastore()
-	mds := dssync.MutexWrap(ds)
+	mds := datastoreSync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 	outCh := make(chan *metadata.MetaRecord)
-	core, err := NewLegsCore(context.Background(), &host, mds, bs, outCh,
-		policy.NewLimiter(*rateConfig))
+	limiter, err := policy.NewLimiter(*rateConfig)
+	if err != nil {
+		t.Error(err)
+	}
+	legsCore, err := NewLegsCore(context.Background(), &host, mds, bs, outCh, limiter)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// mock provider legs
-	srchost, err := libp2p.New(context.Background())
+	srcHost, err := libp2p.New(context.Background())
 	if err != nil {
 		t.Error(err)
 	}
-	srcds := datastore.NewMapDatastore()
-	srcmds := dssync.MutexWrap(srcds)
-	srcbs := blockstore.NewBlockstore(srcmds)
-	srcLnkS := MkLinkSystem(srcbs)
-	dags := merkledag.NewDAGService(blockservice.New(srcbs, offline.Exchange(srcbs)))
-	lp, err := golegs.NewPublisher(context.Background(), srchost, srcmds, srcLnkS, "PandoPubSub")
+	srcDatastore := datastoreSync.MutexWrap(datastore.NewMapDatastore())
+	srcBlockstore := blockstore.NewBlockstore(srcDatastore)
+	srcLinkSystem := MkLinkSystem(srcBlockstore)
+	dags := merkledag.NewDAGService(blockservice.New(srcBlockstore, offline.Exchange(srcBlockstore)))
+	legsPublisher, err := goLegs.NewPublisher(context.Background(), srcHost, srcDatastore, srcLinkSystem, "PandoPubSub")
 
-	mastr := host.Addrs()[0].String() + "/ipfs/" + host.ID().String()
-	peerInfo, err := peer.AddrInfoFromString(mastr)
+	multiAddress := host.Addrs()[0].String() + "/ipfs/" + host.ID().String()
+	peerInfo, err := peer.AddrInfoFromString(multiAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err = srchost.Connect(context.Background(), *peerInfo); err != nil {
+	if err = srcHost.Connect(context.Background(), *peerInfo); err != nil {
 		t.Fatal(err)
 	}
 
-	// mock Core subscribe the mock provider
-	err = core.Subscribe(context.Background(), srchost.ID())
+	// mock Core subscribes the mock provider
+	err = legsCore.Subscribe(context.Background(), srcHost.ID())
 	if err != nil {
 		t.Error(err)
 	}
@@ -156,17 +175,17 @@ func TestGetMetaRecord(t *testing.T) {
 		}
 	}
 
-	err = lp.UpdateRoot(context.Background(), dagNodes[0].Cid())
+	err = legsPublisher.UpdateRoot(context.Background(), dagNodes[0].Cid())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	node := basicnode.NewString("test1")
-	nlink, err := Store(node, srcLnkS)
+	node := basicNode.NewString("test1")
+	nlink, err := Store(node, srcLinkSystem)
 	if err != nil {
 		t.Error(err)
 	}
-	err = lp.UpdateRoot(context.Background(), nlink.(cidlink.Link).Cid)
+	err = legsPublisher.UpdateRoot(context.Background(), nlink.(cidLink.Link).Cid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,8 +194,12 @@ func TestGetMetaRecord(t *testing.T) {
 
 	t.Cleanup(func() {
 		cancel()
-		lp.Close()
-		core.Close(context.Background())
+		if err := legsPublisher.Close(); err != nil {
+			t.Error(err)
+		}
+		if err := legsCore.Close(context.Background()); err != nil {
+			t.Error(err)
+		}
 	})
 
 	select {
@@ -184,7 +207,7 @@ func TestGetMetaRecord(t *testing.T) {
 		t.Fatal("timeout!not receive record rightly")
 	case record := <-outCh:
 		assert.Equal(t, record.Cid, dagNodes[0].Cid())
-		assert.Equal(t, record.ProviderID, srchost.ID())
+		assert.Equal(t, record.ProviderID, srcHost.ID())
 		t.Log(record)
 	}
 
@@ -192,8 +215,8 @@ func TestGetMetaRecord(t *testing.T) {
 	case _ = <-ctx.Done():
 		t.Fatal("timeout!not receive record rightly")
 	case record := <-outCh:
-		assert.Equal(t, record.Cid, nlink.(cidlink.Link).Cid, "expected: ", nlink.(cidlink.Link).Cid.String(), " received:", record.Cid.String())
-		assert.Equal(t, record.ProviderID, srchost.ID())
+		assert.Equal(t, record.Cid, nlink.(cidLink.Link).Cid, "expected: ", nlink.(cidLink.Link).Cid.String(), " received:", record.Cid.String())
+		assert.Equal(t, record.ProviderID, srcHost.ID())
 		t.Log(record)
 	}
 
@@ -205,11 +228,18 @@ func TestLegsSync(t *testing.T) {
 		t.Error(err)
 	}
 	ds := datastore.NewMapDatastore()
-	mds := dssync.MutexWrap(ds)
+	mds := datastoreSync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
 	dags := merkledag.NewDAGService(blockservice.New(bs, offline.Exchange(bs)))
 	outCh := make(chan *metadata.MetaRecord)
-	_, err = NewLegsCore(context.Background(), &host, mds, bs, outCh, policy.NewLimiter(policy.LimiterConfig{}))
+	limiter, err := policy.NewLimiter(policy.LimiterConfig{
+		TotalRate:  1,
+		TotalBurst: 1,
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = NewLegsCore(context.Background(), &host, mds, bs, outCh, limiter)
 	if err != nil {
 		t.Error(err)
 	}
@@ -226,42 +256,41 @@ func TestLegsSync(t *testing.T) {
 	}
 
 	// mock provider legs
-	dsthost, err := libp2p.New(context.Background())
+	dstHost, err := libp2p.New(context.Background())
 	if err != nil {
 		t.Error(err)
 	}
-	dstds := datastore.NewMapDatastore()
-	dstmds := dssync.MutexWrap(dstds)
-	dstbs := blockstore.NewBlockstore(dstmds)
-	srcLnkS := MkLinkSystem(dstbs)
-	dstdags := merkledag.NewDAGService(blockservice.New(dstbs, offline.Exchange(dstbs)))
+	dstDatastore := datastoreSync.MutexWrap(datastore.NewMapDatastore())
+	dstBlockstore := blockstore.NewBlockstore(dstDatastore)
+	srcLinkSystem := MkLinkSystem(dstBlockstore)
+	dstDags := merkledag.NewDAGService(blockservice.New(dstBlockstore, offline.Exchange(dstBlockstore)))
 
-	ls, err := golegs.NewSubscriber(context.Background(), dsthost, dstmds, srcLnkS, "PandoPubSub", nil)
-	mastr := host.Addrs()[0].String() + "/ipfs/" + host.ID().String()
-	peerInfo, err := peer.AddrInfoFromString(mastr)
+	ls, err := goLegs.NewSubscriber(context.Background(), dstHost, dstDatastore, srcLinkSystem, "PandoPubSub", nil)
+	multiAddress := host.Addrs()[0].String() + "/ipfs/" + host.ID().String()
+	peerInfo, err := peer.AddrInfoFromString(multiAddress)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err = dsthost.Connect(context.Background(), *peerInfo); err != nil {
+	if err = dstHost.Connect(context.Background(), *peerInfo); err != nil {
 		t.Fatal(err)
 	}
 
-	_, _, err = ls.Sync(context.Background(), host.ID(), dagNodes[0].Cid(), golegs.LegSelector(nil))
+	_, _, err = ls.Sync(context.Background(), host.ID(), dagNodes[0].Cid(), goLegs.LegSelector(nil))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// wait graphsync to save the block in blockstore
+	// wait graph-sync to save the block in blockstore
 	time.Sleep(time.Second)
 
-	_, err = dstdags.Get(context.Background(), dagNodes[0].Cid())
+	_, err = dstDags.Get(context.Background(), dagNodes[0].Cid())
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for i := 0; i < len(dagNodes); i++ {
-		_, err := dstbs.Get(dagNodes[i].Cid())
+		_, err := dstBlockstore.Get(dagNodes[i].Cid())
 		assert.NoError(t, err)
 	}
 
