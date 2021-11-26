@@ -1,0 +1,58 @@
+package mock
+
+import (
+	"Pando/internal/registry"
+	"Pando/internal/registry/discovery"
+	"Pando/legs"
+	"Pando/metadata"
+	"Pando/policy"
+	"context"
+	"github.com/ipfs/go-datastore"
+	dssync "github.com/ipfs/go-datastore/sync"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	"github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p-core/host"
+)
+
+type PandoMock struct {
+	DS       datastore.Batching
+	BS       blockstore.Blockstore
+	Host     host.Host
+	Core     *legs.Core
+	Registry *registry.Registry
+	Discover discovery.Discoverer
+}
+
+func NewPandoMock() (*PandoMock, error) {
+	ctx := context.Background()
+
+	ds := datastore.NewMapDatastore()
+	mds := dssync.MutexWrap(ds)
+	h, err := libp2p.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+	bs := blockstore.NewBlockstore(mds)
+
+	outCh := make(chan *metadata.MetaRecord)
+	core, err := legs.NewLegsCore(ctx, &h, mds, bs, outCh, policy.NewLimiter(policy.LimiterConfig{}))
+	if err != nil {
+		return nil, err
+	}
+
+	mockDisco, err := newMockDiscoverer(exceptID)
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := registry.NewRegistry(&discoveryCfg, &aclCfg, mds, mockDisco)
+
+	return &PandoMock{
+		DS:       mds,
+		BS:       bs,
+		Host:     h,
+		Core:     core,
+		Registry: r,
+		Discover: mockDisco,
+	}, nil
+}

@@ -17,7 +17,7 @@ func TestInit(t *testing.T) {
 	os.Setenv(config.EnvDir, tempDir)
 
 	app := &cli.App{
-		Name: "indexer",
+		Name: "pando",
 		Commands: []*cli.Command{
 			InitCmd,
 		},

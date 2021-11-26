@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"github.com/ipfs/go-datastore"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/stretchr/testify/assert"
 	"math/big"
@@ -94,7 +93,6 @@ func TestRegisterProvider(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	logging.SetLogLevel("*", "debug")
 	addrs := []string{"/ip4/127.0.0.1/tcp/9999"}
 	account := "t01234"
 	data, err := model.MakeRegisterRequest(peerID, privKey, addrs, account)
@@ -120,4 +118,20 @@ func TestRegisterProvider(t *testing.T) {
 	level, err := reg.ProviderAccountLevel(peerID)
 	assert.NoError(t, err)
 	assert.Equal(t, level, 3, "not get weight rightly")
+}
+
+func TestRegisterProviderBadRequest(t *testing.T) {
+	// error data, should be envelop
+	reqBody := bytes.NewBuffer([]byte("bad request data"))
+
+	req := httptest.NewRequest("POST", "http://example.com/providers", reqBody)
+	w := httptest.NewRecorder()
+	hnd.RegisterProvider(w, req)
+
+	resp := w.Result()
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatal("expected response to be", http.StatusBadRequest)
+	}
+
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	p2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/multiformats/go-multiaddr"
 	"github.com/urfave/cli/v2"
 	"os"
 )
@@ -22,6 +23,16 @@ func registerCommand(cctx *cli.Context) error {
 	privkeyStr := cctx.String("privkey")
 	peeridStr := cctx.String("peerid")
 	configPath := cctx.String("config")
+	providerAddrStr := cctx.StringSlice("provider-addr")
+	var err error
+
+	for _, s := range providerAddrStr {
+		_, err = multiaddr.NewMultiaddr(s)
+		if err != nil {
+			//return fmt.Errorf("invalid multiaddr: %s", s)
+			//fmt.Println(s)
+		}
+	}
 
 	if (privkeyStr == "" || peeridStr == "") && configPath == "" {
 		return fmt.Errorf("please input private key and peerid or config file path")
@@ -29,7 +40,6 @@ func registerCommand(cctx *cli.Context) error {
 
 	var peerID peer.ID
 	var privKey p2pcrypto.PrivKey
-	var err error
 	if configPath == "" {
 		peerID, privKey, err = config.Identity{
 			PeerID:  peeridStr,
@@ -61,7 +71,7 @@ func registerCommand(cctx *cli.Context) error {
 		return err
 	}
 
-	err = client.Register(cctx.Context, peerID, privKey, cctx.StringSlice("provider-addr"), cctx.String("miner"))
+	err = client.Register(cctx.Context, peerID, privKey, providerAddrStr, cctx.String("miner"))
 	if err != nil {
 		return fmt.Errorf("failed to register providers: %s", err)
 	}
