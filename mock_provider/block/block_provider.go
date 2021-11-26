@@ -1,15 +1,16 @@
 package main
 
 import (
-	"Pando/config"
 	"Pando/legs"
 	"Pando/mock_provider/task"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime/datamodel"
+	ic "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"log"
@@ -31,18 +32,6 @@ import (
 	"github.com/multiformats/go-multicodec"
 )
 
-var (
-	//mockTasksNum         = 5
-	TestProviderIdentity = &config.Identity{
-		PeerID:  "12D3KooWDi135q9xcE7xiRN1bBZZGc15dSyFRgm7pajTmt7ndCX5",
-		PrivKey: "CAESQHMFRinebmZ/C2zo8tJfYlWxrW5jUIaNoKndLO/LNuLlOc1eZZUi3InQk7QIx0ggEBtkisx7wd+bFsYJrjkc2Uw=",
-	}
-	PrivKey, _ = TestProviderIdentity.DecodePrivateKey("")
-	// PandoAddrStr Pando Info
-	//PandoAddrStr = "/ip4/192.168.0.101/tcp/5003"
-	//PandoPeerID  = "12D3KooWCjMkPdoB9vWQwC2e98yBB9fK6t4mb9c7tZeDuMpSDmq3"
-)
-
 func Store(bs blockstore.Blockstore, n ipld.Node) (ipld.Link, error) {
 	linkproto := cidlink.LinkPrototype{
 		Prefix: cid.Prefix{
@@ -57,18 +46,36 @@ func Store(bs blockstore.Blockstore, n ipld.Node) (ipld.Link, error) {
 	return lsys.Store(ipld.LinkContext{}, linkproto, n)
 }
 
+// eg: CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w= 10 12D3KooWC3jxxw4TdQtoZDv3QNwmh9rtuiyVL8CADpnJYKHh9AiA /ip4/52.14.211.248/tcp/9000 30
 func main() {
-	if len(os.Args) < 4 {
-		fmt.Println("please input:\r\n 1.mockTask number 2. Pando PeerID 3. Pando MultiAddr")
+	if len(os.Args) < 5 {
+		fmt.Println("please input:\r\n1. provider private key\n2. mock block number\n3. Pando PeerID\n4. Pando MultiAddr\n5. Time wait for data transferring[optional, int]")
 		os.Exit(1)
 	}
 
-	mockTasksNum, err := strconv.Atoi(os.Args[1])
+	privstr := os.Args[1]
+	blocknum, err := strconv.Atoi(os.Args[2])
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal("block number must be integer, not: ", os.Args[2])
 	}
-	PandoPeerID := os.Args[2]
-	PandoAddrStr := os.Args[3]
+	PandoPeerID := os.Args[3]
+	PandoAddrStr := os.Args[4]
+	var timesleep int
+	if len(os.Args) > 5 {
+		timesleep, err = strconv.Atoi(os.Args[5])
+		if err != nil {
+			timesleep = -1
+		}
+	}
+
+	pkb, err := base64.StdEncoding.DecodeString(privstr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	privkey, err := ic.UnmarshalPrivateKey(pkb)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	rand.Seed(time.Now().UnixNano())
 	dstore, err := leveldb.NewDatastore("", nil)
@@ -76,7 +83,7 @@ func main() {
 	//srcStore := dssync.MutexWrap(datastore.NewMapDatastore())
 	srcStore := dssync.MutexWrap(dstore)
 	h, _ := libp2p.New(context.Background(),
-		libp2p.Identity(PrivKey),
+		libp2p.Identity(privkey),
 	)
 	fmt.Println("p2pHost addr:", h.Addrs())
 	fmt.Println("p2pHost id:", h.ID())
@@ -97,7 +104,7 @@ func main() {
 
 	// gen test nodes
 	nodes := make([]datamodel.Node, 0)
-	mockTasks := task.GenMockTask(mockTasksNum)
+	mockTasks := task.GenMockTask(blocknum)
 	for i := 0; i < len(mockTasks); i++ {
 		taskBytes, err := json.Marshal(mockTasks[i])
 		if err != nil {
@@ -133,7 +140,12 @@ func main() {
 		}
 	}
 
-	time.Sleep(time.Second * 7)
-	lp.Close()
+	fmt.Println("waiting for data transferring completed")
+	if timesleep > 0 {
+		time.Sleep(time.Second * time.Duration(timesleep))
+	} else {
+		time.Sleep(time.Second * 30)
+	}
+
 	return
 }
