@@ -13,6 +13,7 @@ import (
 	"golang.org/x/time/rate"
 	"math"
 	"testing"
+	"time"
 )
 
 var (
@@ -251,6 +252,7 @@ func TestLimiter_Allow(t *testing.T) {
 			Convey(testDescription, func() {
 				testLimiter.GateLimiter().SetLimit(testData.limit)
 				testLimiter.GateLimiter().SetBurst(testData.burst)
+				time.Sleep(time.Second)
 				So(testLimiter.Allow(), testData.expect)
 
 				stubTestLimiter.Reset()
