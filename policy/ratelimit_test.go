@@ -12,11 +12,10 @@ import (
 )
 
 var (
-	bandwidth        = 100.0
-	singleDAGSize    = 2.0
-	baseTokenRate    = math.Ceil(0.8 * bandwidth / singleDAGSize)
-	registryInstance *registry.Registry
-	testLimiter      *Limiter
+	bandwidth     = 100.0
+	singleDAGSize = 2.0
+	baseTokenRate = math.Ceil(0.8 * bandwidth / singleDAGSize)
+	testLimiter   *Limiter
 )
 
 func init() {
@@ -55,7 +54,7 @@ func TestNewLimiter(t *testing.T) {
 			limiter, err := NewLimiter(LimiterConfig{
 				TotalRate:  baseTokenRate,
 				TotalBurst: int(baseTokenRate),
-				Registry:   registryInstance,
+				Registry:   &registry.Registry{},
 			})
 			So(limiter, ShouldNotBeNil)
 			So(err, ShouldBeNil)
