@@ -57,7 +57,7 @@ func InitWithIdentity(identity Identity, opts ...Option) (*Config, error) {
 
 	// disable by option
 	if conf.BandWidth != -1 {
-		conf.BandWidth = speedtester.FetchInternetSpeed()
+		conf.BandWidth = speedtester.FetchInternetSpeed(false)
 	} else {
 		conf.BandWidth = 10
 	}

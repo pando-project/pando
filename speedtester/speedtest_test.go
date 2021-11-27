@@ -5,7 +5,7 @@ import (
 )
 
 func TestFetchInternetSpeed(t *testing.T) {
-	downloadSpeed := FetchInternetSpeed()
+	downloadSpeed := FetchInternetSpeed(true)
 	if downloadSpeed <= 1 {
 		t.Errorf("download speed is lower than 1 Mbps, network environment sucks")
 	}

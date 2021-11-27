@@ -17,12 +17,15 @@ func checkError(err error) {
 	}
 }
 
-func FetchInternetSpeed() float64 {
+func FetchInternetSpeed(onlyOneTarget bool) float64 {
 	user, err := speedtest.FetchUserInfo()
 	checkError(err)
 	serverList, err := speedtest.FetchServerList(user)
 	checkError(err)
 	targets := serverList.Servers
+	if onlyOneTarget {
+		targets = targets[:1]
+	}
 
 	var downloadSpeedList []float64
 	targetCount := len(targets)
