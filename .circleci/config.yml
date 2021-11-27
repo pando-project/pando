@@ -34,7 +34,7 @@ jobs:
   build-push:
     working_directory: ~/repo
     docker:
-      - image: circleci/golang:1.6
+      - image: circleci/golang:1.16
     steps:
       - checkout
       - run:
