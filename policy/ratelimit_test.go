@@ -94,7 +94,7 @@ func TestNewLimiter(t *testing.T) {
 
 func TestLimiter_UnregisteredLimiter(t *testing.T) {
 	// m * baseRate = 0.1 * 0.8 * 100 / 2 = 4
-	Convey("TestUnregisteredLimiter", t, func() {
+	Convey("Test UnregisteredLimiter", t, func() {
 		testLimiterCopy := *testLimiter
 		stubTestLimiter := ApplyGlobalVar(&testLimiter, &testLimiterCopy)
 
@@ -113,14 +113,16 @@ func TestLimiter_UnregisteredLimiter(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(limiterExactlyExists, ShouldEqual, unregisteredLimiter)
 			})
-
-			stubTestLimiter.Reset()
 		})
 
 		Convey("return nil and error when base rate is 0", func() {
 			tokenRateZeroLimiter, err := testLimiter.UnregisteredLimiter(0)
 			So(tokenRateZeroLimiter, ShouldBeNil)
 			So(err, ShouldEqual, tokenRateZeroError)
+		})
+
+		Reset(func() {
+			stubTestLimiter.Reset()
 		})
 	})
 }
@@ -146,14 +148,16 @@ func TestLimiter_WhitelistLimiter(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(limiterExactlyExists, ShouldEqual, whitelistLimiter)
 			})
-
-			stubTestLimiter.Reset()
 		})
 
 		Convey("return nil and error when base rate is 0", func() {
 			tokenRateZeroLimiter, err := testLimiter.WhitelistLimiter(0)
 			So(tokenRateZeroLimiter, ShouldBeNil)
 			So(err, ShouldEqual, tokenRateZeroError)
+		})
+
+		Reset(func() {
+			stubTestLimiter.Reset()
 		})
 	})
 }
@@ -177,8 +181,6 @@ func TestLimiter_RegisteredLimiter(t *testing.T) {
 			Convey("limit of registered limiter with account level is [1/5] should be 4", func() {
 				So(limiter.Limit(), ShouldEqual, rate.Limit(4))
 			})
-
-			stubTestLimiter.Reset()
 		})
 
 		// table-driven test
@@ -207,8 +209,6 @@ func TestLimiter_RegisteredLimiter(t *testing.T) {
 					testData.accountLevel, testData.levelCount)
 				So(limiter, ShouldBeNil)
 				So(err, ShouldResemble, testData.err)
-
-				stubTestLimiter.Reset()
 			})
 		}
 
@@ -219,7 +219,9 @@ func TestLimiter_RegisteredLimiter(t *testing.T) {
 			So(err, ShouldResemble, tokenRateZeroError)
 		})
 
-		stubTestLimiter.Reset()
+		Reset(func() {
+			stubTestLimiter.Reset()
+		})
 	})
 }
 
