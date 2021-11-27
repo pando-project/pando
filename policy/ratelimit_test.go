@@ -1,13 +1,9 @@
 package policy
 
 import (
-	"Pando/config"
-	"Pando/internal/lotus"
 	"Pando/internal/registry"
 	"fmt"
 	. "github.com/agiledragon/gomonkey/v2"
-	"github.com/ipfs/go-datastore/sync"
-	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/libp2p/go-libp2p-core/peer"
 	. "github.com/smartystreets/goconvey/convey"
 	"golang.org/x/time/rate"
@@ -24,28 +20,11 @@ var (
 )
 
 func init() {
-	// init registryInstance
-	dstore, err := leveldb.NewDatastore("/tmp", nil)
-	if err != nil {
-		panic(fmt.Errorf("create datastore failed, error: %v", err))
-	}
-	mutexDstore := sync.MutexWrap(dstore)
-	lotusDiscoverer, err := lotus.NewDiscoverer("https://api.chain.love")
-	if err != nil {
-		panic(fmt.Errorf("create discovery failed, error: %v", err))
-	}
-	registryInstance, err = registry.NewRegistry(
-		&config.Discovery{Policy: config.Policy{Allow: true}},
-		&config.AccountLevel{Threshold: []int{1, 10}}, mutexDstore, lotusDiscoverer)
-	if err != nil {
-		panic(fmt.Errorf("new registry failed, error: %v", err))
-	}
-
-	// init testLimiter
+	var err error
 	testLimiter, err = NewLimiter(LimiterConfig{
 		TotalRate:  baseTokenRate,
 		TotalBurst: int(baseTokenRate),
-		Registry:   registryInstance,
+		Registry:   &registry.Registry{},
 	})
 	if err != nil {
 		panic(fmt.Errorf("new test limiter failed, error: %v", err))
