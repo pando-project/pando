@@ -68,6 +68,8 @@ workflows:
     jobs:
       - test
       - build-push:
+          requires:
+            - test
           filters:
             branches:
               only:
