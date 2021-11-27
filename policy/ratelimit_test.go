@@ -13,7 +13,6 @@ import (
 	"golang.org/x/time/rate"
 	"math"
 	"testing"
-	"time"
 )
 
 var (
@@ -221,43 +220,6 @@ func TestLimiter_RegisteredLimiter(t *testing.T) {
 		})
 
 		stubTestLimiter.Reset()
-	})
-}
-
-func TestLimiter_Allow(t *testing.T) {
-	Convey("TestAllow", t, func() {
-		testLimiterCopy := *testLimiter
-		stubTestLimiter := ApplyGlobalVar(&testLimiter, &testLimiterCopy)
-
-		type testArg struct {
-			limit  rate.Limit
-			burst  int
-			expect Assertion
-		}
-		testData := func(limit float64, burst int, expect Assertion) *testArg {
-			return &testArg{
-				limit:  rate.Limit(limit),
-				burst:  burst,
-				expect: expect,
-			}
-		}
-		testTable := map[string]*testArg{
-			"request should be allowed " +
-				"when limit = burst": testData(1, 1, ShouldBeTrue),
-			"request should be allowed when limit > burst":     testData(0, 1, ShouldBeTrue),
-			"request should not be allowed when limit < burst": testData(1, 0, ShouldBeFalse),
-		}
-
-		for testDescription, testData := range testTable {
-			Convey(testDescription, func() {
-				testLimiter.GateLimiter().SetLimit(testData.limit)
-				testLimiter.GateLimiter().SetBurst(testData.burst)
-				time.Sleep(time.Second)
-				So(testLimiter.Allow(), testData.expect)
-
-				stubTestLimiter.Reset()
-			})
-		}
 	})
 }
 
