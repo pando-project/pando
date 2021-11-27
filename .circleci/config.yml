@@ -31,7 +31,7 @@ jobs:
       - codecov/upload:
           file: coverage.txt
 
-  build:
+  build-push:
     working_directory: ~/repo
     docker:
       - image: circleci/golang:1.6
@@ -52,6 +52,11 @@ jobs:
             docker login -u ${DOCKER_ALI_USERNAME} -p ${DOCKER_ALI_PWD} ${DOCKER_REGISTRY}
             docker push ${TAG}
             docker push ${DOCKER_STR}:latest
+
+  notify:
+    docker:
+      - image: circleci/golang:1.6
+    steps:
       - slack/notify:
           event: fail
           template: basic_fail_1
@@ -73,3 +78,4 @@ workflows:
             branches:
               only:
                 - main
+      - notify
