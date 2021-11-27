@@ -184,31 +184,30 @@ func TestLimiter_RegisteredLimiter(t *testing.T) {
 		})
 
 		// table-driven test
-		type testArg struct {
+		testErr := func(accountLevel int, levelCount int) error {
+			return fmt.Errorf("accountLevel or levelCount is invalid, "+
+				"given: accountLevel=%v, levelCount=%v", accountLevel, levelCount)
+		}
+		tests := []struct {
+			description  string
 			accountLevel int
 			levelCount   int
 			err          error
-		}
-		testData := func(accountLevel int, levelCount int) *testArg {
-			return &testArg{
-				accountLevel: accountLevel,
-				levelCount:   levelCount,
-				err: fmt.Errorf("accountLevel or levelCount is invalid, given: "+
-					"accountLevel=%v, levelCount=%v", accountLevel, levelCount),
-			}
-		}
-		testTable := map[string]*testArg{
-			"return nil when accountLevel = 0":          testData(0, 5),
-			"return nil when levelCount = 0":            testData(5, 0),
-			"return nil when accountLevel < levelCount": testData(6, 5),
+		}{
+			{"return nil when accountLevel = 0",
+				0, 5, testErr(0, 5)},
+			{"return nil when levelCount = 0",
+				5, 0, testErr(5, 0)},
+			{"return nil when accountLevel < levelCount",
+				6, 5, testErr(6, 5)},
 		}
 
-		for testDescription, testData := range testTable {
-			Convey(testDescription, func() {
+		for _, test := range tests {
+			Convey(test.description, func() {
 				limiter, err := testLimiter.RegisteredLimiter(baseTokenRate,
-					testData.accountLevel, testData.levelCount)
+					test.accountLevel, test.levelCount)
 				So(limiter, ShouldBeNil)
-				So(err, ShouldResemble, testData.err)
+				So(err, ShouldResemble, test.err)
 			})
 		}
 
