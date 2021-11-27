@@ -3,7 +3,7 @@ module Pando
 go 1.16
 
 require (
-	github.com/Shopify/toxiproxy/v2 v2.2.0
+	github.com/agiledragon/gomonkey/v2 v2.3.1
 	github.com/briandowns/spinner v1.11.1
 	github.com/filecoin-project/go-legs v0.0.0-20211116112108-61960ef1f8ef
 	github.com/filecoin-project/go-state-types v0.1.1-0.20210915140513-d354ccf10379
@@ -37,6 +37,7 @@ require (
 	github.com/multiformats/go-multicodec v0.3.1-0.20210902112759-1539a079fd61
 	github.com/shopspring/decimal v1.3.1
 	github.com/showwin/speedtest-go v1.1.4
+	github.com/smartystreets/goconvey v1.7.2
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/whyrusleeping/cbor-gen v0.0.0-20210713220151-be142a5ae1a8
