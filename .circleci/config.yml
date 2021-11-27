@@ -52,18 +52,12 @@ jobs:
             docker login -u ${DOCKER_ALI_USERNAME} -p ${DOCKER_ALI_PWD} ${DOCKER_REGISTRY}
             docker push ${TAG}
             docker push ${DOCKER_STR}:latest
-
-  notify:
-    docker:
-      - image: circleci/golang:1.6
-    steps:
       - slack/notify:
           event: fail
           template: basic_fail_1
       - slack/notify:
           event: pass
           template: basic_success_1
-
 
 
 # Invoke jobs via workflows
@@ -78,4 +72,3 @@ workflows:
             branches:
               only:
                 - main
-      - notify
