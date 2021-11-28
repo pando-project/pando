@@ -71,13 +71,13 @@ workflows:
           name: unit test
           post-steps:
             - jira/notify:
-                job_type: unit-test
+                job_type: build
       - build-push:
           name: build & deploy
           post-steps:
             - jira/notify:
                 environment_type: production
-                job_type: deploy
+                job_type: deployment
           filters:
             branches:
               only:
