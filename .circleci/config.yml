@@ -66,8 +66,17 @@ workflows:
   pando-build: # This is the name of the workflow, feel free to change it to better match your workflow.
     # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - test
+      - test:
+          name: unit test
+          post-steps:
+            - jira/notify:
+                job_type: unit-test
       - build-push:
+          name: build & deploy
+          post-steps:
+            - jira/notify:
+                environment_type: production
+                job_type: deploy
           filters:
             branches:
               only:
