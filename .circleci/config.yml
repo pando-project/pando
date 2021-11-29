@@ -8,7 +8,7 @@ orbs:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  build:
+  test:
     working_directory: ~/repo
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
@@ -30,11 +30,18 @@ jobs:
             go test -coverprofile=coverage.txt -covermode=atomic $TEST_TARGET
       - codecov/upload:
           file: coverage.txt
-      - setup_remote_docker:
-          version: 19.03.13
+
+  build-push:
+    working_directory: ~/repo
+    docker:
+      - image: circleci/golang:1.16
+    steps:
+      - checkout
       - run:
           name: Build Service
           command: go build -o pando
+      - setup_remote_docker:
+          version: 19.03.13
       - run:
           name: Build and push Docker image
           command: |
@@ -53,14 +60,16 @@ jobs:
           template: basic_success_1
 
 
-
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  go-build: # This is the name of the workflow, feel free to change it to better match your workflow.
+  pando-build: # This is the name of the workflow, feel free to change it to better match your workflow.
     # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - build:
+      - test
+      - build-push:
+          requires:
+            - test
           filters:
             branches:
               only:
