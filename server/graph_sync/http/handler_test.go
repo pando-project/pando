@@ -1,37 +1,67 @@
 package http
 
 import (
+	"Pando/legs"
 	"Pando/test/mock"
+	"bytes"
 	"context"
+	"errors"
+	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/gorilla/mux"
+	"github.com/libp2p/go-libp2p-core/peer"
+	. "github.com/smartystreets/goconvey/convey"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
-var pando, _ = mock.NewPandoMock()
-
 func TestSubProvider(t *testing.T) {
-	if pando == nil {
-		t.Fatal("nil pando mock")
-	}
+	Convey("test subscribe provider", t, func() {
+		// mock functions dep
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		h := newHandler(pando.Core)
 
-	h := newHandler(pando.Core)
-	p := "12D3KooWSQJeqeks5YAEzAaLdevYNUXYUp7bk9tHt9UXDQkVS3JC"
+		request := httptest.NewRequest(http.MethodPost, "http://127.0.0.1", bytes.NewReader([]byte("")))
+		httpWriter := httptest.NewRecorder()
 
-	req := httptest.NewRequest("GET", "https://localhost:9002/graph/sub/"+p, nil)
-	ctx := context.Background()
-	m := map[string]string{"peerid": p}
-	ctx = context.WithValue(ctx, 0, m)
+		Convey("return 200 when subscribe right", func() {
+			patch1 := ApplyMethod(reflect.TypeOf(pando.Core), "Subscribe",
+				func(_ *legs.Core, _ context.Context, _ peer.ID) error {
+					return nil
+				})
+			defer patch1.Reset()
+			patch2 := ApplyFunc(mux.Vars, func(r *http.Request) map[string]string {
+				return map[string]string{"peerid": "12D3KooWJfFoQ2D1nukmG84DEh6gGEEE49yG6rPCdHoCqhF7YyL1"}
+			})
+			defer patch2.Reset()
+			h.SubProvider(httpWriter, request)
+			So(httpWriter.Result().StatusCode, ShouldEqual, http.StatusOK)
+		})
+		Convey("return 500 when subscribe failed", func() {
+			patch1 := ApplyMethod(reflect.TypeOf(pando.Core), "Subscribe",
+				func(_ *legs.Core, _ context.Context, _ peer.ID) error {
+					return errors.New("testerror")
+				})
+			defer patch1.Reset()
+			patch2 := ApplyFunc(mux.Vars, func(r *http.Request) map[string]string {
+				return map[string]string{"peerid": "12D3KooWJfFoQ2D1nukmG84DEh6gGEEE49yG6rPCdHoCqhF7YyL1"}
+			})
+			defer patch2.Reset()
 
-	req = req.WithContext(ctx)
+			h.SubProvider(httpWriter, request)
+			So(httpWriter.Result().StatusCode, ShouldEqual, http.StatusInternalServerError)
+		})
+		Convey("return 400 when decode peerid failed", func() {
+			patch := ApplyFunc(mux.Vars, func(r *http.Request) map[string]string {
+				return map[string]string{"peerid": ""}
+			})
+			defer patch.Reset()
 
-	w := httptest.NewRecorder()
+			h.SubProvider(httpWriter, request)
+			So(httpWriter.Result().StatusCode, ShouldEqual, http.StatusBadRequest)
+		})
 
-	h.SubProvider(w, req)
-	resp := w.Result()
-
-	if resp.StatusCode != http.StatusOK {
-		t.Log(resp.StatusCode)
-		t.Fatal("expected response to be", http.StatusOK)
-	}
+	})
 }

@@ -7,6 +7,7 @@ import (
 	"Pando/metadata"
 	"Pando/policy"
 	"context"
+	"fmt"
 	"github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
@@ -21,6 +22,7 @@ type PandoMock struct {
 	Core     *legs.Core
 	Registry *registry.Registry
 	Discover discovery.Discoverer
+	outMeta  chan *metadata.MetaRecord
 }
 
 func NewPandoMock() (*PandoMock, error) {
@@ -45,10 +47,14 @@ func NewPandoMock() (*PandoMock, error) {
 	}
 
 	limiter, err := policy.NewLimiter(policy.LimiterConfig{
-		TotalRate:  BaseTokenRate,
-		TotalBurst: int(BaseTokenRate),
-		Registry:   r,
+		TotalRate:     BaseTokenRate,
+		TotalBurst:    int(BaseTokenRate),
+		Registry:      r,
+		BaseTokenRate: BaseTokenRate,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	outCh := make(chan *metadata.MetaRecord)
 	core, err := legs.NewLegsCore(ctx, &h, mds, bs, outCh, limiter)
@@ -63,5 +69,13 @@ func NewPandoMock() (*PandoMock, error) {
 		Core:     core,
 		Registry: r,
 		Discover: mockDisco,
+		outMeta:  outCh,
 	}, nil
+}
+
+func (pando *PandoMock) GetMetaRecordCh() (chan *metadata.MetaRecord, error) {
+	if pando.outMeta != nil {
+		return pando.outMeta, nil
+	}
+	return nil, fmt.Errorf("nil channel")
 }

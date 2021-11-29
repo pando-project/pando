@@ -1,17 +1,21 @@
-package registry
+package registry_test
 
 import (
 	"Pando/config"
+	. "Pando/internal/registry"
 	"Pando/internal/registry/discovery"
+	"Pando/internal/syserr"
+	"Pando/test/mock"
 	"context"
 	"errors"
-	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
-
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
+	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"net/http"
+	"testing"
+	"time"
 )
 
 type mockDiscoverer struct {
@@ -68,40 +72,98 @@ func (m *mockDiscoverer) Discover(ctx context.Context, peerID peer.ID, filecoinA
 }
 
 func TestNewRegistryDiscovery(t *testing.T) {
-	mockDisco := newMockDiscoverer(t, exceptID)
+	Convey("test create and close register with discovery", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		r := pando.Registry
+		err = r.Close()
+		So(err, ShouldBeNil)
+		err = r.Close()
+		So(err, ShouldBeNil)
+	})
+	//mockDisco := newMockDiscoverer(t, exceptID)
+	//
+	//r, err := NewRegistry(&discoveryCfg, &aclCfg, nil, mockDisco)
+	//assert.NoError(t, err)
+	//
+	//t.Log("created new registry")
+	//
+	//peerID, err := peer.Decode(trustedID)
+	//assert.NoError(t, err, "bad provider ID")
+	//
+	//maddr, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/3002")
+	//assert.NoErrorf(t, err, "Cannot create multiaddr: %s", err)
+	//info := &ProviderInfo{
+	//	AddrInfo: peer.AddrInfo{
+	//		ID:    peerID,
+	//		Addrs: []multiaddr.Multiaddr{maddr},
+	//	},
+	//}
+	//
+	//err = r.Register(info)
+	//if err != nil {
+	//	t.Error("failed to register directly:", err)
+	//}
+	//
+	//err = r.Close()
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//
+	//// Check that 2nd call to Close is ok
+	//err = r.Close()
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+}
 
-	r, err := NewRegistry(&discoveryCfg, &aclCfg, nil, mockDisco)
-	assert.NoError(t, err)
+func TestRegisterAndDiscovery(t *testing.T) {
+	Convey("test register and discovery", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		r := pando.Registry
+		peerID, err := peer.Decode(trustedID)
+		assert.NoError(t, err, "bad provider ID")
+		maddr, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/3002")
+		assert.NoErrorf(t, err, "Cannot create multiaddr: %s", err)
+		_ = &ProviderInfo{
+			AddrInfo: peer.AddrInfo{
+				ID:    peerID,
+				Addrs: []multiaddr.Multiaddr{maddr},
+			},
+		}
 
-	t.Log("created new registry")
+		testCase := []struct {
+			registerInfo *ProviderInfo
+			expected     error
+		}{
+			{
+				registerInfo: &ProviderInfo{
+					AddrInfo: peer.AddrInfo{
+						ID:    peerID,
+						Addrs: []multiaddr.Multiaddr{maddr},
+					},
+				},
+				expected: nil,
+			},
+			{
+				registerInfo: &ProviderInfo{
+					AddrInfo: peer.AddrInfo{
+						ID:    "dasdsada",
+						Addrs: []multiaddr.Multiaddr{maddr},
+					},
+				},
+				expected: syserr.New(ErrNotAllowed, http.StatusForbidden),
+			},
+		}
+		Convey("register", func() {
+			for _, tt := range testCase {
+				res := r.Register(tt.registerInfo)
+				So(res, ShouldResemble, tt.expected)
+			}
+		})
 
-	peerID, err := peer.Decode(trustedID)
-	assert.NoError(t, err, "bad provider ID")
-
-	maddr, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/3002")
-	assert.NoErrorf(t, err, "Cannot create multiaddr: %s", err)
-	info := &ProviderInfo{
-		AddrInfo: peer.AddrInfo{
-			ID:    peerID,
-			Addrs: []multiaddr.Multiaddr{maddr},
-		},
-	}
-
-	err = r.Register(info)
-	if err != nil {
-		t.Error("failed to register directly:", err)
-	}
-
-	err = r.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Check that 2nd call to Close is ok
-	err = r.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
+	})
 }
 
 func TestDiscoveryAllowed(t *testing.T) {

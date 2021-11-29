@@ -18,7 +18,6 @@ import (
 	"github.com/ipfs/go-datastore/query"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/multiformats/go-multiaddr"
 )
 
 const (
@@ -466,21 +465,4 @@ func (r *Registry) cleanup() {
 
 func (r *Registry) pollProviders() {
 	// TODO: Poll providers that have not been contacted for more than pollInterval.
-}
-
-// stringsToMultiaddrs converts a slice of string into a slice of Multiaddr
-func stringsToMultiaddrs(addrs []string) ([]multiaddr.Multiaddr, error) {
-	if len(addrs) == 0 {
-		return nil, nil
-	}
-
-	maddrs := make([]multiaddr.Multiaddr, len(addrs))
-	for i, m := range addrs {
-		var err error
-		maddrs[i], err = multiaddr.NewMultiaddr(m)
-		if err != nil {
-			return nil, fmt.Errorf("bad address: %s", err)
-		}
-	}
-	return maddrs, nil
 }
