@@ -34,18 +34,27 @@ func NewPandoMock() (*PandoMock, error) {
 	}
 	bs := blockstore.NewBlockstore(mds)
 
-	outCh := make(chan *metadata.MetaRecord)
-	core, err := legs.NewLegsCore(ctx, &h, mds, bs, outCh, policy.NewLimiter(policy.LimiterConfig{}))
-	if err != nil {
-		return nil, err
-	}
-
 	mockDisco, err := newMockDiscoverer(exceptID)
 	if err != nil {
 		return nil, err
 	}
 
 	r, err := registry.NewRegistry(&discoveryCfg, &aclCfg, mds, mockDisco)
+	if err != nil {
+		return nil, err
+	}
+
+	limiter, err := policy.NewLimiter(policy.LimiterConfig{
+		TotalRate:  BaseTokenRate,
+		TotalBurst: int(BaseTokenRate),
+		Registry:   r,
+	})
+
+	outCh := make(chan *metadata.MetaRecord)
+	core, err := legs.NewLegsCore(ctx, &h, mds, bs, outCh, limiter)
+	if err != nil {
+		return nil, err
+	}
 
 	return &PandoMock{
 		DS:       mds,

@@ -29,8 +29,7 @@ func registerCommand(cctx *cli.Context) error {
 	for _, s := range providerAddrStr {
 		_, err = multiaddr.NewMultiaddr(s)
 		if err != nil {
-			//return fmt.Errorf("invalid multiaddr: %s", s)
-			//fmt.Println(s)
+			return err
 		}
 	}
 
@@ -40,7 +39,7 @@ func registerCommand(cctx *cli.Context) error {
 
 	var peerID peer.ID
 	var privKey p2pcrypto.PrivKey
-	if configPath == "" {
+	if peeridStr != "" && privkeyStr != "" {
 		peerID, privKey, err = config.Identity{
 			PeerID:  peeridStr,
 			PrivKey: privkeyStr,
