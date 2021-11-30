@@ -7,7 +7,7 @@ orbs:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  test:
+  unit-test:
     working_directory: ~/repo
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
@@ -35,8 +35,6 @@ jobs:
             - repo
 
   build-push:
-    requires:
-      - test
     working_directory: ~/repo
     docker:
       - image: circleci/golang:1.16
@@ -71,17 +69,19 @@ workflows:
   pando-build: # This is the name of the workflow, feel free to change it to better match your workflow.
     # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - test:
-          name: unit test
+      - unit-test:
+          name: unit-test
           post-steps:
             - jira/notify:
                 job_type: build
       - build-push:
-          name: build & deploy
+          name: build-push
           post-steps:
             - jira/notify:
                 environment_type: production
                 job_type: deployment
+          requires:
+            - unit-test
           filters:
             branches:
               only:
