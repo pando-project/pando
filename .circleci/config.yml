@@ -29,11 +29,17 @@ jobs:
             go test -coverprofile=coverage.txt -covermode=atomic $TEST_TARGET
       - codecov/upload:
           file: coverage.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - repo
 
   build-push:
+    requires:
+      - test
     working_directory: ~/repo
     docker:
-      - image: circleci/golang:1.6
+      - image: circleci/golang:1.16
     steps:
       - checkout
       - run:
