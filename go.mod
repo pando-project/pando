@@ -5,11 +5,12 @@ go 1.16
 require (
 	github.com/agiledragon/gomonkey/v2 v2.3.1
 	github.com/briandowns/spinner v1.11.1
+	github.com/filecoin-project/go-address v0.0.5
+	github.com/filecoin-project/go-jsonrpc v0.1.4-0.20210217175800-45ea43ac2bec
 	github.com/filecoin-project/go-legs v0.0.0-20211116112108-61960ef1f8ef
 	github.com/filecoin-project/go-state-types v0.1.1-0.20210915140513-d354ccf10379
 	github.com/filecoin-project/lotus v1.13.0
 	github.com/filecoin-project/specs-actors/v5 v5.0.4
-	github.com/filecoin-project/storetheindex v0.0.0-20211110195019-8a0d1af92e58
 	github.com/gammazero/keymutex v0.0.2
 	github.com/gorilla/mux v1.8.0
 	github.com/graphql-go/graphql v0.8.0
@@ -35,6 +36,7 @@ require (
 	github.com/montanaflynn/stats v0.6.6
 	github.com/multiformats/go-multiaddr v0.4.0
 	github.com/multiformats/go-multicodec v0.3.1-0.20210902112759-1539a079fd61
+	github.com/multiformats/go-multihash v0.0.16 // indirect
 	github.com/shopspring/decimal v1.3.1
 	github.com/showwin/speedtest-go v1.1.4
 	github.com/smartystreets/goconvey v1.6.4

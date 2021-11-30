@@ -2,8 +2,10 @@ package config
 
 import (
 	"bytes"
+	"github.com/mitchellh/go-homedir"
 	. "github.com/smartystreets/goconvey/convey"
 	"io"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -45,5 +47,22 @@ func TestSaveLoad(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		So(bytes.Equal(cfgBytes, cfg2Bytes), ShouldBeTrue)
+	})
+}
+
+func TestPath(t *testing.T) {
+	Convey("test path", t, func() {
+		defDirPath, err := homedir.Expand(DefaultPathRoot)
+		So(err, ShouldBeNil)
+		p, err := Path("", "1")
+		So(err, ShouldBeNil)
+		So(p, ShouldEqual, filepath.Join(defDirPath, "1"))
+
+		err = os.Setenv(EnvDir, "???")
+		So(err, ShouldBeNil)
+		p, err = Path("", "1")
+		So(err, ShouldBeNil)
+		So(p, ShouldEqual, "???/1")
+
 	})
 }

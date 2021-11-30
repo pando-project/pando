@@ -2,11 +2,13 @@ package mock
 
 import (
 	"Pando/config"
+	"Pando/internal/registry"
 	"Pando/internal/registry/discovery"
 	"context"
 	"errors"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
+	"math/big"
 	"time"
 )
 
@@ -54,7 +56,8 @@ func newMockDiscoverer(providerID string) (*mockDiscoverer, error) {
 				ID:    peerID,
 				Addrs: []multiaddr.Multiaddr{maddr},
 			},
-			Type: discovery.MinerType,
+			Type:    discovery.MinerType,
+			Balance: big.NewInt(0).Mul(registry.FIL, big.NewInt(5)),
 		},
 	}, nil
 }
