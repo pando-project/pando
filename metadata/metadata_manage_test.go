@@ -1,13 +1,15 @@
-package metadata
+package metadata_test
 
 import (
+	. "Pando/metadata"
+	"Pando/test/mock"
 	"context"
+	bsrv "github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
-	"github.com/ipfs/go-datastore"
-	dssync "github.com/ipfs/go-datastore/sync"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	"github.com/stretchr/testify/assert"
-	//"gotest.tools/assert"
+	offline "github.com/ipfs/go-ipfs-exchange-offline"
+	dag "github.com/ipfs/go-merkledag"
+	. "github.com/smartystreets/goconvey/convey"
+	"os"
 	"testing"
 	"time"
 )
@@ -18,56 +20,61 @@ var (
 	testCid3, _ = testCid1.Prefix().Sum([]byte("testdata3"))
 )
 
-func TestCreate(t *testing.T) {
-	ds := datastore.NewMapDatastore()
-	mds := dssync.MutexWrap(ds)
-	bs := blockstore.NewBlockstore(mds)
+func TestReceiveRecordAndOutUpdate_(t *testing.T) {
+	Convey("test metadata manager", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		mm, err := New(context.Background(), pando.DS, pando.BS)
+		So(err, ShouldBeNil)
+		mockRecord := []*MetaRecord{
+			{testCid1, "12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV6", uint64(time.Now().UnixNano())},
+			{testCid2, "12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV4", uint64(time.Now().UnixNano())},
+			{testCid3, "12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV5", uint64(time.Now().UnixNano())},
+		}
 
-	_, err := New(context.Background(), mds, bs)
-	assert.NoError(t, err)
-}
+		Convey("test receive record and out update", func() {
+			recvCh := mm.GetMetaInCh()
+			for _, r := range mockRecord {
+				recvCh <- r
+			}
+			outCh := mm.GetUpdateOut()
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 
-func TestReceiveRecordAndOutUpdate(t *testing.T) {
-	ds := datastore.NewMapDatastore()
-	mds := dssync.MutexWrap(ds)
-	bs := blockstore.NewBlockstore(mds)
+			t.Cleanup(func() {
+				cancel()
+			})
 
-	mm, err := New(context.Background(), mds, bs)
-	if err != nil {
-		t.Error(err)
-	}
+			select {
+			case <-ctx.Done():
+				t.Error("timeout!not get update rightly")
+			case update := <-outCh:
+				So(len(update), ShouldEqual, 3)
+				So(update, ShouldContainKey, mockRecord[0].ProviderID)
+				So(update, ShouldContainKey, mockRecord[1].ProviderID)
+				So(update, ShouldContainKey, mockRecord[2].ProviderID)
+				So(update[mockRecord[0].ProviderID].Cidlist, ShouldResemble, []cid.Cid{testCid1})
+				So(update[mockRecord[1].ProviderID].Cidlist, ShouldResemble, []cid.Cid{testCid2})
+				So(update[mockRecord[2].ProviderID].Cidlist, ShouldResemble, []cid.Cid{testCid3})
+			}
+		})
+		Convey("test export car", func() {
+			dags := dag.NewDAGService(bsrv.New(pando.BS, offline.Exchange(pando.BS)))
+			So(dags, ShouldNotBeNil)
+			provider, err := mock.NewMockProvider(pando)
+			So(err, ShouldBeNil)
+			err = pando.Core.Subscribe(context.Background(), provider.ID)
+			So(err, ShouldBeNil)
+			daglist, err := provider.SendDag()
+			So(err, ShouldBeNil)
+			time.Sleep(time.Second * 3)
+			tmpdir := t.TempDir()
+			carpath := tmpdir + time.Now().String() + ".car"
+			err = ExportMetaCar(dags, []cid.Cid{daglist[0]}, carpath, pando.BS)
+			So(err, ShouldBeNil)
+			data, err := os.ReadFile(carpath)
+			So(err, ShouldBeNil)
+			So(data, ShouldNotBeNil)
+		})
 
-	t.Log(testCid1.String())
-	t.Log(testCid2.String())
-	t.Log(testCid3.String())
-
-	mockRecord := []*MetaRecord{
-		{testCid1, "12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV6", uint64(time.Now().UnixNano())},
-		{testCid2, "12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV4", uint64(time.Now().UnixNano())},
-		{testCid3, "12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV5", uint64(time.Now().UnixNano())},
-	}
-
-	recvCh := mm.GetMetaInCh()
-	for _, r := range mockRecord {
-		recvCh <- r
-	}
-	outCh := mm.GetUpdateOut()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-
-	t.Cleanup(func() {
-		cancel()
 	})
-
-	select {
-	case <-ctx.Done():
-		t.Error("timeout!not get update rightly")
-	case update := <-outCh:
-		assert.Equal(t, len(update), 3)
-		assert.Contains(t, update, mockRecord[0].ProviderID)
-		assert.Contains(t, update, mockRecord[1].ProviderID)
-		assert.Contains(t, update, mockRecord[2].ProviderID)
-		assert.Equal(t, update[mockRecord[0].ProviderID].Cidlist, []cid.Cid{testCid1})
-		assert.Equal(t, update[mockRecord[1].ProviderID].Cidlist, []cid.Cid{testCid2})
-		assert.Equal(t, update[mockRecord[2].ProviderID].Cidlist, []cid.Cid{testCid3})
-	}
 }
