@@ -48,6 +48,10 @@ func TestSaveLoad(t *testing.T) {
 
 		So(bytes.Equal(cfgBytes, cfg2Bytes), ShouldBeTrue)
 	})
+	Convey("test load failed", t, func() {
+		_, err := Load("just for fun")
+		So(err, ShouldEqual, ErrNotInitialized)
+	})
 }
 
 func TestPath(t *testing.T) {

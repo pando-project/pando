@@ -26,20 +26,20 @@ const (
 	minerAddr2     = "/ip4/127.0.0.2/tcp/9999"
 )
 
-var discoveryCfg = config.Discovery{
+var MockDiscoveryCfg = config.Discovery{
 	Policy: config.Policy{
 		Allow:       false,
 		Except:      []string{exceptID, trustedID, trustedID2},
 		Trust:       false,
 		TrustExcept: []string{trustedID, trustedID2},
 	},
-	PollInterval:   config.Duration(time.Minute),
+	PollInterval:   config.Duration(time.Second * 2),
 	RediscoverWait: config.Duration(time.Minute),
 }
 
-var aclCfg = config.AccountLevel{Threshold: []int{1, 10, 99}}
+var MockAclCfg = config.AccountLevel{Threshold: []int{1, 10, 99}}
 
-func newMockDiscoverer(providerID string) (*mockDiscoverer, error) {
+func NewMockDiscoverer(providerID string) (*mockDiscoverer, error) {
 	peerID, err := peer.Decode(providerID)
 	if err != nil {
 		return nil, err

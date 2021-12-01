@@ -16,5 +16,11 @@ func TestSequence(t *testing.T) {
 		So(err, ShouldBeNil)
 		err = sq.check("dsadsa", uint64(time.Now().Add(-time.Second*4).UnixNano()))
 		So(err, ShouldResemble, errors.New("sequence less than or equal to last seen"))
+		time.Sleep(time.Second * 5)
+		err = sq.check("dsadsa2", uint64(time.Now().Add(-time.Second*4).UnixNano()))
+		So(err, ShouldBeNil)
+		sq.retire()
+		So(len(sq.seqs), ShouldEqual, 1)
 	})
+
 }

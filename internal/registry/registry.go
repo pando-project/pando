@@ -111,7 +111,6 @@ func NewRegistry(cfg *config.Discovery, cfglevel *config.AccountLevel, dstore da
 
 	r.periodicTimer = time.AfterFunc(r.pollInterval/2, func() {
 		r.cleanup()
-		r.pollProviders()
 		r.periodicTimer.Reset(r.pollInterval / 2)
 	})
 
@@ -150,30 +149,6 @@ func (r *Registry) run() {
 	for action := range r.actions {
 		action()
 	}
-}
-
-// Discover begins the process of discovering and verifying a provider.  The
-// discovery address us used to lookup the provider's information.
-//
-// TODO: To support multiple discoverer methods (lotus, IPFS, etc.) there need
-// to be information that is part of, or in addition to, the discoveryAddr to
-// indicate where/how discovery is done.
-func (r *Registry) Discover(peerID peer.ID, discoveryAddr string, sync bool) error {
-	// If provider is not allowed, then ignore request
-	if !r.policy.Allowed(peerID) {
-		return syserr.New(ErrNotAllowed, http.StatusForbidden)
-	}
-	// It does not matter if the provider is trusted or not, since verification
-	// is necessary to get the provider's address
-
-	errCh := make(chan error, 1)
-	r.actions <- func() {
-		r.syncStartDiscover(peerID, discoveryAddr, errCh)
-	}
-	if sync {
-		return <-errCh
-	}
-	return nil
 }
 
 // Register is used to directly register a provider, bypassing discovery and
@@ -296,45 +271,6 @@ func (r *Registry) CheckSequence(peerID peer.ID, seq uint64) error {
 	return r.sequences.check(peerID, seq)
 }
 
-func (r *Registry) syncStartDiscover(peerID peer.ID, discoAddr string, errCh chan<- error) {
-	err := r.syncNeedDiscover(discoAddr)
-	if err != nil {
-		//todo end if error? bug ?
-		r.syncEndDiscover(discoAddr, nil, err, errCh)
-		return
-	}
-
-	// Mark discovery as in progress
-	r.discoTimes[discoAddr] = time.Time{}
-	r.discoWait.Add(1)
-
-	// Do discovery asynchronously; do not block other discovery requests
-	go func() {
-		discoData, discoErr := r.discover(peerID, discoAddr)
-		r.actions <- func() {
-			r.syncEndDiscover(discoAddr, discoData, discoErr, errCh)
-			r.discoWait.Done()
-		}
-	}()
-}
-
-func (r *Registry) syncEndDiscover(discoAddr string, discoData *discovery.Discovered, err error, errCh chan<- error) {
-	r.discoTimes[discoAddr] = time.Now()
-
-	if err != nil {
-		errCh <- err
-		close(errCh)
-		return
-	}
-
-	info := &ProviderInfo{
-		AddrInfo:      discoData.AddrInfo,
-		DiscoveryAddr: discoAddr,
-	}
-
-	r.syncRegister(info, errCh)
-}
-
 func (r *Registry) syncRegister(info *ProviderInfo, errCh chan<- error) {
 	r.providers[info.AddrInfo.ID] = info
 	err := r.syncPersistProvider(info)
@@ -343,22 +279,6 @@ func (r *Registry) syncRegister(info *ProviderInfo, errCh chan<- error) {
 		errCh <- syserr.New(err, http.StatusInternalServerError)
 	}
 	close(errCh)
-}
-
-func (r *Registry) syncNeedDiscover(discoAddr string) error {
-	completed, ok := r.discoTimes[discoAddr]
-	if ok {
-		// Check if discovery already in progress
-		if completed.IsZero() {
-			return ErrInProgress
-		}
-
-		// Check if last discovery completed too recently
-		if r.rediscoverWait != 0 && time.Since(completed) < r.rediscoverWait {
-			return ErrTooSoon
-		}
-	}
-	return nil
 }
 
 func (r *Registry) syncPersistProvider(info *ProviderInfo) error {
@@ -421,27 +341,6 @@ func (r *Registry) loadPersistedProviders() (int, error) {
 	return count, nil
 }
 
-func (r *Registry) discover(peerID peer.ID, discoAddr string) (*discovery.Discovered, error) {
-	if r.discoverer == nil {
-		return nil, ErrNoDiscovery
-	}
-
-	ctx := context.Background()
-	discoTimeout := r.discoveryTimeout
-	if discoTimeout != 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, discoTimeout)
-		defer cancel()
-	}
-
-	discoData, err := r.discoverer.Discover(ctx, peerID, discoAddr)
-	if err != nil {
-		return nil, fmt.Errorf("cannot discover provider: %s", err)
-	}
-
-	return discoData, nil
-}
-
 func (r *Registry) cleanup() {
 	r.discoWait.Add(1)
 	r.sequences.retire()
@@ -461,8 +360,4 @@ func (r *Registry) cleanup() {
 		}
 	}
 	r.discoWait.Done()
-}
-
-func (r *Registry) pollProviders() {
-	// TODO: Poll providers that have not been contacted for more than pollInterval.
 }

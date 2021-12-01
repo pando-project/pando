@@ -1,6 +1,7 @@
 package registry_test
 
 import (
+	"Pando/internal/registry"
 	. "Pando/internal/registry"
 	"Pando/internal/syserr"
 	"Pando/test/mock"
@@ -9,12 +10,9 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"net/http"
 	"testing"
+	"time"
 )
 
-//type mockDiscoverer struct {
-//	discoverRsp *discovery.Discovered
-//}
-//
 const (
 	exceptID   = "12D3KooWK7CTS7cyWi51PeNE3cTjS2F2kDCZaQVU4A5xBmb9J1do"
 	trustedID  = "12D3KooWSG3JuvEjRkSxt93ADTjQxqe4ExbBwSkQ9Zyk1WfBaZJF"
@@ -25,47 +23,7 @@ const (
 	minerAddr2     = "/ip4/127.0.0.2/tcp/9999"
 )
 
-//
-//var discoveryCfg = config.Discovery{
-//	Policy: config.Policy{
-//		Allow:       false,
-//		Except:      []string{exceptID, trustedID, trustedID2},
-//		Trust:       false,
-//		TrustExcept: []string{trustedID, trustedID2},
-//	},
-//	PollInterval:   config.Duration(time.Minute),
-//	RediscoverWait: config.Duration(time.Minute),
-//}
-//
-//var aclCfg = config.AccountLevel{Threshold: []int{1, 10, 99}}
-//
-//func newMockDiscoverer(t *testing.T, providerID string) *mockDiscoverer {
-//	peerID, err := peer.Decode(providerID)
-//	assert.NoError(t, err, "bad provider ID")
-//
-//	maddr, err := multiaddr.NewMultiaddr(minerAddr)
-//	assert.NoError(t, err, "bad miner address")
-//
-//	return &mockDiscoverer{
-//		discoverRsp: &discovery.Discovered{
-//			AddrInfo: peer.AddrInfo{
-//				ID:    peerID,
-//				Addrs: []multiaddr.Multiaddr{maddr},
-//			},
-//			Type: discovery.MinerType,
-//		},
-//	}
-//}
-
-//func (m *mockDiscoverer) Discover(ctx context.Context, peerID peer.ID, filecoinAddr string) (*discovery.Discovered, error) {
-//	if filecoinAddr == "bad1234" {
-//		return nil, errors.New("unknown miner")
-//	}
-//
-//	return m.discoverRsp, nil
-//}
-
-func TestNewRegistryDiscovery(t *testing.T) {
+func TestNewRegistryAndClose(t *testing.T) {
 	Convey("test create and close register with discovery", t, func() {
 		pando, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
@@ -82,12 +40,13 @@ func TestRegisterAndDiscovery(t *testing.T) {
 		pando, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
 		r := pando.Registry
+
 		peerID, err := peer.Decode(trustedID)
 		So(err, ShouldBeNil)
 		maddr, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/3002")
 		So(err, ShouldBeNil)
 
-		testCase := []struct {
+		registerCases := []struct {
 			registerInfo *ProviderInfo
 			expected     error
 		}{
@@ -111,8 +70,8 @@ func TestRegisterAndDiscovery(t *testing.T) {
 				expected: syserr.New(ErrNotAllowed, http.StatusForbidden),
 			},
 		}
-		Convey("register", func() {
-			for _, tt := range testCase {
+		Convey("register, get provider info and reload", func() {
+			for _, tt := range registerCases {
 				res := r.Register(tt.registerInfo)
 				So(res, ShouldResemble, tt.expected)
 			}
@@ -121,6 +80,24 @@ func TestRegisterAndDiscovery(t *testing.T) {
 			l, err := r.ProviderAccountLevel(peerID)
 			So(err, ShouldBeNil)
 			So(l, ShouldEqual, 2)
+			time.Sleep(time.Second * 2)
+			isregister := r.IsRegistered(peerID)
+			So(isregister, ShouldBeTrue)
+			isregister = r.IsRegistered("?????")
+			So(isregister, ShouldBeFalse)
+			info := r.ProviderInfoByAddr(minerDiscoAddr)
+			So(info, ShouldNotBeNil)
+			err = r.Close()
+			So(err, ShouldBeNil)
+
+			diso, err := mock.NewMockDiscoverer(peerID.String())
+			So(err, ShouldBeNil)
+			// reload the persisted info
+			r, err := registry.NewRegistry(&mock.MockDiscoveryCfg, &mock.MockAclCfg, pando.DS, diso)
+			So(err, ShouldBeNil)
+			info = r.ProviderInfo(peerID)
+			So(info, ShouldNotBeNil)
+
 		})
 
 	})
