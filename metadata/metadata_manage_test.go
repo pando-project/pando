@@ -66,7 +66,7 @@ func TestReceiveRecordAndOutUpdate_(t *testing.T) {
 			So(err, ShouldBeNil)
 			daglist, err := provider.SendDag()
 			So(err, ShouldBeNil)
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 5)
 			tmpdir := t.TempDir()
 			carpath := tmpdir + time.Now().String() + ".car"
 			err = ExportMetaCar(dags, []cid.Cid{daglist[0]}, carpath, pando.BS)
