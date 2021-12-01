@@ -78,5 +78,8 @@ func TestStateTreeRoundTrip_(t *testing.T) {
 		pstate, err = st.GetProviderStateByPeerID(testPeer)
 		So(err, ShouldBeNil)
 		So(pstate.State.LastCommitHeight, ShouldEqual, uint64(1))
+
+		close(ch)
+		So(<-st.ctx.Done(), ShouldNotBeNil)
 	})
 }
