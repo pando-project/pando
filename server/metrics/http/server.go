@@ -1,12 +1,14 @@
 package http
 
 import (
+	"Pando/internal/metrics"
 	"context"
 	"fmt"
+	coremetrics "github.com/filecoin-project/go-indexer-core/metrics"
+	"github.com/gorilla/mux"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net"
 	"net/http"
 )
@@ -34,7 +36,9 @@ func New(listen string) (*Server, error) {
 		return nil, err
 	}
 
-	server := &Server{&http.Server{Addr: metricAddr.String(), Handler: promhttp.Handler()}, listener}
+	r := mux.NewRouter().StrictSlash(true)
+	r.Handle("/metrics", metrics.Start(coremetrics.DefaultViews))
+	server := &Server{&http.Server{Addr: metricAddr.String(), Handler: r}, listener}
 
 	return server, nil
 }

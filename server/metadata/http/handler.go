@@ -1,13 +1,19 @@
 package http
 
 import (
+	"Pando/internal/metrics"
 	"Pando/statetree"
+	"context"
 	"encoding/json"
 	"fmt"
+	coremetrics "github.com/filecoin-project/go-indexer-core/metrics"
 	"github.com/gorilla/mux"
 	"github.com/ipfs/go-cid"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // handler handles requests for the finder resource
@@ -26,6 +32,8 @@ func newHandler(stateTree *statetree.StateTree) *httpHandler {
 }
 
 func (h *httpHandler) ListSnapShots(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
 	snapCidList, err := h.metaHandler.StateTree.GetSnapShotCidList()
 	if err != nil {
 		log.Error("cannot list snapshots, err", err)
@@ -38,10 +46,17 @@ func (h *httpHandler) ListSnapShots(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
+
+	_ = stats.RecordWithOptions(context.Background(),
+		stats.WithTags(tag.Insert(metrics.Method, "api")),
+		stats.WithMeasurements(metrics.ListMetadataLatency.M(coremetrics.MsecSince(startTime))))
+
 	WriteJsonResponse(w, http.StatusOK, resBytes)
 }
 
 func (h *httpHandler) ListSnapShotInfo(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
 	cidStr, err := getSsCid(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -66,11 +81,17 @@ func (h *httpHandler) ListSnapShotInfo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
-	WriteJsonResponse(w, http.StatusOK, resBytes)
 
+	_ = stats.RecordWithOptions(context.Background(),
+		stats.WithTags(tag.Insert(metrics.Method, "api")),
+		stats.WithMeasurements(metrics.ListSnapshotInfoLatency.M(coremetrics.MsecSince(startTime))))
+
+	WriteJsonResponse(w, http.StatusOK, resBytes)
 }
 
 func (h *httpHandler) GetSnapShotByHeight(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+
 	ssHeight, err := getSsHeight(r)
 	if err != nil {
 		log.Warnf("error input %s", err.Error())
@@ -91,8 +112,12 @@ func (h *httpHandler) GetSnapShotByHeight(w http.ResponseWriter, r *http.Request
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
-	WriteJsonResponse(w, http.StatusOK, resBytes)
 
+	_ = stats.RecordWithOptions(context.Background(),
+		stats.WithTags(tag.Insert(metrics.Method, "api")),
+		stats.WithMeasurements(metrics.GetSnapshotByHeightLatency.M(coremetrics.MsecSince(startTime))))
+
+	WriteJsonResponse(w, http.StatusOK, resBytes)
 }
 
 func getSsCid(r *http.Request) (string, error) {
