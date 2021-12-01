@@ -10,6 +10,7 @@ import (
 	httpadminserver "Pando/server/admin/http"
 	graphserver "Pando/server/graph_sync/http"
 	metaserver "Pando/server/metadata/http"
+	metrics "Pando/server/metrics/http"
 	"Pando/statetree"
 	"Pando/statetree/types"
 	"context"
@@ -56,6 +57,7 @@ func daemonCommand(cctx *cli.Context) error {
 	_ = logging.SetLogLevel("registryInstance", "debug")
 	_ = logging.SetLogLevel("registry", "debug")
 	_ = logging.SetLogLevel("pubsub", "debug")
+	_ = logging.SetLogLevel("metrics", "debug")
 
 	cfg, err := config.Load("")
 	if err != nil {
@@ -156,6 +158,10 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	metricsServer, err := metrics.New(cfg.Addresses.Metrics)
+	if err != nil {
+		return err
+	}
 
 	log.Info("Starting http servers")
 	errChan := make(chan error, 1)
@@ -167,6 +173,9 @@ func daemonCommand(cctx *cli.Context) error {
 	}()
 	go func() {
 		errChan <- adminServer.Start()
+	}()
+	go func() {
+		errChan <- metricsServer.Start()
 	}()
 
 	var finalErr error
@@ -202,6 +211,10 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 	if err = adminServer.Shutdown(ctx); err != nil {
 		log.Errorw("Error shutting down admin server", "err", err)
+		finalErr = ErrDaemonStop
+	}
+	if err = metricsServer.Shutdown(ctx); err != nil {
+		log.Errorw("Error shutting down metrics server", "err", err)
 		finalErr = ErrDaemonStop
 	}
 
