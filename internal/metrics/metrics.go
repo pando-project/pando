@@ -1,10 +1,14 @@
 package metrics
 
 import (
+	"context"
+	"github.com/filecoin-project/go-indexer-core/metrics"
 	"go.opencensus.io/tag"
 	"net/http"
+	"time"
 
 	"contrib.go.opencensus.io/exporter/prometheus"
+	coremetrics "github.com/filecoin-project/go-indexer-core/metrics"
 	logging "github.com/ipfs/go-log/v2"
 	promclient "github.com/prometheus/client_golang/prometheus"
 	"go.opencensus.io/stats"
@@ -25,30 +29,39 @@ var (
 		"Time to fetch snapshot info", stats.UnitMilliseconds)
 	GetSnapshotByHeightLatency = stats.Float64("meta/snap_info_by_height",
 		"Time to fetch snapshot info by height", stats.UnitMilliseconds)
+	GraphPersistenceLatency = stats.Float64("graph/persistence_latency",
+		"Time to persistence DAG", stats.UnitMilliseconds)
 )
 
 // Views
 var (
-	bounds = []float64{0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 1000, 2000, 5000}
-	//builtinViews = map[string]*view.View {
-	//	"RegisterProviderLatency": {Measure: RegisterProviderLatency, Aggregation: view.Distribution(bounds...)},
-	//	"SubProviderLatency": {Measure: SubProviderLatency, Aggregation: view.Distribution(bounds...)},
-	//	"ListMetadataLatency": {Measure: ListMetadataLatency, Aggregation: view.Distribution(bounds...)},
-	//	"ListSnapshotInfoLatency": {Measure: ListSnapshotInfoLatency, Aggregation: view.Distribution()},
-	//}
+	bounds       = []float64{0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 1000, 2000, 5000}
 	builtinViews = []*view.View{
 		{Measure: RegisterProviderLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: SubProviderLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: ListMetadataLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: ListSnapshotInfoLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetSnapshotByHeightLatency, Aggregation: view.Distribution(bounds...)},
+		{Measure: GraphPersistenceLatency, Aggregation: view.Distribution(bounds...)},
 	}
 )
 
-var log = logging.Logger("indexer/metrics")
+func APITimer(ctx context.Context, m *stats.Float64Measure) func() {
+	start := time.Now()
 
-// Start creates an HTTP router for serving metric info
-func Start(views []*view.View) http.Handler {
+	return func() {
+		_ = stats.RecordWithOptions(
+			ctx,
+			stats.WithTags(tag.Insert(metrics.Method, "api")),
+			stats.WithMeasurements(m.M(coremetrics.MsecSince(start))),
+		)
+	}
+}
+
+var log = logging.Logger("metrics")
+
+// Handler creates an HTTP router for serving metric info
+func Handler(views []*view.View) http.Handler {
 	// Register default views
 	err := view.Register(builtinViews...)
 	if err != nil {

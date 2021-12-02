@@ -57,6 +57,7 @@ func daemonCommand(cctx *cli.Context) error {
 	_ = logging.SetLogLevel("registryInstance", "debug")
 	_ = logging.SetLogLevel("registry", "debug")
 	_ = logging.SetLogLevel("pubsub", "debug")
+	_ = logging.SetLogLevel("metrics-server", "debug")
 	_ = logging.SetLogLevel("metrics", "debug")
 
 	cfg, err := config.Load("")

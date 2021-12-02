@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-var log = logging.Logger("metrics")
+var log = logging.Logger("metrics-server")
 
 type Server struct {
 	server   *http.Server
@@ -37,7 +37,7 @@ func New(listen string) (*Server, error) {
 	}
 
 	r := mux.NewRouter().StrictSlash(true)
-	r.Handle("/metrics", metrics.Start(coremetrics.DefaultViews))
+	r.Handle("/metrics", metrics.Handler(coremetrics.DefaultViews))
 	server := &Server{&http.Server{Addr: metricAddr.String(), Handler: r}, listener}
 
 	return server, nil

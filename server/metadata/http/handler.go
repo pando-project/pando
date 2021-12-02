@@ -6,14 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	coremetrics "github.com/filecoin-project/go-indexer-core/metrics"
 	"github.com/gorilla/mux"
 	"github.com/ipfs/go-cid"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 // handler handles requests for the finder resource
@@ -32,7 +28,8 @@ func newHandler(stateTree *statetree.StateTree) *httpHandler {
 }
 
 func (h *httpHandler) ListSnapShots(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
+	record := metrics.APITimer(context.Background(), metrics.ListSnapshotInfoLatency)
+	defer record()
 
 	snapCidList, err := h.metaHandler.StateTree.GetSnapShotCidList()
 	if err != nil {
@@ -47,15 +44,12 @@ func (h *httpHandler) ListSnapShots(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = stats.RecordWithOptions(context.Background(),
-		stats.WithTags(tag.Insert(metrics.Method, "api")),
-		stats.WithMeasurements(metrics.ListMetadataLatency.M(coremetrics.MsecSince(startTime))))
-
 	WriteJsonResponse(w, http.StatusOK, resBytes)
 }
 
 func (h *httpHandler) ListSnapShotInfo(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
+	record := metrics.APITimer(context.Background(), metrics.ListSnapshotInfoLatency)
+	defer record()
 
 	cidStr, err := getSsCid(r)
 	if err != nil {
@@ -82,15 +76,12 @@ func (h *httpHandler) ListSnapShotInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = stats.RecordWithOptions(context.Background(),
-		stats.WithTags(tag.Insert(metrics.Method, "api")),
-		stats.WithMeasurements(metrics.ListSnapshotInfoLatency.M(coremetrics.MsecSince(startTime))))
-
 	WriteJsonResponse(w, http.StatusOK, resBytes)
 }
 
 func (h *httpHandler) GetSnapShotByHeight(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
+	record := metrics.APITimer(context.Background(), metrics.GetSnapshotByHeightLatency)
+	defer record()
 
 	ssHeight, err := getSsHeight(r)
 	if err != nil {
@@ -112,10 +103,6 @@ func (h *httpHandler) GetSnapShotByHeight(w http.ResponseWriter, r *http.Request
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
-
-	_ = stats.RecordWithOptions(context.Background(),
-		stats.WithTags(tag.Insert(metrics.Method, "api")),
-		stats.WithMeasurements(metrics.GetSnapshotByHeightLatency.M(coremetrics.MsecSince(startTime))))
 
 	WriteJsonResponse(w, http.StatusOK, resBytes)
 }
