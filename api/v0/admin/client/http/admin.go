@@ -1,4 +1,4 @@
-package ingesthttpclient
+package adminhttpclient
 
 import (
 	"Pando/api/v0/admin/model"
