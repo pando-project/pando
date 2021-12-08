@@ -3,10 +3,13 @@ package legs_test
 import (
 	"Pando/test/mock"
 	"context"
+	logging "github.com/ipfs/go-log/v2"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 	"time"
 )
+
+var _ = logging.SetLogLevel("core", "debug")
 
 func TestCreate(t *testing.T) {
 	Convey("test create legs core", t, func() {
