@@ -29,10 +29,31 @@ var (
 	SnapShotDuration       = time.Second * 5
 	BackupMaxInterval      = time.Second * 10
 	BackupMaxDagNums       = 10000
-	BackupTmpDir           = "./tmp/"
+	BackupTmpDirName       = "tmp"
+	BackupTmpPath          string
 	BackFileName           = "backup-%d.car"
 	BackupCheckNumInterval = time.Second * 60
 )
+
+func init() {
+	pwd, err := os.Getwd()
+	if err != nil {
+		panic(err.Error())
+	}
+	BackupTmpDir := path.Join(pwd, BackupTmpDirName)
+	_, err = os.Stat(BackupTmpDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.Mkdir(BackupTmpDir, os.ModePerm)
+			if err != nil {
+				log.Errorf("failed to create backup dir:%s , err:%s", BackupTmpDir, err.Error())
+			}
+		} else {
+			log.Errorf("please input correct filepath, err : %s", err.Error())
+		}
+	}
+	BackupTmpPath = BackupTmpDir
+}
 
 var NoRecordBackup = errors.New("no records need backup")
 
@@ -160,8 +181,6 @@ func (mm *MetaManager) backupDagToCarLocally(ctx context.Context) {
 			})
 			// delete record had been backup
 			select {
-			case _ = <-mm.ctx.Done():
-				return
 			case _ = <-t.C:
 				for i, r := range waitBackupRecoed {
 					if r.isBackup {
@@ -175,11 +194,6 @@ func (mm *MetaManager) backupDagToCarLocally(ctx context.Context) {
 
 	go func() {
 		for range time.NewTicker(mm.backupMaxInterval).C {
-			select {
-			case _ = <-mm.ctx.Done():
-				return
-			default:
-			}
 			backupMutex.Lock()
 			log.Infow("start backup the car in local")
 			// for update the isBackup later because the original slice has changed
@@ -187,6 +201,7 @@ func (mm *MetaManager) backupDagToCarLocally(ctx context.Context) {
 			copy(_waitBackupRecoed, waitBackupRecoed)
 			err := mm.backupRecordsAndUpdateStatus(ctx, _waitBackupRecoed)
 			if err != nil {
+				backupMutex.Unlock()
 				continue
 			}
 			log.Infow("finished backup the car in local")
@@ -196,11 +211,6 @@ func (mm *MetaManager) backupDagToCarLocally(ctx context.Context) {
 
 	go func() {
 		for range time.NewTicker(BackupCheckNumInterval).C {
-			select {
-			case _ = <-mm.ctx.Done():
-				return
-			default:
-			}
 			backupMutex.Lock()
 			nums := 0
 			for _, r := range waitBackupRecoed {
@@ -214,6 +224,7 @@ func (mm *MetaManager) backupDagToCarLocally(ctx context.Context) {
 				copy(_waitBackupRecoed, waitBackupRecoed)
 				err := mm.backupRecordsAndUpdateStatus(ctx, _waitBackupRecoed)
 				if err != nil {
+					backupMutex.Unlock()
 					continue
 				}
 				log.Infow("finished backup the car in local")
@@ -235,7 +246,7 @@ func (mm *MetaManager) backupRecordsAndUpdateStatus(ctx context.Context, _waitBa
 		return NoRecordBackup
 	}
 	fname := fmt.Sprintf(BackFileName, time.Now().UnixNano())
-	err := ExportMetaCar(mm.dagServ, waitBackupCidList, BackupTmpDir+fname, mm.bs)
+	err := ExportMetaCar(mm.dagServ, waitBackupCidList, fname, mm.bs)
 	log.Debugf("back up as file: %s", fname)
 	if err != nil {
 		log.Errorf("failed to write Dags to car, err: %s", err.Error())
@@ -255,19 +266,19 @@ func (mm *MetaManager) Close() {
 	close(mm.recvCh)
 }
 
-func ExportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, filepath string, bs blockstore.Blockstore) error {
-	_, err := os.Stat(path.Dir(filepath))
-	if err != nil {
-		if os.IsNotExist(err) {
-			err = os.Mkdir(path.Dir(filepath), os.ModePerm)
-			if err != nil {
-				log.Errorf("failed to create backup dir:%s , err:%s", path.Dir(filepath), err.Error())
-			}
-		} else {
-			log.Errorf("please input correct filepath, err : %s", err.Error())
-		}
-	}
-	f, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE, 0666)
+func ExportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, filename string, bs blockstore.Blockstore) error {
+	//_, err := os.Stat(path.Dir(filepath))
+	//if err != nil {
+	//	if os.IsNotExist(err) {
+	//		err = os.Mkdir(path.Dir(filepath), os.ModePerm)
+	//		if err != nil {
+	//			log.Errorf("failed to create backup dir:%s , err:%s", path.Dir(filepath), err.Error())
+	//		}
+	//	} else {
+	//		log.Errorf("please input correct filepath, err : %s", err.Error())
+	//	}
+	//}
+	f, err := os.OpenFile(path.Join(BackupTmpPath, filename), os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Errorf("open file error : %s", err.Error())
 		return err

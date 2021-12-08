@@ -19,7 +19,6 @@ import (
 const (
 	checkInterval  = time.Second * 10
 	fileDir        = "./tmp"
-	filename       = "backup.car"
 	shutGateway    = "https://shuttle-4.estuary.tech"
 	estuaryGateway = "https://api.estuary.tech"
 
@@ -83,7 +82,6 @@ func NewBackupSys(gateway string, shuttleGateway string) (*backupSystem, error) 
 		checkInterval:  time.Second * 10,
 		apiKey:         apiKey,
 		fileDir:        fileDir,
-		fileName:       filename,
 		toCheck:        make(chan uint64, 1),
 	}
 	bs.run()
@@ -95,18 +93,18 @@ func (bs *backupSystem) run() {
 	// if there is car file, back up it then deletes file
 	go func() {
 		for range time.NewTicker(time.Second).C {
-			files, err := ioutil.ReadDir(fileDir)
+			files, err := ioutil.ReadDir(BackupTmpPath)
 			if err != nil {
-				log.Error("wrong back up dir path: %s", fileDir)
+				log.Error("wrong back up dir path: %s", BackupTmpPath)
 			}
 			for _, file := range files {
-				err = bs.backupToEstuary(path.Join(fileDir, file.Name()))
+				err = bs.backupToEstuary(path.Join(BackupTmpPath, file.Name()))
 				if err != nil {
 					//todo metrics
 					log.Errorf("failed back up, err : %s", err.Error())
 					continue
 				}
-				err = os.Remove(path.Join(fileDir, file.Name()))
+				err = os.Remove(path.Join(BackupTmpPath, file.Name()))
 				if err != nil {
 					log.Error("failed to remove the backed up car file")
 				}
