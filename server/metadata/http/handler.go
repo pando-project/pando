@@ -1,7 +1,9 @@
 package http
 
 import (
+	"Pando/internal/metrics"
 	"Pando/statetree"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -26,6 +28,9 @@ func newHandler(stateTree *statetree.StateTree) *httpHandler {
 }
 
 func (h *httpHandler) ListSnapShots(w http.ResponseWriter, r *http.Request) {
+	record := metrics.APITimer(context.Background(), metrics.ListSnapshotInfoLatency)
+	defer record()
+
 	snapCidList, err := h.metaHandler.StateTree.GetSnapShotCidList()
 	if err != nil {
 		log.Error("cannot list snapshots, err", err)
@@ -38,10 +43,14 @@ func (h *httpHandler) ListSnapShots(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
+
 	WriteJsonResponse(w, http.StatusOK, resBytes)
 }
 
 func (h *httpHandler) ListSnapShotInfo(w http.ResponseWriter, r *http.Request) {
+	record := metrics.APITimer(context.Background(), metrics.ListSnapshotInfoLatency)
+	defer record()
+
 	cidStr, err := getSsCid(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -70,11 +79,14 @@ func (h *httpHandler) ListSnapShotInfo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
-	WriteJsonResponse(w, http.StatusOK, resBytes)
 
+	WriteJsonResponse(w, http.StatusOK, resBytes)
 }
 
 func (h *httpHandler) GetSnapShotByHeight(w http.ResponseWriter, r *http.Request) {
+	record := metrics.APITimer(context.Background(), metrics.GetSnapshotByHeightLatency)
+	defer record()
+
 	ssHeight, err := getSsHeight(r)
 	if err != nil {
 		log.Warnf("error input %s", err.Error())
@@ -95,8 +107,8 @@ func (h *httpHandler) GetSnapShotByHeight(w http.ResponseWriter, r *http.Request
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
-	WriteJsonResponse(w, http.StatusOK, resBytes)
 
+	WriteJsonResponse(w, http.StatusOK, resBytes)
 }
 
 func getSsCid(r *http.Request) (string, error) {

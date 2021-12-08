@@ -3,9 +3,12 @@ module Pando
 go 1.16
 
 require (
+	contrib.go.opencensus.io/exporter/prometheus v0.4.0
 	github.com/agiledragon/gomonkey/v2 v2.3.1
 	github.com/briandowns/spinner v1.11.1
 	github.com/filecoin-project/go-address v0.0.5
+	github.com/filecoin-project/go-data-transfer v1.11.4
+	github.com/filecoin-project/go-indexer-core v0.2.6
 	github.com/filecoin-project/go-jsonrpc v0.1.4-0.20210217175800-45ea43ac2bec
 	github.com/filecoin-project/go-legs v0.0.0-20211116112108-61960ef1f8ef
 	github.com/filecoin-project/go-state-types v0.1.1-0.20210915140513-d354ccf10379
@@ -34,16 +37,16 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/montanaflynn/stats v0.6.6
-	github.com/multiformats/go-multiaddr v0.4.0
+	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multicodec v0.3.1-0.20210902112759-1539a079fd61
-	github.com/multiformats/go-multihash v0.0.16 // indirect
+	github.com/prometheus/client_golang v1.11.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/showwin/speedtest-go v1.1.4
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/whyrusleeping/cbor-gen v0.0.0-20210713220151-be142a5ae1a8
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
+	go.opencensus.io v0.23.0
 	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1

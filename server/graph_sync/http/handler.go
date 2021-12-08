@@ -1,6 +1,7 @@
 package http
 
 import (
+	"Pando/internal/metrics"
 	"Pando/legs"
 	"context"
 	"fmt"
@@ -27,6 +28,9 @@ func newHandler(core *legs.Core) *httpHandler {
 }
 
 func (h *httpHandler) SubProvider(w http.ResponseWriter, r *http.Request) {
+	record := metrics.APITimer(context.Background(), metrics.SubProviderLatency)
+	defer record()
+
 	peerID, err := getProviderID(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -38,6 +42,7 @@ func (h *httpHandler) SubProvider(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
+
 	w.WriteHeader(http.StatusOK)
 }
 

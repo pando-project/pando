@@ -26,7 +26,7 @@ func TestCreateAndRegister(t *testing.T) {
 			peerID, pk, err := mock.GetPrivkyAndPeerID()
 			So(err, ShouldBeNil)
 
-			patch := ApplyPrivateMethod(reflect.TypeOf(http.DefaultClient), "Do", func(_ *http.Client, _ *http.Request) (*http.Response, error) {
+			patch := ApplyMethod(reflect.TypeOf(http.DefaultClient), "Do", func(_ *http.Client, _ *http.Request) (*http.Response, error) {
 				res := httptest.NewRecorder()
 				res.WriteHeader(200)
 				return res.Result(), nil
@@ -42,7 +42,7 @@ func TestCreateAndRegister(t *testing.T) {
 			addrs := []string{"/ip4/127.0.0.1/tcp/9999"}
 			peerID, pk, err := mock.GetPrivkyAndPeerID()
 			So(err, ShouldBeNil)
-			patch := ApplyPrivateMethod(reflect.TypeOf(http.DefaultClient), "Do", func(_ *http.Client, _ *http.Request) (*http.Response, error) {
+			patch := ApplyMethod(reflect.TypeOf(http.DefaultClient), "Do", func(_ *http.Client, _ *http.Request) (*http.Response, error) {
 				res := httptest.NewRecorder()
 				res.WriteHeader(404)
 				return res.Result(), http.ErrHandlerTimeout

@@ -31,6 +31,7 @@ func InitWithIdentity(identity Identity, opts ...Option) (*Config, error) {
 			P2PAddr:   defaultP2PAddr,
 			MetaData:  defaultMetaData,
 			Admin:     defaultAdmin,
+			Metrics:   defaultMetrics,
 		},
 		Identity: identity,
 		Discovery: Discovery{
