@@ -95,7 +95,7 @@ func (bs *backupSystem) run() {
 		for range time.NewTicker(time.Second).C {
 			files, err := ioutil.ReadDir(BackupTmpPath)
 			if err != nil {
-				log.Error("wrong back up dir path: %s", BackupTmpPath)
+				log.Errorf("wrong back up dir path: %s", BackupTmpPath)
 			}
 			for _, file := range files {
 				err = bs.backupToEstuary(path.Join(BackupTmpPath, file.Name()))
