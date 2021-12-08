@@ -29,7 +29,7 @@ var (
 	SnapShotDuration       = time.Second * 5
 	BackupMaxInterval      = time.Second * 10
 	BackupMaxDagNums       = 10000
-	BackupTmpDirName       = "tmp"
+	BackupTmpDirName       = "ttmp"
 	BackupTmpPath          string
 	BackFileName           = "backup-%d.car"
 	BackupCheckNumInterval = time.Second * 60
@@ -52,8 +52,8 @@ func init() {
 			log.Errorf("please input correct filepath, err : %s", err.Error())
 		}
 	}
-	fmt.Println("The BackupTmpPath is : ", BackupTmpPath)
 	BackupTmpPath = BackupTmpDir
+	fmt.Println("The BackupTmpPath is : ", BackupTmpPath)
 }
 
 var NoRecordBackup = errors.New("no records need backup")
