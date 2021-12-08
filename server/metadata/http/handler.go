@@ -28,7 +28,7 @@ func newHandler(stateTree *statetree.StateTree) *httpHandler {
 }
 
 func (h *httpHandler) ListSnapShots(w http.ResponseWriter, r *http.Request) {
-	record := metrics.APITimer(context.Background(), metrics.ListSnapshotInfoLatency)
+	record := metrics.APITimer(context.Background(), metrics.ListMetadataLatency)
 	defer record()
 
 	snapCidList, err := h.metaHandler.StateTree.GetSnapShotCidList()
