@@ -39,7 +39,7 @@ func TestGetMetaRecord(t *testing.T) {
 		cidlist, err := provider.SendDag()
 		So(err, ShouldBeNil)
 		select {
-		case _ = <-ctx.Done():
+		case <-ctx.Done():
 			t.Error("timeout")
 		case r := <-outCh:
 			So(r.Cid, ShouldResemble, cidlist[0])

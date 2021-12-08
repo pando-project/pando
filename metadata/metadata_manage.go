@@ -52,6 +52,7 @@ func init() {
 			log.Errorf("please input correct filepath, err : %s", err.Error())
 		}
 	}
+	fmt.Println("The BackupTmpPath is : ", BackupTmpPath)
 	BackupTmpPath = BackupTmpDir
 }
 
@@ -195,7 +196,7 @@ func (mm *MetaManager) backupDagToCarLocally(ctx context.Context) {
 	go func() {
 		for range time.NewTicker(mm.backupMaxInterval).C {
 			backupMutex.Lock()
-			log.Infow("start backup the car in local")
+			log.Debugw("start backup the car in local")
 			// for update the isBackup later because the original slice has changed
 			_waitBackupRecoed := make([]*backupRecord, len(waitBackupRecoed))
 			copy(_waitBackupRecoed, waitBackupRecoed)
@@ -242,7 +243,7 @@ func (mm *MetaManager) backupRecordsAndUpdateStatus(ctx context.Context, _waitBa
 		}
 	}
 	if len(waitBackupCidList) == 0 {
-		log.Infow(NoRecordBackup.Error())
+		log.Debugw(NoRecordBackup.Error())
 		return NoRecordBackup
 	}
 	fname := fmt.Sprintf(BackFileName, time.Now().UnixNano())

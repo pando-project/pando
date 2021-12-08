@@ -98,6 +98,7 @@ func (bs *backupSystem) run() {
 				log.Errorf("wrong back up dir path: %s", BackupTmpPath)
 			}
 			for _, file := range files {
+				fmt.Printf("back up file path is %s ", path.Join(BackupTmpPath, file.Name()))
 				err = bs.backupToEstuary(path.Join(BackupTmpPath, file.Name()))
 				if err != nil {
 					//todo metrics
@@ -199,9 +200,12 @@ func (bs *backupSystem) backupToEstuary(filepath string) error {
 
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read data: %s", err.Error())
 	}
-	io.Copy(formfile, bytes.NewReader(data))
+	_, err = io.Copy(formfile, bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("failed to copy data: %s", err.Error())
+	}
 
 	if err := mw.Close(); err != nil {
 		return err
