@@ -23,7 +23,7 @@ func TestCreate(t *testing.T) {
 
 func TestGetMetaRecord(t *testing.T) {
 	Convey("test get meta record", t, func() {
-		ctx, cncl := context.WithTimeout(context.Background(), time.Second*20)
+		ctx, cncl := context.WithTimeout(context.Background(), time.Minute*5)
 		p, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
 		core := p.Core
