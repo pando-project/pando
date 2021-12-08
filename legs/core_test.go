@@ -3,10 +3,13 @@ package legs_test
 import (
 	"Pando/test/mock"
 	"context"
+	logging "github.com/ipfs/go-log/v2"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 	"time"
 )
+
+var _ = logging.SetLogLevel("core", "debug")
 
 func TestCreate(t *testing.T) {
 	Convey("test create legs core", t, func() {
@@ -23,7 +26,7 @@ func TestCreate(t *testing.T) {
 
 func TestGetMetaRecord(t *testing.T) {
 	Convey("test get meta record", t, func() {
-		ctx, cncl := context.WithTimeout(context.Background(), time.Second*20)
+		ctx, cncl := context.WithTimeout(context.Background(), time.Minute*5)
 		p, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
 		core := p.Core

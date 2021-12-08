@@ -15,6 +15,8 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"math/rand"
+	"time"
 )
 
 type ProviderMock struct {
@@ -25,9 +27,9 @@ type ProviderMock struct {
 }
 
 func getDagNodes() []format.Node {
-	a := merkledag.NewRawNode([]byte("aaaaa"))
-	b := merkledag.NewRawNode([]byte("bbbb"))
-	c := merkledag.NewRawNode([]byte("cccc"))
+	a := merkledag.NewRawNode([]byte("aaaaa" + string(rune(rand.Intn(100000)))))
+	b := merkledag.NewRawNode([]byte("bbbbb" + string(rune(rand.Intn(100000)))))
+	c := merkledag.NewRawNode([]byte("ccccc" + string(rune(rand.Intn(100000)))))
 
 	nd1 := &merkledag.ProtoNode{}
 	err := nd1.AddNodeLink("cat", a)
@@ -55,6 +57,7 @@ func getDagNodes() []format.Node {
 }
 
 func NewMockProvider(p *PandoMock) (*ProviderMock, error) {
+	rand.Seed(time.Now().UnixNano())
 	// mock provider legs
 	srcHost, err := libp2p.New(context.Background())
 	if err != nil {
@@ -100,11 +103,9 @@ func (p *ProviderMock) SendDag() ([]cid.Cid, error) {
 		cidlist = append(cidlist, dagNodes[i].Cid())
 	}
 
-	for i := 0; i < len(dagNodes); i++ {
-		err := p.LegsProvider.UpdateRoot(context.Background(), dagNodes[0].Cid())
-		if err != nil {
-			return nil, err
-		}
+	err := p.LegsProvider.UpdateRoot(context.Background(), dagNodes[0].Cid())
+	if err != nil {
+		return nil, err
 	}
 
 	return cidlist, nil
