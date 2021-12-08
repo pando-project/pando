@@ -1,46 +1,61 @@
 package model
 
 import (
+	"Pando/test/mock"
+	"errors"
+	"fmt"
+	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/record"
+	. "github.com/smartystreets/goconvey/convey"
+	"reflect"
 	"testing"
-
-	"github.com/filecoin-project/storetheindex/config"
 )
 
-var providerIdent = config.Identity{
-	PeerID:  "12D3KooWBckWLKiYoUX4k3HTrbrSe4DD5SPNTKgP6vKTva1NaRkJ",
-	PrivKey: "CAESQLypOCKYR7HGwVl4ngNhEqMZ7opchNOUA4Qc1QDpxsARGr2pWUgkXFXKU27TgzIHXqw0tXaUVx2GIbUuLitq22c=",
-}
-
 func TestRegisterRequest(t *testing.T) {
-	addrs := []string{"/ip4/127.0.0.1/tcp/9999"}
-
-	peerID, privKey, err := providerIdent.Decode()
-	if err != nil {
-		t.Fatal(err)
-	}
+	peerID, privKey, err := mock.GetPrivkyAndPeerID()
 	account := "t12345"
-	data, err := MakeRegisterRequest(peerID, privKey, addrs, account)
-	if err != nil {
-		t.Fatal(err)
-	}
+	addrs := []string{"/ip4/127.0.0.1/tcp/9999"}
+	Convey("test create and load register request", t, func() {
+		So(err, ShouldBeNil)
+		data, err := MakeRegisterRequest(peerID, privKey, addrs, account)
+		So(err, ShouldBeNil)
+		peerRec, err := ReadRegisterRequest(data)
+		So(err, ShouldBeNil)
+		seq0 := peerRec.Seq
+		// register again
+		data, err = MakeRegisterRequest(peerID, privKey, addrs, account)
+		So(err, ShouldBeNil)
+		peerRec, err = ReadRegisterRequest(data)
+		So(err, ShouldBeNil)
+		// seq create from time
+		So(seq0, ShouldBeLessThan, peerRec.Seq)
 
-	peerRec, err := ReadRegisterRequest(data)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	seq0 := peerRec.Seq
-
-	data, err = MakeRegisterRequest(peerID, privKey, addrs, account)
-	if err != nil {
-		t.Fatal(err)
-	}
-	peerRec, err = ReadRegisterRequest(data)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if seq0 >= peerRec.Seq {
-		t.Fatal("sequence not greater than last seen")
-	}
+	})
+	Convey("test create error and load error", t, func() {
+		Convey("nil addr", func() {
+			account := "t12345"
+			peerID, privKey, err := mock.GetPrivkyAndPeerID()
+			So(err, ShouldBeNil)
+			data, err := MakeRegisterRequest(peerID, privKey, []string{}, account)
+			So(err, ShouldResemble, errors.New("missing address"))
+			So(data, ShouldBeNil)
+		})
+		Convey("failed seal the envelop", func() {
+			patch := ApplyFunc(record.Seal, func(rec record.Record, privateKey crypto.PrivKey) (*record.Envelope, error) {
+				return nil, errors.New("failed seal")
+			})
+			defer patch.Reset()
+			_, err := MakeRegisterRequest(peerID, privKey, addrs, account)
+			So(err, ShouldResemble, fmt.Errorf("could not sign request: failed seal"))
+		})
+		Convey("failed marshal the envelop", func() {
+			patch := ApplyMethod(reflect.TypeOf(&record.Envelope{}), "Marshal", func(_ *record.Envelope) ([]byte, error) {
+				return nil, errors.New("failed")
+			})
+			defer patch.Reset()
+			_, err := MakeRegisterRequest(peerID, privKey, addrs, account)
+			So(err, ShouldResemble, fmt.Errorf("could not marshal request envelop: failed"))
+		})
+	})
 }

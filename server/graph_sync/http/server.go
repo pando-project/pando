@@ -44,7 +44,6 @@ func New(listen string, core *legs.Core) (*Server, error) {
 	h := newHandler(core)
 
 	r.HandleFunc("/graph/sub/{peerid}", h.SubProvider)
-	r.HandleFunc("/graph/get/{id}", h.GetGraph)
 
 	return s, nil
 }

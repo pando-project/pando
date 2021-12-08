@@ -81,8 +81,7 @@ func (mm *MetaManager) flushRegular() {
 			for _, r := range records {
 				cidlist = append(cidlist, r.Cid)
 			}
-			// todo: export as car file
-			//exportMetaCar(mm.dagds, cidlist, "./received/"+peerID.String()[:5]+time.Now().String()+".car", mm.bs)
+			//ExportMetaCar(mm.dagds, cidlist, "./received/"+peerID.String()[:5]+time.Now().String()+".car", mm.bs)
 			update[peerID] = &types.ProviderState{Cidlist: cidlist}
 		}
 		if len(update) > 0 {
@@ -104,11 +103,11 @@ func (mm *MetaManager) GetUpdateOut() <-chan map[peer.ID]*types.ProviderState {
 	return mm.outStateTreeCh
 }
 
-func exportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, path string, bs blockstore.Blockstore) {
+func ExportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, path string, bs blockstore.Blockstore) error {
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Errorf("open file error : %s", err.Error())
-		return
+		return err
 	}
 	defer f.Close()
 
@@ -117,13 +116,13 @@ func exportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, path string, bs b
 		fmt.Println("cid: ", c)
 		vb, e := bs.Get(c)
 		if e != nil {
-			fmt.Println(e)
+			return e
 		}
 		log.Debugf("[block] block value: ", vb.RawData())
 
 		v, e := dagds.Get(context.Background(), c)
 		if e != nil {
-			fmt.Println(e)
+			return e
 		}
 		log.Debugf("[dag] block value: ", v.String())
 	}
@@ -131,6 +130,7 @@ func exportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, path string, bs b
 	err = car.WriteCar(context.Background(), dagds, cidlist, f)
 	if err != nil {
 		log.Errorf("failed to export the car for metadata, %s", err.Error())
+		return err
 	}
-
+	return nil
 }
