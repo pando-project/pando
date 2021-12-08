@@ -9,10 +9,14 @@ import (
 
 func TestIdentity(t *testing.T) {
 	Convey("test create and decode identity", t, func() {
-		id, err := CreateIdentity(io.Discard)
+		identity, err := CreateIdentity(io.Discard)
 		So(err, ShouldBeNil)
-		pk, err := id.DecodePrivateKey("")
+		pk, err := identity.DecodePrivateKey("")
 		So(err, ShouldBeNil)
 		So(pk.Type(), ShouldEqual, crypto_pb.KeyType_Ed25519)
+		id, pk2, err := identity.Decode()
+		So(err, ShouldBeNil)
+		So(id.String(), ShouldEqual, identity.PeerID)
+		So(pk2, ShouldResemble, pk)
 	})
 }

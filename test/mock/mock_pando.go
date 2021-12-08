@@ -36,12 +36,12 @@ func NewPandoMock() (*PandoMock, error) {
 	}
 	bs := blockstore.NewBlockstore(mds)
 
-	mockDisco, err := newMockDiscoverer(exceptID)
+	mockDisco, err := NewMockDiscoverer(exceptID)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := registry.NewRegistry(&discoveryCfg, &aclCfg, mds, mockDisco)
+	r, err := registry.NewRegistry(&MockDiscoveryCfg, &MockAclCfg, mds, mockDisco)
 	if err != nil {
 		return nil, err
 	}

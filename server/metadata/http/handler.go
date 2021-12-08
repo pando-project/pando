@@ -63,8 +63,12 @@ func (h *httpHandler) ListSnapShotInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ss, err := h.metaHandler.StateTree.GetSnapShot(ssCid)
-	if err != nil {
+	if err != nil && err != statetree.NotFoundErr {
 		log.Errorf("cannot get snapshot: %s, err: %s", ssCid.String(), err.Error())
+		http.Error(w, "", http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.Errorf("not found snapshot: %s", ssCid.String())
 		http.Error(w, "", http.StatusNotFound)
 		return
 	}
