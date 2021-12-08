@@ -5,18 +5,21 @@ import (
 	"Pando/test/mock"
 	"context"
 	"github.com/ipfs/go-cid"
+	logging "github.com/ipfs/go-log/v2"
 	. "github.com/smartystreets/goconvey/convey"
-	"os"
 	"testing"
 	"time"
 )
 
-func TestReceiveRecordAndOutUpdate_(t *testing.T) {
+func TestReceiveRecordAndOutUpdate(t *testing.T) {
 	Convey("test metadata manager", t, func() {
 		pando, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
+		err = logging.SetLogLevel("meta-manager", "debug")
+		So(err, ShouldBeNil)
 
 		Convey("test receive record, out update and backup because of maxInterval", func() {
+			BackupMaxInterval = time.Second * time.Second * 3
 			mm, err := New(context.Background(), pando.DS, pando.BS)
 			So(err, ShouldBeNil)
 			provider, err := mock.NewMockProvider(pando)
@@ -51,10 +54,8 @@ func TestReceiveRecordAndOutUpdate_(t *testing.T) {
 				So(len(update), ShouldEqual, 1)
 				So(update, ShouldContainKey, mockRecord[0].ProviderID)
 				So(update[mockRecord[0].ProviderID].Cidlist, ShouldResemble, []cid.Cid{mockRecord[0].Cid, mockRecord[1].Cid, mockRecord[2].Cid})
-				data, err := os.ReadFile(BackupTmpDir + BackFileName)
-				So(err, ShouldBeNil)
-				So(data, ShouldNotBeNil)
 			}
+			mm.Close()
 		})
 		Convey("test receive record, out update and backup because of maxDagNum", func() {
 			BackupMaxInterval = time.Second * 60
@@ -77,7 +78,6 @@ func TestReceiveRecordAndOutUpdate_(t *testing.T) {
 				{cidlist2[0], provider.ID, uint64(time.Now().UnixNano())},
 				{cidlist3[0], provider.ID, uint64(time.Now().UnixNano())},
 			}
-			//_ = logging.SetLogLevel("meta-manager", "debug")
 			recvCh := mm.GetMetaInCh()
 			for _, r := range mockRecord {
 				recvCh <- r
@@ -92,13 +92,10 @@ func TestReceiveRecordAndOutUpdate_(t *testing.T) {
 			case <-ctx.Done():
 				t.Error("timeout!not get update rightly")
 			case update := <-outCh:
-				t.Log(update)
 				So(len(update), ShouldEqual, 1)
 				So(update, ShouldContainKey, mockRecord[0].ProviderID)
 				So(update[mockRecord[0].ProviderID].Cidlist, ShouldResemble, []cid.Cid{mockRecord[0].Cid, mockRecord[1].Cid, mockRecord[2].Cid})
-				data, err := os.ReadFile(BackupTmpDir + BackFileName)
-				So(err, ShouldBeNil)
-				So(data, ShouldNotBeNil)
+
 			}
 		})
 

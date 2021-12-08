@@ -27,10 +27,10 @@ var log = logging.Logger("meta-manager")
 
 var (
 	SnapShotDuration       = time.Second * 5
-	BackupMaxInterval      = time.Second * 3
+	BackupMaxInterval      = time.Second * 10
 	BackupMaxDagNums       = 10000
 	BackupTmpDir           = "./tmp/"
-	BackFileName           = "backup.car"
+	BackFileName           = "backup-%d.car"
 	BackupCheckNumInterval = time.Second * 60
 )
 
@@ -47,6 +47,9 @@ type MetaManager struct {
 	cache             map[peer.ID][]*MetaRecord
 	mutex             sync.Mutex
 	backupMaxInterval time.Duration
+	estBackupSys      *backupSystem
+	ctx               context.Context
+	cncl              context.CancelFunc
 }
 
 type backupRecord struct {
@@ -61,6 +64,13 @@ type MetaRecord struct {
 }
 
 func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore) (*MetaManager, error) {
+	ebs, err := NewBackupSys(estuaryGateway, shutGateway)
+	if err != nil {
+		return nil, err
+	}
+
+	cctx, cncl := context.WithCancel(ctx)
+
 	mm := &MetaManager{
 		flushTime:         SnapShotDuration,
 		recvCh:            make(chan *MetaRecord),
@@ -71,31 +81,45 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore) (
 		cache:             make(map[peer.ID][]*MetaRecord),
 		dagServ:           dag.NewDAGService(bsrv.New(bs, offline.Exchange(bs))),
 		backupMaxInterval: BackupMaxInterval,
+		estBackupSys:      ebs,
+		ctx:               cctx,
+		cncl:              cncl,
 	}
 
 	go mm.dealReceivedMeta()
 	go mm.flushRegular()
-	go mm.backupDagToFilecoin(ctx)
+	go mm.backupDagToCarLocally(cctx)
 	return mm, nil
 }
 
 func (mm *MetaManager) dealReceivedMeta() {
-	for r := range mm.recvCh {
-		mm.mutex.Lock()
-		if r != nil {
-			if mm.cache[r.ProviderID] == nil {
-				mm.cache[r.ProviderID] = make([]*MetaRecord, 0)
+	for {
+		select {
+		case r, ok := <-mm.recvCh:
+			if !ok {
+				return
 			}
-			mm.cache[r.ProviderID] = append(mm.cache[r.ProviderID], r)
-			mm.backupCh <- r.Cid
+			mm.mutex.Lock()
+			if r != nil {
+				if mm.cache[r.ProviderID] == nil {
+					mm.cache[r.ProviderID] = make([]*MetaRecord, 0)
+				}
+				mm.cache[r.ProviderID] = append(mm.cache[r.ProviderID], r)
+				mm.backupCh <- r.Cid
+			}
+			mm.mutex.Unlock()
 		}
-		mm.mutex.Unlock()
 	}
 }
 
 func (mm *MetaManager) flushRegular() {
 
 	for range time.NewTicker(mm.flushTime).C {
+		select {
+		case _ = <-mm.ctx.Done():
+			return
+		default:
+		}
 		update := make(map[peer.ID]*types.ProviderState)
 		for peerID, records := range mm.cache {
 			cidlist := make([]cid.Cid, 0)
@@ -123,7 +147,7 @@ func (mm *MetaManager) GetUpdateOut() <-chan map[peer.ID]*types.ProviderState {
 	return mm.outStateTreeCh
 }
 
-func (mm *MetaManager) backupDagToFilecoin(ctx context.Context) {
+func (mm *MetaManager) backupDagToCarLocally(ctx context.Context) {
 	backupMutex := new(sync.Mutex)
 	waitBackupRecoed := make([]*backupRecord, 0)
 	t := time.NewTicker(time.Minute)
@@ -136,6 +160,8 @@ func (mm *MetaManager) backupDagToFilecoin(ctx context.Context) {
 			})
 			// delete record had been backup
 			select {
+			case _ = <-mm.ctx.Done():
+				return
 			case _ = <-t.C:
 				for i, r := range waitBackupRecoed {
 					if r.isBackup {
@@ -149,8 +175,13 @@ func (mm *MetaManager) backupDagToFilecoin(ctx context.Context) {
 
 	go func() {
 		for range time.NewTicker(mm.backupMaxInterval).C {
+			select {
+			case _ = <-mm.ctx.Done():
+				return
+			default:
+			}
 			backupMutex.Lock()
-			log.Infow("start backup the car to filecoin")
+			log.Infow("start backup the car in local")
 			// for update the isBackup later because the original slice has changed
 			_waitBackupRecoed := make([]*backupRecord, len(waitBackupRecoed))
 			copy(_waitBackupRecoed, waitBackupRecoed)
@@ -158,13 +189,18 @@ func (mm *MetaManager) backupDagToFilecoin(ctx context.Context) {
 			if err != nil {
 				continue
 			}
-			log.Infow("finished backup the car to filecoin")
+			log.Infow("finished backup the car in local")
 			backupMutex.Unlock()
 		}
 	}()
 
 	go func() {
 		for range time.NewTicker(BackupCheckNumInterval).C {
+			select {
+			case _ = <-mm.ctx.Done():
+				return
+			default:
+			}
 			backupMutex.Lock()
 			nums := 0
 			for _, r := range waitBackupRecoed {
@@ -173,22 +209,23 @@ func (mm *MetaManager) backupDagToFilecoin(ctx context.Context) {
 				}
 			}
 			if nums > BackupMaxDagNums {
+				log.Infow("start backup the car in local")
 				_waitBackupRecoed := make([]*backupRecord, len(waitBackupRecoed))
 				copy(_waitBackupRecoed, waitBackupRecoed)
 				err := mm.backupRecordsAndUpdateStatus(ctx, _waitBackupRecoed)
 				if err != nil {
 					continue
 				}
-				log.Infow("finished backup the car to filecoin")
+				log.Infow("finished backup the car in local")
 			}
 			backupMutex.Unlock()
 		}
 	}()
 }
 
-func (mm *MetaManager) backupRecordsAndUpdateStatus(ctx context.Context, _waitBackupRecoed []*backupRecord) error {
+func (mm *MetaManager) backupRecordsAndUpdateStatus(ctx context.Context, _waitBackupRecord []*backupRecord) error {
 	waitBackupCidList := make([]cid.Cid, 0)
-	for _, r := range _waitBackupRecoed {
+	for _, r := range _waitBackupRecord {
 		if !r.isBackup && r.cid != cid.Undef {
 			waitBackupCidList = append(waitBackupCidList, r.cid)
 		}
@@ -197,25 +234,25 @@ func (mm *MetaManager) backupRecordsAndUpdateStatus(ctx context.Context, _waitBa
 		log.Infow(NoRecordBackup.Error())
 		return NoRecordBackup
 	}
-	err := ExportMetaCar(mm.dagServ, waitBackupCidList, BackupTmpDir+BackFileName, mm.bs)
+	fname := fmt.Sprintf(BackFileName, time.Now().UnixNano())
+	err := ExportMetaCar(mm.dagServ, waitBackupCidList, BackupTmpDir+fname, mm.bs)
+	log.Debugf("back up as file: %s", fname)
 	if err != nil {
 		log.Errorf("failed to write Dags to car, err: %s", err.Error())
 		return err
 	}
-	err = mm.makeBackupDeal(ctx, BackupTmpDir+BackFileName)
-	if err != nil {
-		log.Errorf("failed to backup car to filecoin, err: %s", err.Error())
-		return err
-	}
-	for _, r := range _waitBackupRecoed {
+
+	for _, r := range _waitBackupRecord {
 		r.isBackup = true
 	}
 	return nil
 }
 
-func (mm *MetaManager) makeBackupDeal(ctx context.Context, path string) error {
-	// todo
-	return nil
+func (mm *MetaManager) Close() {
+	mm.cncl()
+	close(mm.outStateTreeCh)
+	close(mm.backupCh)
+	close(mm.recvCh)
 }
 
 func ExportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, filepath string, bs blockstore.Blockstore) error {

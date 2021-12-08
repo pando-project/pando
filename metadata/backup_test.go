@@ -1,15 +1,22 @@
 package metadata
 
 import (
+	logging "github.com/ipfs/go-log/v2"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+	"time"
 )
 
 func TestBackUpFile(t *testing.T) {
 	Convey("when send right request then get 200 response", t, func() {
-		bs, err := NewBackupSys("https://shuttle-4.estuary.tech", "Bearer EST75c4d3bb-d86f-42e4-80da-662d7fbde4c2ARY")
+		err := logging.SetLogLevel("meta-manager", "debug")
 		So(err, ShouldBeNil)
-		err = bs.backupToEstuary_("/Users/zxh/ken-labs/Pando/metadata/tmp/backup.car")
+		_, err = NewBackupSys("https://api.estuary.tech", "https://shuttle-4.estuary.tech")
 		So(err, ShouldBeNil)
+		time.Sleep(time.Second * 10)
+		//err = bs.backupToEstuary("/Users/zxh/ken-labs/Pando/metadata/tmp/backup.car")
+		//So(err, ShouldBeNil)
+		//_, err = bs.checkDealForBackup(11726283)
+		//So(err, ShouldBeNil)
 	})
 }
