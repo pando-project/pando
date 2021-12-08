@@ -9,6 +9,8 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"io"
+	"time"
+
 	// dagjson codec registered for encoding
 
 	_ "github.com/ipld/go-ipld-prime/codec/dagcbor"
@@ -37,11 +39,13 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 			if !ok {
 				return fmt.Errorf("unsupported link type")
 			}
+			fmt.Printf("[link-sys committer]time: %v, cid: %s\n", time.Now(), asCidLink.Cid)
 			block, err := blocks.NewBlockWithCid(buffer.Bytes(), asCidLink.Cid)
 			if err != nil {
 				return err
 			}
-			return bs.Put(block)
+			err = bs.Put(block)
+			return err
 		}
 		return &buffer, committer, nil
 	}

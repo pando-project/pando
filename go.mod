@@ -7,6 +7,7 @@ require (
 	github.com/agiledragon/gomonkey/v2 v2.3.1
 	github.com/briandowns/spinner v1.11.1
 	github.com/filecoin-project/go-address v0.0.5
+	github.com/filecoin-project/go-data-transfer v1.11.4
 	github.com/filecoin-project/go-indexer-core v0.2.6
 	github.com/filecoin-project/go-jsonrpc v0.1.4-0.20210217175800-45ea43ac2bec
 	github.com/filecoin-project/go-legs v0.0.0-20211116112108-61960ef1f8ef
@@ -36,7 +37,7 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/montanaflynn/stats v0.6.6
-	github.com/multiformats/go-multiaddr v0.4.0
+	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multicodec v0.3.1-0.20210902112759-1539a079fd61
 	github.com/prometheus/client_golang v1.11.0
 	github.com/shopspring/decimal v1.3.1

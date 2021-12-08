@@ -71,6 +71,7 @@ func NewLegsCore(ctx context.Context,
 
 	lms.GraphSync().RegisterIncomingBlockHook(lc.storageHook())
 	lms.GraphSync().RegisterOutgoingRequestHook(lc.rateLimitHook())
+	lms.DataTransfer().SubscribeToEvents(onDataTransferComplete)
 	log.Debugf("LegCore started and all hooks and linksystem registered")
 
 	return lc, nil
