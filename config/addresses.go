@@ -6,6 +6,7 @@ const (
 	defaultGraphQl   = "/ip4/0.0.0.0/tcp/9003"
 	defaultMetaData  = "/ip4/0.0.0.0/tcp/9004"
 	defaultP2PAddr   = "/ip4/0.0.0.0/tcp/9000"
+	defaultMetrics   = "/ip4/0.0.0.0/tcp/9005"
 )
 
 // Addresses stores the (string) multiaddr addresses for the node.
@@ -22,4 +23,6 @@ type Addresses struct {
 	P2PAddr string
 	// GraphQL address
 	GraphQL string
+	// Metrics address
+	Metrics string
 }

@@ -3,7 +3,9 @@ package httpadminserver
 import (
 	"Pando/internal/handler"
 	"Pando/internal/httpserver"
+	"Pando/internal/metrics"
 	"Pando/internal/registry"
+	"context"
 	"io"
 	"net/http"
 )
@@ -18,8 +20,11 @@ func newHandler(registry *registry.Registry) *httpHandler {
 	}
 }
 
-// POST /providers
+// RegisterProvider is the handler of API: POST /providers
 func (h *httpHandler) RegisterProvider(w http.ResponseWriter, r *http.Request) {
+	record := metrics.APITimer(context.Background(), metrics.RegisterProviderLatency)
+	defer record()
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Errorw("failed reading body", "err", err)
