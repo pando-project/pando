@@ -25,6 +25,8 @@ var (
 		"Time to subscribe a provider", stats.UnitMilliseconds)
 	ListMetadataLatency = stats.Float64("meta/list_latency",
 		"Time to fetch metadata snapshots", stats.UnitMilliseconds)
+	ListPandoInfoLatency = stats.Float64("meta/list_info",
+		"Time to list pando info", stats.UnitMilliseconds)
 	ListSnapshotInfoLatency = stats.Float64("meta/snap_info_latency",
 		"Time to fetch snapshot info", stats.UnitMilliseconds)
 	GetSnapshotByHeightLatency = stats.Float64("meta/snap_info_by_height",

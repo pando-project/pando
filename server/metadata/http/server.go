@@ -46,6 +46,8 @@ func New(listen string, glisten string, stateTree *statetree.StateTree) (*Server
 
 	h := newHandler(stateTree)
 
+	r.HandleFunc("/status", h.GetPandoInfo)
+
 	r.HandleFunc("/meta/list", h.ListSnapShots)
 	r.HandleFunc("/meta/info/{sscid}", h.ListSnapShotInfo)
 	r.HandleFunc("/meta/height/{height}", h.GetSnapShotByHeight)

@@ -343,6 +343,13 @@ func (st *StateTree) DeleteInfo() error {
 	return nil
 }
 
+func (st *StateTree) GetPandoInfo() (*types.ExtraInfo, error) {
+	if st.exinfo != nil {
+		return st.exinfo, nil
+	}
+	return nil, fmt.Errorf("nil info")
+}
+
 func (st *StateTree) Shutdown() error {
 	st.cncl()
 	log.Warn("shutting down the state tree...")

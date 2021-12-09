@@ -111,6 +111,25 @@ func (h *httpHandler) GetSnapShotByHeight(w http.ResponseWriter, r *http.Request
 	WriteJsonResponse(w, http.StatusOK, resBytes)
 }
 
+func (h *httpHandler) GetPandoInfo(w http.ResponseWriter, r *http.Request) {
+	record := metrics.APITimer(context.Background(), metrics.ListPandoInfoLatency)
+	defer record()
+
+	info, err := h.metaHandler.StateTree.GetPandoInfo()
+	if err != nil {
+		log.Error("cannot get pando info, err", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	resBytes, err := json.Marshal(info)
+	if err != nil {
+		log.Error("cannot marshal pando info, err", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+	WriteJsonResponse(w, http.StatusOK, resBytes)
+}
+
 func getSsCid(r *http.Request) (string, error) {
 	vars := mux.Vars(r)
 	id := vars["sscid"]

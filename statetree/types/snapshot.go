@@ -10,8 +10,6 @@ type SnapShot struct {
 }
 
 type ExtraInfo struct {
-	GraphSyncUrl   string
-	GoLegsSubUrl   string
-	GolegsSubTopic string
-	MultiAddr      string
+	PeerID     string
+	MultiAddrs string
 }

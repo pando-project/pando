@@ -25,12 +25,7 @@ func TestStateTreeRoundTrip_(t *testing.T) {
 		core := pando.Core
 		So(core, ShouldNotBeNil)
 
-		ex := &types.ExtraInfo{
-			GraphSyncUrl:   "",
-			GoLegsSubUrl:   "",
-			GolegsSubTopic: "",
-			MultiAddr:      "test",
-		}
+		ex := &types.ExtraInfo{}
 		ch := make(chan map[peer.ID]*types.ProviderState)
 		st, err := New(context.Background(), core.DS, core.BS, ch, ex)
 		So(err, ShouldBeNil)
