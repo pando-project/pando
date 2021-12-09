@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"Pando/internal/httpclient"
+	"Pando/metadata/est_utils"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -24,35 +25,6 @@ const (
 
 	EstuaryApiKeyEnv = "ESTKEY"
 )
-
-type addResponse struct {
-	Cid       string
-	EstuaryId uint64
-	Providers []string
-}
-
-type contentStatusResponse struct {
-	Content struct {
-		Id           int    `json:"id"`
-		Cid          string `json:"cid"`
-		Name         string `json:"name"`
-		UserId       int    `json:"userId"`
-		Description  string `json:"description"`
-		Size         int    `json:"size"`
-		Active       bool   `json:"active"`
-		Offloaded    bool   `json:"offloaded"`
-		Replication  int    `json:"replication"`
-		AggregatedIn int    `json:"aggregatedIn"`
-		Aggregate    bool   `json:"aggregate"`
-		Pinning      bool   `json:"pinning"`
-		PinMeta      string `json:"pinMeta"`
-		Failed       bool   `json:"failed"`
-		Location     string `json:"location"`
-		DagSplit     bool   `json:"dagSplit"`
-	} `json:"content"`
-	Deals         []interface{} `json:"deals"`
-	FailuresCount int           `json:"failuresCount"`
-}
 
 type backupSystem struct {
 	gateway        string
@@ -131,8 +103,10 @@ func (bs *backupSystem) checkDeal() {
 		for idx, checkId := range waitCheckList {
 			success, err := bs.checkDealForBackup(checkId)
 			if err != nil {
-				log.Errorf("failed to check the status of content id : %d, err : %s", checkId, err.Error())
+				log.Errorf("failed to check deal status of content id : %d, err : %s", checkId, err.Error())
+				continue
 			}
+			// delete from waitCheckList
 			if success {
 				mux.Lock()
 				if waitCheckList[idx] == checkId {
@@ -146,6 +120,8 @@ func (bs *backupSystem) checkDeal() {
 						}
 					}
 				}
+			} else {
+				// todo: metrics for failure
 			}
 		}
 	}
@@ -175,17 +151,22 @@ func (bs *backupSystem) checkDealForBackup(estID uint64) (bool, error) {
 		return false, err
 	}
 
-	resStruct := new(contentStatusResponse)
+	resStruct := new(est_utils.ContentStatus)
 	err = json.Unmarshal(body, resStruct)
 	if err != nil {
 		return false, err
 	}
 
-	if resStruct.Deals == nil {
+	success, err := bs.checkDealStatus(resStruct)
+	if err != nil {
+		log.Errorf("failed to check the status of deal for file: %s, id: %d, err: %s", resStruct.Content.Name, estID, err.Error())
+		return false, err
+	}
+	if success {
+		return true, nil
+	} else {
 		return false, nil
 	}
-
-	return false, nil
 }
 
 func (bs *backupSystem) backupToEstuary(filepath string) error {
@@ -229,7 +210,7 @@ func (bs *backupSystem) backupToEstuary(filepath string) error {
 	if err != nil {
 		return err
 	}
-	r := new(addResponse)
+	r := new(est_utils.AddResponse)
 	err = json.Unmarshal(body, r)
 	if err != nil {
 		return err
@@ -243,4 +224,20 @@ func (bs *backupSystem) backupToEstuary(filepath string) error {
 	log.Debugf("success back up %s to est, id : %d", filepath, r.EstuaryId)
 
 	return nil
+}
+
+func (bs *backupSystem) checkDealStatus(cs *est_utils.ContentStatus) (bool, error) {
+	if cs == nil {
+		return false, fmt.Errorf("nil conten status")
+	}
+	if cs.Deals == nil {
+		return false, nil
+	}
+
+	for _, ds := range cs.Deals {
+		if ds.Deal.Failed {
+			return false, nil
+		}
+	}
+	return true, nil
 }

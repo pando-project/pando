@@ -5,8 +5,9 @@ go 1.16
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0
 	github.com/agiledragon/gomonkey/v2 v2.3.1
+	github.com/application-research/filclient v0.0.0-20211123221534-5923ff193ca6
 	github.com/briandowns/spinner v1.11.1
-	github.com/filecoin-project/go-address v0.0.5
+	github.com/filecoin-project/go-address v0.0.6
 	github.com/filecoin-project/go-data-transfer v1.11.4
 	github.com/filecoin-project/go-indexer-core v0.2.6
 	github.com/filecoin-project/go-jsonrpc v0.1.4-0.20210217175800-45ea43ac2bec
@@ -18,17 +19,17 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/graphql-go/graphql v0.8.0
 	github.com/ipfs/go-block-format v0.0.3
-	github.com/ipfs/go-blockservice v0.1.5
+	github.com/ipfs/go-blockservice v0.1.7
 	github.com/ipfs/go-cid v0.1.0
 	github.com/ipfs/go-datastore v0.4.6
 	github.com/ipfs/go-ds-leveldb v0.4.2
-	github.com/ipfs/go-graphsync v0.10.1
-	github.com/ipfs/go-ipfs-blockstore v1.0.4
+	github.com/ipfs/go-graphsync v0.10.5
+	github.com/ipfs/go-ipfs-blockstore v1.0.5-0.20210802214209-c56038684c45
 	github.com/ipfs/go-ipfs-exchange-offline v0.0.1
 	github.com/ipfs/go-ipld-cbor v0.0.5
 	github.com/ipfs/go-ipld-format v0.2.0
 	github.com/ipfs/go-log/v2 v2.3.0
-	github.com/ipfs/go-merkledag v0.3.2
+	github.com/ipfs/go-merkledag v0.4.1
 	github.com/ipld/go-car v0.3.2
 	github.com/ipld/go-ipld-prime v0.12.4-0.20211026094848-168715526f2d
 	github.com/libp2p/go-libp2p v0.15.1
