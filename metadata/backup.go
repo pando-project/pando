@@ -98,7 +98,6 @@ func (bs *backupSystem) run() {
 				log.Errorf("wrong back up dir path: %s", BackupTmpPath)
 			}
 			for _, file := range files {
-				fmt.Printf("back up file path is %s ", path.Join(BackupTmpPath, file.Name()))
 				err = bs.backupToEstuary(path.Join(BackupTmpPath, file.Name()))
 				if err != nil {
 					//todo metrics
