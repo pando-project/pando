@@ -104,7 +104,7 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	metaManager, err := metadata.New(context.Background(), mds, bs)
+	metaManager, err := metadata.New(context.Background(), mds, bs, &cfg.Backup)
 	if err != nil {
 		return err
 	}

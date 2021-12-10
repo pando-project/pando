@@ -17,6 +17,7 @@ type Config struct {
 	BandWidth     float64
 	SingleDAGSize float64
 	Policy        Policy
+	Backup        Backup
 }
 
 const (

@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"Pando/config"
 	"Pando/internal/httpclient"
 	"bytes"
 	"encoding/json"
@@ -17,10 +18,10 @@ import (
 )
 
 const (
-	checkInterval  = time.Second * 10
-	fileDir        = "./tmp"
-	shutGateway    = "https://shuttle-4.estuary.tech"
-	estuaryGateway = "https://api.estuary.tech"
+	checkInterval = time.Second * 10
+	//TmpBackupFileDir      = "./tmp"
+	DefaultShuttleGateway = "https://shuttle-4.estuary.tech"
+	DefaultEstGateway     = "https://api.estuary.tech"
 
 	EstuaryApiKeyEnv = "ESTKEY"
 )
@@ -59,30 +60,43 @@ type backupSystem struct {
 	shuttleGateway string
 	checkInterval  time.Duration
 	apiKey         string
-	fileDir        string
-	fileName       string
-	toCheck        chan uint64
+	//fileDir        string
+	fileName string
+	toCheck  chan uint64
 }
 
-func NewBackupSys(gateway string, shuttleGateway string) (*backupSystem, error) {
-	if gateway == "" {
-		gateway = estuaryGateway
+func NewBackupSys(backupCfg *config.Backup) (*backupSystem, error) {
+	var gateway string
+	var shuttleGateway string
+	var apiKey string
+
+	if backupCfg == nil || backupCfg.EstuaryGateway == "" {
+		gateway = DefaultEstGateway
+	} else {
+		gateway = backupCfg.EstuaryGateway
 	}
-	if shuttleGateway == "" {
-		shuttleGateway = shutGateway
+	if backupCfg == nil || backupCfg.ShuttleGateway == "" {
+		shuttleGateway = DefaultShuttleGateway
+	} else {
+		shuttleGateway = backupCfg.ShuttleGateway
+	}
+	if backupCfg == nil || backupCfg.ApiKey == "" {
+		apiKeyEnv, exist := os.LookupEnv(EstuaryApiKeyEnv)
+		if !exist {
+			return nil, fmt.Errorf("please set apikey in $%s", EstuaryApiKeyEnv)
+		}
+		apiKey = apiKeyEnv
+	} else {
+		apiKey = backupCfg.ApiKey
 	}
 
-	apiKey, exist := os.LookupEnv(EstuaryApiKeyEnv)
-	if !exist {
-		return nil, fmt.Errorf("please set apikey in $%s", EstuaryApiKeyEnv)
-	}
 	bs := &backupSystem{
 		gateway:        gateway,
 		shuttleGateway: shuttleGateway,
 		checkInterval:  time.Second * 10,
 		apiKey:         apiKey,
-		fileDir:        fileDir,
-		toCheck:        make(chan uint64, 1),
+		//fileDir:        TmpBackupFileDir,
+		toCheck: make(chan uint64, 1),
 	}
 	bs.run()
 

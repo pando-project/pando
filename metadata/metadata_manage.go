@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"Pando/config"
 	"Pando/statetree/types"
 	"context"
 	"errors"
@@ -85,8 +86,8 @@ type MetaRecord struct {
 	Time       uint64
 }
 
-func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore) (*MetaManager, error) {
-	ebs, err := NewBackupSys(estuaryGateway, shutGateway)
+func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, backupCfg *config.Backup) (*MetaManager, error) {
+	ebs, err := NewBackupSys(backupCfg)
 	if err != nil {
 		return nil, err
 	}
