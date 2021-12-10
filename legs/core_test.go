@@ -36,6 +36,7 @@ func TestGetMetaRecord(t *testing.T) {
 		So(err, ShouldBeNil)
 		err = core.Subscribe(context.Background(), provider.ID)
 		So(err, ShouldBeNil)
+		time.Sleep(time.Second * 2)
 		cidlist, err := provider.SendDag()
 		So(err, ShouldBeNil)
 		select {
