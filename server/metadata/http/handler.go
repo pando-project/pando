@@ -1,6 +1,7 @@
 package http
 
 import (
+	"Pando/internal/httpserver"
 	"Pando/internal/metrics"
 	"Pando/statetree"
 	"context"
@@ -118,7 +119,10 @@ func (h *httpHandler) GetPandoInfo(w http.ResponseWriter, r *http.Request) {
 	info, err := h.metaHandler.StateTree.GetPandoInfo()
 	if err != nil {
 		log.Error("cannot get pando info, err", err)
-		http.Error(w, "", http.StatusInternalServerError)
+		resBytes, _ := json.Marshal(&httpserver.ErrorJsonResponse{
+			Error: "failed to locate server status information",
+		})
+		WriteJsonResponse(w, http.StatusInternalServerError, resBytes)
 		return
 	}
 	resBytes, err := json.Marshal(info)
