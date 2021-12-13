@@ -51,6 +51,10 @@ func InitWithIdentity(identity Identity, opts ...Option) (*Config, error) {
 		},
 		AccountLevel:  AccountLevel{defaultThreshold},
 		SingleDAGSize: defaultSingleDAGSize,
+		Backup: Backup{
+			EstuaryGateway: defaultEstGateway,
+			ShuttleGateway: defaultShuttleGateway,
+		},
 	}
 	for _, opt := range opts {
 		opt(conf)
