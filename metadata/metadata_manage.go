@@ -243,7 +243,7 @@ func (mm *MetaManager) backupRecordsAndUpdateStatus(ctx context.Context, _waitBa
 		}
 	}
 	if len(waitBackupCidList) == 0 {
-		log.Debugw(NoRecordBackup.Error())
+		//log.Debugw(NoRecordBackup.Error())
 		return NoRecordBackup
 	}
 	fname := fmt.Sprintf(BackFileName, time.Now().UnixNano())

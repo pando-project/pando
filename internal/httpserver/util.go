@@ -13,6 +13,10 @@ import (
 
 var log = logging.Logger("indexer/http")
 
+type ErrorJsonResponse struct {
+	Error string
+}
+
 func WriteJsonResponse(w http.ResponseWriter, status int, body []byte) {
 	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

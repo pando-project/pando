@@ -1,6 +1,7 @@
 package http
 
 import (
+	"Pando/internal/httpserver"
 	"Pando/internal/metrics"
 	"Pando/statetree"
 	"context"
@@ -108,6 +109,28 @@ func (h *httpHandler) GetSnapShotByHeight(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	WriteJsonResponse(w, http.StatusOK, resBytes)
+}
+
+func (h *httpHandler) GetPandoInfo(w http.ResponseWriter, r *http.Request) {
+	record := metrics.APITimer(context.Background(), metrics.ListPandoInfoLatency)
+	defer record()
+
+	info, err := h.metaHandler.StateTree.GetPandoInfo()
+	if err != nil {
+		log.Error("cannot get pando info, err", err)
+		resBytes, _ := json.Marshal(&httpserver.ErrorJsonResponse{
+			Error: "failed to locate server status information",
+		})
+		WriteJsonResponse(w, http.StatusInternalServerError, resBytes)
+		return
+	}
+	resBytes, err := json.Marshal(info)
+	if err != nil {
+		log.Error("cannot marshal pando info, err", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
 	WriteJsonResponse(w, http.StatusOK, resBytes)
 }
 
