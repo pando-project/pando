@@ -54,7 +54,6 @@ func init() {
 		}
 	}
 	BackupTmpPath = BackupTmpDir
-	fmt.Println("The BackupTmpPath is : ", BackupTmpPath)
 }
 
 var NoRecordBackup = errors.New("no records need backup")
@@ -269,17 +268,6 @@ func (mm *MetaManager) Close() {
 }
 
 func ExportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, filename string, bs blockstore.Blockstore) error {
-	//_, err := os.Stat(path.Dir(filepath))
-	//if err != nil {
-	//	if os.IsNotExist(err) {
-	//		err = os.Mkdir(path.Dir(filepath), os.ModePerm)
-	//		if err != nil {
-	//			log.Errorf("failed to create backup dir:%s , err:%s", path.Dir(filepath), err.Error())
-	//		}
-	//	} else {
-	//		log.Errorf("please input correct filepath, err : %s", err.Error())
-	//	}
-	//}
 	f, err := os.OpenFile(path.Join(BackupTmpPath, filename), os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Errorf("open file error : %s", err.Error())
@@ -287,20 +275,18 @@ func ExportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, filename string, 
 	}
 	defer f.Close()
 
-	//todo debug
 	for _, c := range cidlist {
-		fmt.Println("cid: ", c)
-		vb, e := bs.Get(c)
+		_, e := bs.Get(c)
 		if e != nil {
 			return e
 		}
-		log.Debugf("[block] block value: ", vb.RawData())
+		//log.Debugf("[block] block value: ", vb.RawData())
 
-		v, e := dagds.Get(context.Background(), c)
+		_, e = dagds.Get(context.Background(), c)
 		if e != nil {
 			return e
 		}
-		log.Debugf("[dag] block value: ", v.String())
+		//log.Debugf("[dag] block value: ", v.String())
 	}
 
 	err = car.WriteCar(context.Background(), dagds, cidlist, f)
