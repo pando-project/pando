@@ -110,7 +110,7 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 	info := new(types.ExtraInfo)
 	for _, addr := range p2pHost.Addrs() {
-		info.MultiAddrs += addr.String() + "\t"
+		info.MultiAddrs += addr.String() + " "
 	}
 	info.PeerID = p2pHost.ID().String()
 
