@@ -183,11 +183,11 @@ func (st *StateTree) UpdateRoot(ctx context.Context, update map[peer.ID]*types.P
 
 func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update map[peer.ID]*types.ProviderState) error {
 	var height uint64
-	var previousSs cid.Cid
+	var previousSs string
 	if st.snapShot == cid.Undef {
 		// todo
 		height = uint64(0)
-		previousSs = newRoot
+		previousSs = ""
 	} else {
 		//oldSs := new(types.SnapShot)
 		//err := st.Store.Get(ctx, st.snapShot, oldSs)
@@ -196,7 +196,7 @@ func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update
 		//}
 		//height = oldSs.Height + 1
 		height = st.height
-		previousSs = st.snapShot
+		previousSs = st.snapShot.String()
 	}
 
 	_update := make(map[string]*types.ProviderState)
@@ -210,7 +210,7 @@ func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update
 		Update:       _update,
 		Height:       height,
 		CreateTime:   uint64(time.Now().UnixNano()),
-		PrevSnapShot: previousSs.String(),
+		PrevSnapShot: previousSs,
 		ExtraInfo:    st.exinfo,
 	}
 
