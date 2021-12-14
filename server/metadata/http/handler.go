@@ -11,6 +11,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // handler handles requests for the finder resource
@@ -125,7 +126,14 @@ func (h *httpHandler) GetPandoInfo(w http.ResponseWriter, r *http.Request) {
 		WriteJsonResponse(w, http.StatusInternalServerError, resBytes)
 		return
 	}
-	resBytes, err := json.Marshal(info)
+
+	mas := strings.Fields(info.MultiAddrs)
+
+	resBytes, err := json.Marshal(struct {
+		PeerID     string
+		Multiaddrs []string
+	}{info.PeerID, mas})
+
 	if err != nil {
 		log.Error("cannot marshal pando info, err", err)
 		http.Error(w, "", http.StatusInternalServerError)
