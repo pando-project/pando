@@ -55,22 +55,22 @@ func (i *Limiter) GateLimiter() *rate.Limiter {
 	return i.gateLimiter
 }
 
-func (i *Limiter) UnregisteredLimiter(baseTokenRate float64) (*rate.Limiter, error) {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-
-	if i.unregisteredLimiter != nil {
-		return i.unregisteredLimiter, nil
-	}
-
-	tokenRate := math.Ceil(0.1 * baseTokenRate)
-	if !rateIsValid(tokenRate) {
-		return nil, tokenRateZeroError
-	}
-	i.unregisteredLimiter = rate.NewLimiter(rate.Limit(tokenRate), int(tokenRate))
-
-	return i.unregisteredLimiter, nil
-}
+//func (i *Limiter) UnregisteredLimiter(baseTokenRate float64) (*rate.Limiter, error) {
+//	i.mu.Lock()
+//	defer i.mu.Unlock()
+//
+//	if i.unregisteredLimiter != nil {
+//		return i.unregisteredLimiter, nil
+//	}
+//
+//	tokenRate := math.Ceil(0.1 * baseTokenRate)
+//	if !rateIsValid(tokenRate) {
+//		return nil, tokenRateZeroError
+//	}
+//	i.unregisteredLimiter = rate.NewLimiter(rate.Limit(tokenRate), int(tokenRate))
+//
+//	return i.unregisteredLimiter, nil
+//}
 
 func (i *Limiter) WhitelistLimiter(baseTokenRate float64) (*rate.Limiter, error) {
 	i.mu.Lock()

@@ -70,43 +70,43 @@ func TestNewLimiter(t *testing.T) {
 	})
 }
 
-func TestLimiter_UnregisteredLimiter(t *testing.T) {
-	// m * baseRate = 0.1 * 0.8 * 100 / 2 = 4
-	Convey("Test UnregisteredLimiter", t, func() {
-		testLimiterCopy := *testLimiter
-		stubTestLimiter := ApplyGlobalVar(&testLimiter, &testLimiterCopy)
-
-		Convey("return a new unregistered limiter if not exists", func() {
-			unregisteredLimiter, err := testLimiter.UnregisteredLimiter(baseTokenRate)
-			So(unregisteredLimiter, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-
-			Convey("limit of unregistered limiter = 4.0 when base rate = 40", func() {
-				So(unregisteredLimiter.Limit(), ShouldEqual, rate.Limit(4.0))
-			})
-
-			Convey("return a limiter from *Limiter.unregisteredLimiter when it's exist,"+
-				"in this case, it should be exactly the limiter created above", func() {
-				limiterExactlyExists, err := testLimiter.UnregisteredLimiter(baseTokenRate)
-				So(err, ShouldBeNil)
-				So(limiterExactlyExists, ShouldEqual, unregisteredLimiter)
-			})
-		})
-
-		Convey("return nil and error when base rate is 0", func() {
-			tokenRateZeroLimiter, err := testLimiter.UnregisteredLimiter(0)
-			So(tokenRateZeroLimiter, ShouldBeNil)
-			So(err, ShouldEqual, tokenRateZeroError)
-		})
-
-		Reset(func() {
-			stubTestLimiter.Reset()
-		})
-	})
-}
+//func TestLimiter_UnregisteredLimiter(t *testing.T) {
+//	// m * baseRate = 0.1 * 0.8 * 100 / 2 = 4
+//	Convey("Test UnregisteredLimiter", t, func() {
+//		testLimiterCopy := *testLimiter
+//		stubTestLimiter := ApplyGlobalVar(&testLimiter, &testLimiterCopy)
+//
+//		Convey("return a new unregistered limiter if not exists", func() {
+//			unregisteredLimiter, err := testLimiter.UnregisteredLimiter(baseTokenRate)
+//			So(unregisteredLimiter, ShouldNotBeNil)
+//			So(err, ShouldBeNil)
+//
+//			Convey("limit of unregistered limiter = 4.0 when base rate = 40", func() {
+//				So(unregisteredLimiter.Limit(), ShouldEqual, rate.Limit(4.0))
+//			})
+//
+//			Convey("return a limiter from *Limiter.unregisteredLimiter when it's exist,"+
+//				"in this case, it should be exactly the limiter created above", func() {
+//				limiterExactlyExists, err := testLimiter.UnregisteredLimiter(baseTokenRate)
+//				So(err, ShouldBeNil)
+//				So(limiterExactlyExists, ShouldEqual, unregisteredLimiter)
+//			})
+//		})
+//
+//		Convey("return nil and error when base rate is 0", func() {
+//			tokenRateZeroLimiter, err := testLimiter.UnregisteredLimiter(0)
+//			So(tokenRateZeroLimiter, ShouldBeNil)
+//			So(err, ShouldEqual, tokenRateZeroError)
+//		})
+//
+//		Reset(func() {
+//			stubTestLimiter.Reset()
+//		})
+//	})
+//}
 
 func TestLimiter_WhitelistLimiter(t *testing.T) {
-	// m * baseRate = 0.5 * 0.8 * 100 / 2 = 20
+	// m * baseRate = 0.6 * 0.8 * 100 / 2 = 24
 	Convey("TestWhiteLimiter", t, func() {
 		testLimiterCopy := *testLimiter
 		stubTestLimiter := ApplyGlobalVar(&testLimiter, &testLimiterCopy)
@@ -116,8 +116,8 @@ func TestLimiter_WhitelistLimiter(t *testing.T) {
 			So(whitelistLimiter, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 
-			Convey("limit of whitelist limiter = 20 when base rate = 40", func() {
-				So(whitelistLimiter.Limit(), ShouldEqual, rate.Limit(20))
+			Convey("limit of whitelist limiter = 24 when base rate = 40", func() {
+				So(whitelistLimiter.Limit(), ShouldEqual, rate.Limit(24))
 			})
 
 			Convey("return a limiter from *Limiter.whitelistLimiter when it's exist,"+
