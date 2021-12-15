@@ -80,7 +80,7 @@ func (i *Limiter) WhitelistLimiter(baseTokenRate float64) (*rate.Limiter, error)
 		return i.whitelistLimiter, nil
 	}
 
-	tokenRate := math.Ceil(0.5 * baseTokenRate)
+	tokenRate := math.Ceil(0.6 * baseTokenRate)
 	if !rateIsValid(tokenRate) {
 		return nil, tokenRateZeroError
 	}

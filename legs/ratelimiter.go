@@ -15,6 +15,10 @@ func (l *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
 		peerRateLimiter := l.rateLimiter.PeerLimiter(p)
 		if peerRateLimiter == nil {
 			peerRateLimiter = l.addPeerLimiter(p, accountInfo.PeerType, accountInfo.AccountLevel)
+			// when recognize an unregistered provider, lock the request forever
+			if peerRateLimiter == nil {
+				l.pauseRequest(request.ID())
+			}
 		}
 		log.Debugf("rate limit for peer %s is %f token/s, accountLevel is %v", p, peerRateLimiter.Limit(), accountInfo.AccountLevel)
 		if !l.rateLimiter.Allow() || !peerRateLimiter.Allow() {
@@ -63,8 +67,9 @@ func (l *Core) addPeerLimiter(peerID peer.ID, peerType account.PeerType, account
 	baseTokenRate := l.rateLimiter.Config().BaseTokenRate
 	switch peerType {
 	case account.UnregisteredPeer:
-		limiter, err = l.rateLimiter.UnregisteredLimiter(baseTokenRate)
-		checkError(action, err)
+		return nil
+		//limiter, err = l.rateLimiter.UnregisteredLimiter(baseTokenRate)
+		//checkError(action, err)
 	case account.WhiteListPeer:
 		limiter, err = l.rateLimiter.WhitelistLimiter(baseTokenRate)
 		checkError(action, err)
