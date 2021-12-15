@@ -28,7 +28,7 @@ var initFlags = []cli.Flag{
 
 var pandoHostFlag = altsrc.NewStringFlag(&cli.StringFlag{
 	Name:     "pando",
-	Usage:    "Host or host:port of pando to use",
+	Usage:    "Pando service address, which accepts hostname or hostname:port",
 	EnvVars:  []string{"PANDO"},
 	Required: false,
 	Value:    "localhost",
@@ -42,24 +42,24 @@ var registerFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:     "privkey",
-		Usage:    "private key string, used for sign the register request",
+		Usage:    "Provider private key, used for signing the register request",
 		Required: false,
 	},
 	&cli.StringFlag{
 		Name:     "peerid",
-		Usage:    "peerid, used for register",
+		Usage:    "Provider peer ID",
 		Required: false,
 	},
 	pandoHostFlag,
 	&cli.StringSliceFlag{
 		Name:     "provider-addr",
-		Usage:    "Provider address as multiaddr string, example: \"/ip4/127.0.0.1/tcp/3102\"",
+		Usage:    "Provider multiaddr, example: \"/ip4/127.0.0.1/tcp/3102\"",
 		Aliases:  []string{"pa"},
 		Required: true,
 	},
 	&cli.StringFlag{
 		Name:     "miner",
-		Usage:    "miner account",
+		Usage:    "Provider miner account (optional)",
 		Required: false,
 	},
 }

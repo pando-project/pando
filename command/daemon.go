@@ -16,15 +16,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
+	"os"
+	"time"
+
 	dssync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p"
 	"github.com/urfave/cli/v2"
-	"math"
-	"os"
-	"time"
 )
 
 var log = logging.Logger("pando")
@@ -38,7 +39,7 @@ var (
 
 var DaemonCmd = &cli.Command{
 	Name:   "daemon",
-	Usage:  "start a pando daemon, accepting http requests",
+	Usage:  "Start the Pando daemon process",
 	Flags:  nil,
 	Action: daemonCommand,
 }
@@ -98,8 +99,8 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Debugf("multiaddr is: %s", p2pHost.Addrs())
-	log.Debugf("peerID is: %s", p2pHost.ID())
+	log.Debugf("Pando multiaddr: %s", p2pHost.Addrs())
+	log.Debugf("Pando peer ID: %s", p2pHost.ID())
 
 	if err != nil {
 		return err
@@ -225,7 +226,7 @@ func daemonCommand(cctx *cli.Context) error {
 
 	cancel()
 
-	log.Info("pando stopped")
+	log.Info("Pando daemon process stopped")
 
 	return finalErr
 }

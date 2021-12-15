@@ -12,7 +12,7 @@ import (
 
 var InitCmd = &cli.Command{
 	Name:   "init",
-	Usage:  "Initialize indexer node config file and identity",
+	Usage:  "Initialize Pando configuration file and identity",
 	Flags:  initFlags,
 	Action: initCommand,
 }

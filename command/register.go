@@ -5,16 +5,17 @@ import (
 	"Pando/config"
 	"encoding/json"
 	"fmt"
+	"os"
+
 	p2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/urfave/cli/v2"
-	"os"
 )
 
 var RegisterCmd = &cli.Command{
 	Name:   "register",
-	Usage:  "Register provider information with an indexer that trusts the provider",
+	Usage:  "Register a metadata provider to a trusted Pando service",
 	Flags:  registerFlags,
 	Action: registerCommand,
 }
