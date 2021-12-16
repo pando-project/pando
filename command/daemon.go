@@ -7,10 +7,8 @@ import (
 	"Pando/legs"
 	"Pando/metadata"
 	"Pando/policy"
-	httpadminserver "Pando/server/admin/http"
-	graphserver "Pando/server/graph_sync/http"
-	metaserver "Pando/server/metadata/http"
-	metrics "Pando/server/metrics/http"
+	httpadminserver "Pando/server/_admin/http"
+	httppublicserver "Pando/server/_public/http"
 	"Pando/statetree"
 	"Pando/statetree/types"
 	"context"
@@ -151,36 +149,38 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 
 	// http servers
-	graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, legsCore)
+	//graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, legsCore)
+	//if err != nil {
+	//	return err
+	//}
+
+	adminServer, err := httpadminserver.New("/ip4/127.0.0.1/tcp/9001", legsCore)
 	if err != nil {
 		return err
 	}
-	adminServer, err := httpadminserver.New(cfg.Addresses.Admin, registryInstance)
-	if err != nil {
-		return err
-	}
-	metaDataServer, err := metaserver.New(cfg.Addresses.MetaData, cfg.Addresses.GraphQL, stateTree)
-	if err != nil {
-		return err
-	}
-	metricsServer, err := metrics.New(cfg.Addresses.Metrics)
+	publicServer, err := httppublicserver.New("/ip4/127.0.0.1/tcp/9002", stateTree, registryInstance)
 	if err != nil {
 		return err
 	}
 
+	//metaDataServer, err := metaserver.New(cfg.Addresses.MetaData, cfg.Addresses.GraphQL, stateTree)
+	//if err != nil {
+	//	return err
+	//}
+	//metricsServer, err := metrics.New(cfg.Addresses.Metrics)
+	//if err != nil {
+	//	return err
+	//}
+
 	log.Info("Starting http servers")
 	errChan := make(chan error, 1)
 	go func() {
-		errChan <- graphSyncServer.Start()
+		err = publicServer.ListenAndServe()
+		errChan <- err
 	}()
 	go func() {
-		errChan <- metaDataServer.Start()
-	}()
-	go func() {
-		errChan <- adminServer.Start()
-	}()
-	go func() {
-		errChan <- metricsServer.Start()
+		err = adminServer.ListenAndServe()
+		errChan <- err
 	}()
 
 	var finalErr error
@@ -206,22 +206,31 @@ func daemonCommand(cctx *cli.Context) error {
 		}
 	}()
 
-	if err = graphSyncServer.Shutdown(ctx); err != nil {
-		log.Errorw("Error shutting down graphsync server", "err", err)
-		finalErr = ErrDaemonStop
-	}
-	if err = metaDataServer.Shutdown(ctx); err != nil {
-		log.Errorw("Error shutting down metadata server", "err", err)
-		finalErr = ErrDaemonStop
-	}
 	if err = adminServer.Shutdown(ctx); err != nil {
 		log.Errorw("Error shutting down admin server", "err", err)
 		finalErr = ErrDaemonStop
 	}
-	if err = metricsServer.Shutdown(ctx); err != nil {
-		log.Errorw("Error shutting down metrics server", "err", err)
+	if err = publicServer.Shutdown(ctx); err != nil {
+		log.Errorw("Error shutting down public server", "err", err)
 		finalErr = ErrDaemonStop
 	}
+
+	//if err = graphSyncServer.Shutdown(ctx); err != nil {
+	//	log.Errorw("Error shutting down graphsync server", "err", err)
+	//	finalErr = ErrDaemonStop
+	//}
+	//if err = metaDataServer.Shutdown(ctx); err != nil {
+	//	log.Errorw("Error shutting down metadata server", "err", err)
+	//	finalErr = ErrDaemonStop
+	//}
+	//if err = adminServer.Shutdown(ctx); err != nil {
+	//	log.Errorw("Error shutting down admin server", "err", err)
+	//	finalErr = ErrDaemonStop
+	//}
+	//if err = metricsServer.Shutdown(ctx); err != nil {
+	//	log.Errorw("Error shutting down metrics server", "err", err)
+	//	finalErr = ErrDaemonStop
+	//}
 
 	cancel()
 

@@ -292,7 +292,8 @@ func (st *StateTree) GetSnapShotByHeight(height uint64) (*types.SnapShot, error)
 		return nil, err
 	}
 	if len(cidlist) == 0 || height > uint64(len(cidlist)-1) {
-		return nil, fmt.Errorf("height cannot be bigger than newest")
+		log.Warnf("height cannot be bigger than newest")
+		return nil, NotFoundErr
 	}
 	ss, err := st.GetSnapShot(cidlist[height])
 	if err != nil {
