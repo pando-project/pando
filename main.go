@@ -35,8 +35,8 @@ func main() {
 	}()
 
 	app := &cli.App{
-		Name:    "pando",
-		Usage:   "Pando: Filecoin's metadata server",
+		Name:    "Pando",
+		Usage:   "Sidechain Metadata Service",
 		Version: version.String(),
 		Commands: []*cli.Command{
 			command.DaemonCmd,

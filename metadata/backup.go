@@ -55,7 +55,7 @@ func NewBackupSys(backupCfg *config.Backup) (*backupSystem, error) {
 	if backupCfg == nil || backupCfg.ApiKey == "" {
 		apiKeyEnv, exist := os.LookupEnv(EstuaryApiKeyEnv)
 		if !exist {
-			return nil, fmt.Errorf("please set apikey in $%s", EstuaryApiKeyEnv)
+			return nil, fmt.Errorf("please set apikey in environment variable $%s", EstuaryApiKeyEnv)
 		}
 		apiKey = apiKeyEnv
 	} else {
