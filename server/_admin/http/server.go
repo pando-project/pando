@@ -29,12 +29,6 @@ func New(listen string, core *legs.Core) (*http.Server, error) {
 	legsRouter := r.Group("/admin/legs")
 	legsRouter.GET("/subscribe", h.SubProvider)
 
-	//ch := make(chan error)
-	//go func() {
-	//	err = r.Run(graphSyncAddr.String())
-	//	ch <- err
-	//}()
-
 	return &http.Server{
 		Addr:    adminAddr.String(),
 		Handler: r,

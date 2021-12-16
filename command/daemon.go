@@ -149,11 +149,6 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 
 	// http servers
-	//graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, legsCore)
-	//if err != nil {
-	//	return err
-	//}
-
 	adminServer, err := httpadminserver.New("/ip4/127.0.0.1/tcp/9001", legsCore)
 	if err != nil {
 		return err
@@ -162,15 +157,6 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-
-	//metaDataServer, err := metaserver.New(cfg.Addresses.MetaData, cfg.Addresses.GraphQL, stateTree)
-	//if err != nil {
-	//	return err
-	//}
-	//metricsServer, err := metrics.New(cfg.Addresses.Metrics)
-	//if err != nil {
-	//	return err
-	//}
 
 	log.Info("Starting http servers")
 	errChan := make(chan error, 1)
@@ -214,23 +200,6 @@ func daemonCommand(cctx *cli.Context) error {
 		log.Errorw("Error shutting down public server", "err", err)
 		finalErr = ErrDaemonStop
 	}
-
-	//if err = graphSyncServer.Shutdown(ctx); err != nil {
-	//	log.Errorw("Error shutting down graphsync server", "err", err)
-	//	finalErr = ErrDaemonStop
-	//}
-	//if err = metaDataServer.Shutdown(ctx); err != nil {
-	//	log.Errorw("Error shutting down metadata server", "err", err)
-	//	finalErr = ErrDaemonStop
-	//}
-	//if err = adminServer.Shutdown(ctx); err != nil {
-	//	log.Errorw("Error shutting down admin server", "err", err)
-	//	finalErr = ErrDaemonStop
-	//}
-	//if err = metricsServer.Shutdown(ctx); err != nil {
-	//	log.Errorw("Error shutting down metrics server", "err", err)
-	//	finalErr = ErrDaemonStop
-	//}
 
 	cancel()
 

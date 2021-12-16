@@ -30,7 +30,6 @@ func New(listen string, stateTree *statetree.StateTree, registry *registry.Regis
 		return nil, err
 	}
 
-	//l, err := net.Listen("tcp", adminAddr.String())
 	if err != nil {
 		return nil, err
 	}

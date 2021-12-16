@@ -204,34 +204,6 @@ func (h *metaHttpHandler) ListSnapShotInfo(c *gin.Context) {
 	WriteJsonResponse(c.Writer, http.StatusOK, resBytes)
 }
 
-//func (h *metaHttpHandler) GetSnapShotByHeight(c *gin.Context) {
-//	record := metrics.APITimer(context.Background(), metrics.GetSnapshotByHeightLatency)
-//	defer record()
-//
-//	ssHeight := c.Query("height")
-//	height, err := strconv.ParseUint(ssHeight, 10, 64)
-//	if err != nil {
-//		log.Errorf("valid snapshout height: %s, err: %s", ssHeight, err)
-//		http.Error(c.Writer, "", http.StatusBadRequest)
-//		return
-//	}
-//	ss, err := h.stateTree.GetSnapShotByHeight(height)
-//	if err != nil {
-//		log.Warnf("cannot get snapshot by height: %d, err: %s", ssHeight, err.Error())
-//		http.Error(c.Writer, "", http.StatusNotFound)
-//		return
-//	}
-//
-//	resBytes, err := json.Marshal(ss)
-//	if err != nil {
-//		log.Error("cannot marshal snapshot, err", err)
-//		http.Error(c.Writer, "", http.StatusInternalServerError)
-//		return
-//	}
-//
-//	WriteJsonResponse(c.Writer, http.StatusOK, resBytes)
-//}
-
 func (h *metaHttpHandler) GetPandoInfo(c *gin.Context) {
 	record := metrics.APITimer(context.Background(), metrics.ListPandoInfoLatency)
 	defer record()
