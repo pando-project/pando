@@ -13,6 +13,8 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
 	"net/http"
+	"path"
+	"runtime"
 )
 
 var log = logging.Logger("admin-server")
@@ -48,13 +50,20 @@ func New(listen string, stateTree *statetree.StateTree, registry *registry.Regis
 
 	// metadata(state-tree)
 	metaRouter := r.Group("/meta")
-	metaRouter.GET("/list", metaHandler.ListSnapShots)
-	metaRouter.GET("/info", metaHandler.ListSnapShotInfo)
+	metaRouter.GET("/list", metaHandler.ListSnapShotsList)
+	metaRouter.GET("/info", metaHandler.GetSnapShotInfo)
 
 	// graphql(for state-tree)
 	graphqlRouter := r.Group("/graphql")
-	// todo get path auto
-	r.LoadHTMLGlob("./server/_public/http/templates/*")
+	var templatesPath string
+	_, filename, _, ok := runtime.Caller(0)
+	if ok {
+		templatesPath = path.Join(path.Dir(filename), "./templates/*")
+	} else {
+		return nil, fmt.Errorf("failed to get dirctory path")
+	}
+
+	r.LoadHTMLGlob(templatesPath)
 	graphqlRouter.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{})
 	})

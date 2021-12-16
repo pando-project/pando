@@ -6,6 +6,7 @@ import (
 	"Pando/internal/metrics"
 	"Pando/internal/registry"
 	"Pando/statetree"
+	"Pando/statetree/types"
 	"context"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
@@ -116,7 +117,7 @@ func NewMetaHandler(stateTree *statetree.StateTree) (*metaHttpHandler, error) {
 	}, nil
 }
 
-func (h *metaHttpHandler) ListSnapShots(c *gin.Context) {
+func (h *metaHttpHandler) ListSnapShotsList(c *gin.Context) {
 	record := metrics.APITimer(context.Background(), metrics.ListMetadataLatency)
 	defer record()
 
@@ -136,22 +137,25 @@ func (h *metaHttpHandler) ListSnapShots(c *gin.Context) {
 	WriteJsonResponse(c.Writer, http.StatusOK, resBytes)
 }
 
-func (h *metaHttpHandler) ListSnapShotInfo(c *gin.Context) {
+func (h *metaHttpHandler) GetSnapShotInfo(c *gin.Context) {
 	record := metrics.APITimer(context.Background(), metrics.ListSnapshotInfoLatency)
 	defer record()
 
-	ssHeight := c.Query("height")
+	heightStr := c.Query("height")
 	cidStr := c.Query("sscid")
 
-	if ssHeight == "" && cidStr == "" {
+	if heightStr == "" && cidStr == "" {
 		log.Error("nil snapshot cid and height")
 		http.Error(c.Writer, "", http.StatusBadRequest)
 		return
 	}
 	var ssCid cid.Cid
+	var ssHeight uint64
 	var err error
+	var resCid *types.SnapShot
+	var resHeight *types.SnapShot
 	var resBytes []byte
-	// choose cid as first parameter if both cid and height exist
+	// get snapshot by cid
 	if cidStr != "" {
 		ssCid, err = cid.Decode(cidStr)
 		if err != nil {
@@ -159,7 +163,7 @@ func (h *metaHttpHandler) ListSnapShotInfo(c *gin.Context) {
 			http.Error(c.Writer, "", http.StatusBadRequest)
 			return
 		}
-		ss, err := h.stateTree.GetSnapShot(ssCid)
+		resCid, err = h.stateTree.GetSnapShot(ssCid)
 		if err != nil && err != statetree.NotFoundErr {
 			log.Errorf("cannot get snapshot: %s, err: %s", ssCid.String(), err.Error())
 			http.Error(c.Writer, "", http.StatusInternalServerError)
@@ -169,20 +173,16 @@ func (h *metaHttpHandler) ListSnapShotInfo(c *gin.Context) {
 			http.Error(c.Writer, "", http.StatusNotFound)
 			return
 		}
-		resBytes, err = json.Marshal(ss)
-		if err != nil {
-			log.Error("cannot marshal snapshot, err", err)
-			http.Error(c.Writer, "", http.StatusInternalServerError)
-			return
-		}
-	} else {
-		height, err := strconv.ParseUint(ssHeight, 10, 64)
+	}
+	// get snapshot by height
+	if heightStr != "" {
+		ssHeight, err = strconv.ParseUint(heightStr, 10, 64)
 		if err != nil {
 			log.Errorf("valid snapshout height: %s, err: %s", ssHeight, err)
 			http.Error(c.Writer, "", http.StatusBadRequest)
 			return
 		}
-		ss, err := h.stateTree.GetSnapShotByHeight(height)
+		resHeight, err = h.stateTree.GetSnapShotByHeight(ssHeight)
 		if err != nil && err != statetree.NotFoundErr {
 			log.Warnf("cannot get snapshot by height: %s, err: %s", ssHeight, err.Error())
 			http.Error(c.Writer, "", http.StatusInternalServerError)
@@ -192,13 +192,30 @@ func (h *metaHttpHandler) ListSnapShotInfo(c *gin.Context) {
 			http.Error(c.Writer, "", http.StatusNotFound)
 			return
 		}
+	}
 
-		resBytes, err = json.Marshal(ss)
-		if err != nil {
-			log.Error("cannot marshal snapshot, err", err)
-			http.Error(c.Writer, "", http.StatusInternalServerError)
+	var finalRes *types.SnapShot
+	// sure two snapshots are equal
+	if heightStr != "" && cidStr != "" {
+		if resCid == nil || resHeight == nil || resCid.CreateTime != resHeight.CreateTime {
+			log.Warnf("snapshout: %s not matched height :%d", ssCid.String(), ssHeight)
+			http.Error(c.Writer, "get different snapshots by cid and height", http.StatusBadRequest)
 			return
 		}
+		finalRes = resCid
+	} else {
+		if resCid != nil {
+			finalRes = resCid
+		} else {
+			finalRes = resHeight
+		}
+	}
+
+	resBytes, err = json.Marshal(finalRes)
+	if err != nil {
+		log.Error("cannot marshal snapshot, err", err)
+		http.Error(c.Writer, "", http.StatusInternalServerError)
+		return
 	}
 
 	WriteJsonResponse(c.Writer, http.StatusOK, resBytes)
