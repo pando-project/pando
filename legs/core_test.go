@@ -25,6 +25,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestGetMetaRecord(t *testing.T) {
+	t.Skip("skip this test until the mandatory providers registration function is implemented")
 	Convey("test get meta record", t, func() {
 		ctx, cncl := context.WithTimeout(context.Background(), time.Minute*5)
 		p, err := mock.NewPandoMock()
