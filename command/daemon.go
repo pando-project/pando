@@ -149,11 +149,11 @@ func daemonCommand(cctx *cli.Context) error {
 	}
 
 	// http servers
-	adminServer, err := httpadminserver.New("/ip4/127.0.0.1/tcp/9001", legsCore)
+	adminServer, err := httpadminserver.New(cfg.Addresses.AdminServer, legsCore)
 	if err != nil {
 		return err
 	}
-	publicServer, err := httppublicserver.New("/ip4/127.0.0.1/tcp/9002", stateTree, registryInstance)
+	publicServer, err := httppublicserver.New(cfg.Addresses.PandoServer, stateTree, registryInstance)
 	if err != nil {
 		return err
 	}

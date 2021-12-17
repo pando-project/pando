@@ -7,15 +7,15 @@ import (
 
 var initFlags = []cli.Flag{
 	&cli.StringFlag{
-		Name:     "listen-graphsync",
-		Usage:    "GraphSync HTTP API listen address",
-		EnvVars:  []string{"PANDO_LISTEN_GRAPHSYNC"},
+		Name:     "listen-admin",
+		Usage:    "Admin HTTP API listen address",
+		EnvVars:  []string{"PANDO_LISTEN_ADMIN"},
 		Required: false,
 	},
 	&cli.StringFlag{
-		Name:     "listen-graphql",
-		Usage:    "GraphQl HTTP API listen address",
-		EnvVars:  []string{"PANDO_LISTEN_GRAPHQL"},
+		Name:     "listen-pando",
+		Usage:    "Pando HTTP API listen address",
+		EnvVars:  []string{"PANDO_LISTEN_SERVER"},
 		Required: false,
 	},
 	&cli.BoolFlag{
