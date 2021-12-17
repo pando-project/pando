@@ -21,8 +21,7 @@ var log = logging.Logger("core")
 const (
 	// syncPrefix used to track the latest sync in datastore.
 	syncPrefix = "/sync/"
-	//admapPrefix = "/admap/"
-
+	// PubSubTopic used for legs transportation
 	PubSubTopic = "PandoPubSub"
 )
 
@@ -225,4 +224,8 @@ func (l *Core) Close(ctx context.Context) error {
 	// Close leg transport.
 	err := l.lms.Close(ctx)
 	return err
+}
+
+func (l *Core) SetRatelimiter(rl *policy.Limiter) {
+	l.rateLimiter = rl
 }

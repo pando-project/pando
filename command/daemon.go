@@ -7,8 +7,8 @@ import (
 	"Pando/legs"
 	"Pando/metadata"
 	"Pando/policy"
-	httpadminserver "Pando/server/_admin/http"
-	httppublicserver "Pando/server/_public/http"
+	httpadminserver "Pando/server/admin/http"
+	httppublicserver "Pando/server/public/http"
 	"Pando/statetree"
 	"Pando/statetree/types"
 	"context"
@@ -128,7 +128,13 @@ func daemonCommand(cctx *cli.Context) error {
 			return fmt.Errorf("cannot create lotus client: %s", err)
 		}
 	}
-	registryInstance, err := registry.NewRegistry(&cfg.Discovery, &cfg.AccountLevel, dstore, lotusDiscoverer)
+
+	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh(), nil)
+	if err != nil {
+		return err
+	}
+
+	registryInstance, err := registry.NewRegistry(&cfg.Discovery, &cfg.AccountLevel, dstore, lotusDiscoverer, legsCore)
 	if err != nil {
 		return fmt.Errorf("cannot create provider registryInstance: %s", err)
 	}
@@ -144,17 +150,14 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh(), rateLimiter)
-	if err != nil {
-		return err
-	}
+	legsCore.SetRatelimiter(rateLimiter)
 
 	// http servers
 	adminServer, err := httpadminserver.New(cfg.Addresses.AdminServer, legsCore)
 	if err != nil {
 		return err
 	}
-	publicServer, err := httppublicserver.New(cfg.Addresses.PandoServer, stateTree, registryInstance)
+	pandoServer, err := httppublicserver.New(cfg.Addresses.PandoServer, stateTree, registryInstance)
 	if err != nil {
 		return err
 	}
@@ -162,7 +165,7 @@ func daemonCommand(cctx *cli.Context) error {
 	log.Info("Starting http servers")
 	errChan := make(chan error, 1)
 	go func() {
-		err = publicServer.ListenAndServe()
+		err = pandoServer.ListenAndServe()
 		errChan <- err
 	}()
 	go func() {
@@ -197,8 +200,8 @@ func daemonCommand(cctx *cli.Context) error {
 		log.Errorw("Error shutting down admin server", "err", err)
 		finalErr = ErrDaemonStop
 	}
-	if err = publicServer.Shutdown(ctx); err != nil {
-		log.Errorw("Error shutting down public server", "err", err)
+	if err = pandoServer.Shutdown(ctx); err != nil {
+		log.Errorw("Error shutting down pando server", "err", err)
 		finalErr = ErrDaemonStop
 	}
 

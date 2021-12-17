@@ -26,7 +26,7 @@ func New(listen string, core *legs.Core) (*http.Server, error) {
 	h := newHandler(core)
 
 	r := gin.Default()
-	legsRouter := r.Group("/admin/legs")
+	legsRouter := r.Group("/providers")
 	legsRouter.GET("/subscribe", h.SubProvider)
 
 	return &http.Server{
