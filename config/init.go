@@ -26,12 +26,9 @@ func InitWithIdentity(identity Identity, opts ...Option) (*Config, error) {
 	conf := &Config{
 		// setup the node's default addresses.
 		Addresses: Addresses{
-			GraphSync: defaultGraphSync,
-			GraphQL:   defaultGraphQl,
-			P2PAddr:   defaultP2PAddr,
-			MetaData:  defaultMetaData,
-			Admin:     defaultAdmin,
-			Metrics:   defaultMetrics,
+			P2PAddr:     defaultP2PAddr,
+			AdminServer: defaultAdmin,
+			PandoServer: defaultPando,
 		},
 		Identity: identity,
 		Discovery: Discovery{

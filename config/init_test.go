@@ -16,9 +16,8 @@ func TestInit(t *testing.T) {
 		cfg, err := Init(io.Discard, disSpeed)
 		So(err, ShouldBeNil)
 		So(cfg.Addresses.P2PAddr, ShouldEqual, defaultP2PAddr)
-		So(cfg.Addresses.GraphQL, ShouldEqual, defaultGraphQl)
-		So(cfg.Addresses.MetaData, ShouldEqual, defaultMetaData)
-		So(cfg.Addresses.GraphSync, ShouldEqual, defaultGraphSync)
+		So(cfg.Addresses.AdminServer, ShouldEqual, defaultAdmin)
+		So(cfg.Addresses.PandoServer, ShouldEqual, defaultPando)
 		So(len(cfg.AccountLevel.Threshold), ShouldEqual, len(defaultThreshold))
 	})
 }

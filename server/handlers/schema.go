@@ -1,4 +1,4 @@
-package graphQL
+package handlers
 
 import (
 	"Pando/statetree/types"
@@ -6,6 +6,12 @@ import (
 	"fmt"
 	"github.com/graphql-go/graphql"
 )
+
+type postData struct {
+	Query     string                 `json:"query"`
+	Operation string                 `json:"operation"`
+	Variables map[string]interface{} `json:"variables"`
+}
 
 var errUnexpectedType = "Unexpected type %T. expected %s"
 
