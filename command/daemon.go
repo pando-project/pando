@@ -12,10 +12,14 @@ import (
 	"Pando/statetree"
 	"Pando/statetree/types"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
+	"net/http"
 	"os"
+	"regexp"
 	"time"
 
 	dssync "github.com/ipfs/go-datastore/sync"
@@ -107,9 +111,11 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
 	info := new(types.ExtraInfo)
-	for _, addr := range p2pHost.Addrs() {
-		info.MultiAddrs += addr.String() + " "
+	info.MultiAddrs, err = getExternalIp(cfg.Addresses.P2PAddr)
+	if err != nil {
+		return err
 	}
 	info.PeerID = p2pHost.ID().String()
 
@@ -210,4 +216,32 @@ func daemonCommand(cctx *cli.Context) error {
 	log.Info("Pando daemon process stopped")
 
 	return finalErr
+}
+
+func getExternalIp(localaddr string) (string, error) {
+	c := http.DefaultClient
+	res, err := c.Get("https://api.ipify.org?format=json")
+	if err != nil {
+		return "", err
+	}
+	resStruct := new(struct {
+		Ip string
+	})
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, resStruct)
+	if err != nil {
+		return "", err
+	}
+
+	reg, err := regexp.Compile(`[0-9]+\.[0-9]+\.[0-9]+\.`)
+	if err != nil {
+		return "", err
+	}
+	rep := reg.ReplaceAllString(localaddr, resStruct.Ip)
+
+	return rep, nil
 }
