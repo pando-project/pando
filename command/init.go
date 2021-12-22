@@ -50,22 +50,22 @@ func initCommand(cctx *cli.Context) error {
 		return err
 	}
 
-	graphsyncAddr := cctx.String("listen-graphsync")
-	if graphsyncAddr != "" {
-		_, err := multiaddr.NewMultiaddr(graphsyncAddr)
+	adminAddr := cctx.String("listen-admin")
+	if adminAddr != "" {
+		_, err := multiaddr.NewMultiaddr(adminAddr)
 		if err != nil {
-			return fmt.Errorf("bad listen-graphsync: %s", err)
+			return fmt.Errorf("bad listen-admin: %s", err)
 		}
-		cfg.Addresses.GraphSync = graphsyncAddr
+		cfg.Addresses.AdminServer = adminAddr
 	}
 
-	graphqlAddr := cctx.String("listen-graphql")
-	if graphqlAddr != "" {
-		_, err := multiaddr.NewMultiaddr(graphqlAddr)
+	pandoAddr := cctx.String("listen-pando")
+	if pandoAddr != "" {
+		_, err := multiaddr.NewMultiaddr(pandoAddr)
 		if err != nil {
-			return fmt.Errorf("bad listen-graphql: %s", err)
+			return fmt.Errorf("bad listen-pando: %s", err)
 		}
-		cfg.Addresses.GraphQL = graphqlAddr
+		cfg.Addresses.PandoServer = pandoAddr
 	}
 
 	return cfg.Save(configFile)

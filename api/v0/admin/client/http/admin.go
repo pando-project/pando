@@ -14,7 +14,7 @@ import (
 
 const (
 	adminPort     = 9001
-	providersPath = "/providers"
+	providersPath = "/providers/register"
 )
 
 // Client is an http client for the indexer ingest API

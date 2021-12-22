@@ -1,43 +1,41 @@
 package httpadminserver
 
 import (
-	"Pando/internal/handler"
-	"Pando/internal/httpserver"
 	"Pando/internal/metrics"
-	"Pando/internal/registry"
+	"Pando/legs"
 	"context"
-	"io"
+	"github.com/gin-gonic/gin"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"net/http"
 )
 
+// handlers handles requests for the finder resource
 type httpHandler struct {
-	adminHandler *handler.AdminHandler
+	Core *legs.Core
 }
 
-func newHandler(registry *registry.Registry) *httpHandler {
-	return &httpHandler{
-		adminHandler: handler.NewAdminHandler(registry),
-	}
+func newHandler(core *legs.Core) *httpHandler {
+	return &httpHandler{core}
 }
 
-// RegisterProvider is the handler of API: POST /providers
-func (h *httpHandler) RegisterProvider(w http.ResponseWriter, r *http.Request) {
-	record := metrics.APITimer(context.Background(), metrics.RegisterProviderLatency)
+func (h *httpHandler) SubProvider(c *gin.Context) {
+	record := metrics.APITimer(context.Background(), metrics.SubProviderLatency)
 	defer record()
 
-	body, err := io.ReadAll(r.Body)
+	peerID := c.Query("peerid")
+	providerID, err := peer.Decode(peerID)
 	if err != nil {
-		log.Errorw("failed reading body", "err", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Warnf("cannot decode provider id: %s", err)
+		c.Writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	err = h.adminHandler.RegisterProvider(body)
+	err = h.Core.Subscribe(context.Background(), providerID)
 	if err != nil {
-		httpserver.HandleError(w, err, "register")
-		log.Warnf("register failed: %s", err.Error())
+		log.Error("cannot create subscriber", "err", err)
+		http.Error(c.Writer, "", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	c.Writer.WriteHeader(http.StatusOK)
 }

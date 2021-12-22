@@ -8,16 +8,18 @@ import (
 	"Pando/metadata"
 	"Pando/policy"
 	httpadminserver "Pando/server/admin/http"
-	graphserver "Pando/server/graph_sync/http"
-	metaserver "Pando/server/metadata/http"
-	metrics "Pando/server/metrics/http"
+	httppublicserver "Pando/server/public/http"
 	"Pando/statetree"
 	"Pando/statetree/types"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
+	"net/http"
 	"os"
+	"regexp"
 	"time"
 
 	dssync "github.com/ipfs/go-datastore/sync"
@@ -109,9 +111,11 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
 	info := new(types.ExtraInfo)
-	for _, addr := range p2pHost.Addrs() {
-		info.MultiAddrs += addr.String() + " "
+	info.MultiAddrs, err = getExternalIp(cfg.Addresses.P2PAddr)
+	if err != nil {
+		return err
 	}
 	info.PeerID = p2pHost.ID().String()
 
@@ -130,7 +134,13 @@ func daemonCommand(cctx *cli.Context) error {
 			return fmt.Errorf("cannot create lotus client: %s", err)
 		}
 	}
-	registryInstance, err := registry.NewRegistry(&cfg.Discovery, &cfg.AccountLevel, dstore, lotusDiscoverer)
+
+	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh(), nil)
+	if err != nil {
+		return err
+	}
+
+	registryInstance, err := registry.NewRegistry(&cfg.Discovery, &cfg.AccountLevel, dstore, lotusDiscoverer, legsCore)
 	if err != nil {
 		return fmt.Errorf("cannot create provider registryInstance: %s", err)
 	}
@@ -146,25 +156,14 @@ func daemonCommand(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	legsCore, err := legs.NewLegsCore(context.Background(), &p2pHost, mds, bs, metaManager.GetMetaInCh(), rateLimiter)
-	if err != nil {
-		return err
-	}
+	legsCore.SetRatelimiter(rateLimiter)
 
 	// http servers
-	graphSyncServer, err := graphserver.New(cfg.Addresses.GraphSync, legsCore)
+	adminServer, err := httpadminserver.New(cfg.Addresses.AdminServer, legsCore)
 	if err != nil {
 		return err
 	}
-	adminServer, err := httpadminserver.New(cfg.Addresses.Admin, registryInstance)
-	if err != nil {
-		return err
-	}
-	metaDataServer, err := metaserver.New(cfg.Addresses.MetaData, cfg.Addresses.GraphQL, stateTree)
-	if err != nil {
-		return err
-	}
-	metricsServer, err := metrics.New(cfg.Addresses.Metrics)
+	pandoServer, err := httppublicserver.New(cfg.Addresses.PandoServer, stateTree, registryInstance)
 	if err != nil {
 		return err
 	}
@@ -172,16 +171,12 @@ func daemonCommand(cctx *cli.Context) error {
 	log.Info("Starting http servers")
 	errChan := make(chan error, 1)
 	go func() {
-		errChan <- graphSyncServer.Start()
+		err = pandoServer.ListenAndServe()
+		errChan <- err
 	}()
 	go func() {
-		errChan <- metaDataServer.Start()
-	}()
-	go func() {
-		errChan <- adminServer.Start()
-	}()
-	go func() {
-		errChan <- metricsServer.Start()
+		err = adminServer.ListenAndServe()
+		errChan <- err
 	}()
 
 	var finalErr error
@@ -207,20 +202,12 @@ func daemonCommand(cctx *cli.Context) error {
 		}
 	}()
 
-	if err = graphSyncServer.Shutdown(ctx); err != nil {
-		log.Errorw("Error shutting down graphsync server", "err", err)
-		finalErr = ErrDaemonStop
-	}
-	if err = metaDataServer.Shutdown(ctx); err != nil {
-		log.Errorw("Error shutting down metadata server", "err", err)
-		finalErr = ErrDaemonStop
-	}
 	if err = adminServer.Shutdown(ctx); err != nil {
 		log.Errorw("Error shutting down admin server", "err", err)
 		finalErr = ErrDaemonStop
 	}
-	if err = metricsServer.Shutdown(ctx); err != nil {
-		log.Errorw("Error shutting down metrics server", "err", err)
+	if err = pandoServer.Shutdown(ctx); err != nil {
+		log.Errorw("Error shutting down pando server", "err", err)
 		finalErr = ErrDaemonStop
 	}
 
@@ -229,4 +216,32 @@ func daemonCommand(cctx *cli.Context) error {
 	log.Info("Pando daemon process stopped")
 
 	return finalErr
+}
+
+func getExternalIp(localaddr string) (string, error) {
+	c := http.DefaultClient
+	res, err := c.Get("https://api.ipify.org?format=json")
+	if err != nil {
+		return "", err
+	}
+	resStruct := new(struct {
+		Ip string
+	})
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	err = json.Unmarshal(body, resStruct)
+	if err != nil {
+		return "", err
+	}
+
+	reg, err := regexp.Compile(`[0-9]+\.[0-9]+\.[0-9]+\.`)
+	if err != nil {
+		return "", err
+	}
+	rep := reg.ReplaceAllString(localaddr, resStruct.Ip)
+
+	return rep, nil
 }

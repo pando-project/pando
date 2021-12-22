@@ -23,11 +23,11 @@ func TestInit(t *testing.T) {
 		}
 
 		badAddr := "ip3/127.0.0.1/tcp/9999"
-		err := app.RunContext(ctx, []string{"pando", "init", "-listen-graphsync", badAddr, "-speedtest=false"})
-		So(err.Error(), ShouldContainSubstring, "bad listen-graphsync")
+		err := app.RunContext(ctx, []string{"pando", "init", "-listen-admin", badAddr, "-speedtest=false"})
+		So(err.Error(), ShouldContainSubstring, "bad listen-admin")
 
-		err = app.RunContext(ctx, []string{"pando", "init", "-listen-graphql", badAddr, "-speedtest=false"})
-		So(err.Error(), ShouldContainSubstring, "bad listen-graphql: failed to parse multiaddr")
+		err = app.RunContext(ctx, []string{"pando", "init", "-listen-pando", badAddr, "-speedtest=false"})
+		So(err.Error(), ShouldContainSubstring, "bad listen-pando: failed to parse multiaddr")
 	})
 	Convey("when run init with right parameter then get nil err", t, func() {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -45,8 +45,8 @@ func TestInit(t *testing.T) {
 		goodAddr2 := "/ip4/127.0.0.1/tcp/17171"
 		args := []string{
 			"pando", "init",
-			"-listen-graphql", goodAddr,
-			"-listen-graphsync", goodAddr2,
+			"-listen-pando", goodAddr,
+			"-listen-admin", goodAddr2,
 			"-speedtest=0",
 		}
 		err := app.RunContext(ctx, args)
