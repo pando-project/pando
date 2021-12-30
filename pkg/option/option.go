@@ -27,16 +27,18 @@ type Options struct {
 	ShowConfig  bool   `yaml:"-"`
 	ConfigFile  string `yaml:"-"`
 
-	PandoRoot        string        `yaml:"PandoRoot"`
-	DisableSpeedTest bool          `yaml:"DisableSpeedTest"`
-	LogLevel         string        `yaml:"LogLevel"`
-	Identity         Identity      `yaml:"Identity"`
-	ServerAddress    ServerAddress `yaml:"ServerAddress"`
-	DataStore        DataStore     `yaml:"DataStore"`
-	Discovery        Discovery     `yaml:"Discovery"`
-	AccountLevel     AccountLevel  `yaml:"AccountLevel"`
-	RateLimit        RateLimit     `yaml:"RateLimit"`
-	Backup           Backup        `yaml:"Backup"`
+	PandoRoot        string `yaml:"PandoRoot"`
+	DisableSpeedTest bool   `yaml:"DisableSpeedTest"`
+	// Supported LogLevels are: DEBUG, INFO, WARN, ERROR, DPANIC, PANIC, FATAL, and
+	// their lower-case forms.
+	LogLevel      string        `yaml:"LogLevel"`
+	Identity      Identity      `yaml:"Identity"`
+	ServerAddress ServerAddress `yaml:"ServerAddress"`
+	DataStore     DataStore     `yaml:"DataStore"`
+	Discovery     Discovery     `yaml:"Discovery"`
+	AccountLevel  AccountLevel  `yaml:"AccountLevel"`
+	RateLimit     RateLimit     `yaml:"RateLimit"`
+	Backup        Backup        `yaml:"Backup"`
 }
 
 // New creates a default Options.
@@ -111,7 +113,7 @@ func New(root *cobra.Command) *Options {
 	opt.flags.StringVar(&opt.Backup.EstuaryGateway, "backup-estuary-gateway", defaultEstGateway,
 		"Estuary gateway address used to backup metadata files.")
 
-	opt.flags.StringVar(&opt.Backup.ShuttleGateway, "backup-shuttle-gatewat", defaultShuttleGateway,
+	opt.flags.StringVar(&opt.Backup.ShuttleGateway, "backup-shuttle-gateway", defaultShuttleGateway,
 		"Estuary shuttle gateway address used to backup metadata files.")
 
 	_ = opt.viper.BindPFlags(opt.flags)

@@ -12,10 +12,10 @@ var ExampleUsage = `
 # Init Pando configs.
 pando-server init
 
-# Start pando server.
+# StartHttpServer pando server.
 pando-server start
 
-# Start pando server in daemon mode.
+# StartHttpServer pando server in daemon mode.
 pando-server start -d
 `
 

@@ -1,9 +1,10 @@
-package v1
+package http
 
 import (
 	"context"
 	"fmt"
 	"net/http"
+	"pando/pkg/api/v1"
 	"pando/pkg/statetree"
 	snapshotTypes "pando/pkg/statetree/types"
 	"strconv"
@@ -30,7 +31,7 @@ func (a *API) metadataList(ctx *gin.Context) {
 	snapCidList, err := a.core.StateTree.GetSnapShotCidList()
 	if err != nil {
 		logger.Error(fmt.Sprintf("metadataList metadataSnapshot failed: %v", err))
-		handleError(ctx, http.StatusInternalServerError, InternalServerError)
+		handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 		return
 	}
 
@@ -60,7 +61,7 @@ func (a *API) metadataSnapshot(ctx *gin.Context) {
 			}
 
 			logger.Errorf("get metadataSnapshot failed: %v", err)
-			handleError(ctx, http.StatusInternalServerError, InternalServerError)
+			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 			return
 		}
 	}
@@ -76,7 +77,7 @@ func (a *API) metadataSnapshot(ctx *gin.Context) {
 			}
 
 			logger.Errorf("get metadataSnapshot failed: %v", err)
-			handleError(ctx, http.StatusInternalServerError, InternalServerError)
+			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 			return
 		}
 	}

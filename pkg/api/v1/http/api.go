@@ -1,23 +1,23 @@
-package v1
+package http
 
 import (
 	"github.com/gin-gonic/gin"
 	logging "github.com/ipfs/go-log/v2"
-	core2 "pando/pkg/api/core"
+	"pando/pkg/api/core"
 
 	"pando/pkg/api/types"
 )
 
-var logger = logging.Logger("v1API")
+var logger = logging.Logger("v1HttpAPI")
 
 type API struct {
 	router *gin.Engine
-	core   *core2.Core
+	core   *core.Core
 }
 
 type ErrorTemplate map[string]string
 
-func NewV1API(router *gin.Engine, core *core2.Core) *API {
+func NewV1HttpAPI(router *gin.Engine, core *core.Core) *API {
 	return &API{
 		router: router,
 		core:   core,
