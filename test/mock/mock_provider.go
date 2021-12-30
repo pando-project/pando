@@ -1,7 +1,6 @@
 package mock
 
 import (
-	"Pando/legs"
 	"context"
 	goLegs "github.com/filecoin-project/go-legs"
 	"github.com/ipfs/go-blockservice"
@@ -16,6 +15,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"math/rand"
+	"pando/pkg/legs"
 	"time"
 )
 

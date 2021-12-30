@@ -1,4 +1,4 @@
-module Pando
+module pando
 
 go 1.16
 
@@ -20,8 +20,8 @@ require (
 	github.com/filecoin-project/specs-actors/v6 v6.0.1 // indirect
 	github.com/gammazero/keymutex v0.0.2
 	github.com/gin-gonic/gin v1.7.7
-	github.com/gorilla/mux v1.8.0
-	github.com/graphql-go/graphql v0.8.0
+	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/graphql-go/graphql v0.8.0 // indirect
 	github.com/gwatts/gin-adapter v0.0.0-20170508204228-c44433c485ad
 	github.com/ipfs/go-bitswap v0.4.0 // indirect
 	github.com/ipfs/go-block-format v0.0.3
@@ -44,21 +44,27 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/montanaflynn/stats v0.6.6
 	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multicodec v0.3.1-0.20210902112759-1539a079fd61
 	github.com/prometheus/client_golang v1.11.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/showwin/speedtest-go v1.1.4
+	github.com/sirupsen/logrus v1.8.1
 	github.com/smartystreets/goconvey v1.6.4
+	github.com/spf13/cobra v0.0.5
+	github.com/spf13/pflag v1.0.3
+	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.7.0
-	github.com/urfave/cli/v2 v2.3.0
+	github.com/urfave/cli/v2 v2.3.0 // indirect
 	github.com/whyrusleeping/cbor-gen v0.0.0-20210713220151-be142a5ae1a8
 	go.opencensus.io v0.23.0
 	go.uber.org/zap v1.19.1 // indirect
-	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0 // indirect
+	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 replace github.com/showwin/speedtest-go v1.1.4 => github.com/kenlabs/speedtest-go v1.1.5

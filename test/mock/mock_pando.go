@@ -1,11 +1,6 @@
 package mock
 
 import (
-	"Pando/internal/registry"
-	"Pando/internal/registry/discovery"
-	"Pando/legs"
-	"Pando/metadata"
-	"Pando/policy"
 	"context"
 	"fmt"
 	"github.com/ipfs/go-datastore"
@@ -13,6 +8,11 @@ import (
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
+	"pando/pkg/legs"
+	"pando/pkg/metadata"
+	"pando/pkg/policy"
+	"pando/pkg/registry"
+	"pando/pkg/registry/discovery"
 )
 
 type PandoMock struct {

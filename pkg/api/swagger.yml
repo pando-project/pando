@@ -1,0 +1,227 @@
+swagger: "2.0"
+info:
+  description: "Ensuring access to notarized metadata"
+  version: "1.0.0"
+  title: "Pando"
+  contact:
+    name: KenLabs
+    url: https://join.slack.com/t/ken-labs/shared_invite/zt-ylfrwtl2-H4ZyLCzw94wfiuC7VtAy~A
+  license:
+    name: "Apache 2.0 and MIT"
+    url: "https://github.com/kenlabs/pando"
+host: "pando.kencloud.com"
+basePath: "/v1"
+
+
+tags:
+- name: "pando"
+  description: "Get Pando's details information"
+- name: "provider"
+  description: "Register provider and get info of a specific provider"
+- name: "metadata"
+  description: "Get metadata details information"
+
+
+schemes:
+- "https"
+- "http"
+
+
+paths:
+  /pando/subscribe:
+    get:
+      tags:
+      - "pando"
+      summary: "Let Pando subscribe a topic for data sync with a specific provider"
+      description: ""
+      operationId: "subscribeProvider"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "query"
+        name: "provider"
+        type: "string"
+        description: "PeerID of a provider to subscribe"
+        required: true
+      responses:
+        "201":
+          description: "Register success"
+          schema: 
+            $ref: "#/definitions/APIResponse"
+          examples:
+            application/json:
+              message: "opration success"
+              data: {}
+        "400":
+          description: "Invalid request"
+          schema:
+            $ref: "#/definitions/APIResponse"
+          examples:
+            application/json:
+              message: "invalid peerID"
+              data: {}
+  /pando/info:
+    get:
+      tags:
+      - "pando"
+      summary: "Get Pando's peerID and multiaddress"
+      description: ""
+      operationId: "getPandoInfo"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/APIResponse"
+          examples:
+            application/json:
+              message: "ok"
+              data:
+                peerID: "12D3KooWEpehzfFV4U1SQFcWEXBkP3zseGszEGAPfApS9as2Swgi"
+                multiAddr: "/ip4/104.21.0.228/tcp/9000"
+  /pando/metrics:
+    get:
+      tags:
+      - "pando"
+      summary: "Prometheus exporter page of Pando"
+      description: ""
+      operationId: "getPandoMetrics"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "OK"
+  /pando/health:
+    options:
+      tags:
+      - "pando"
+      summary: "Check if Pando is alive"
+      description: ""
+      operationId: "checkPandoAlive"
+      responses:
+        "200":
+          description: "OK"
+    
+  /provider/register:
+    post:
+      tags:
+      - "provider"
+      summary: "Register a new provider in Pando"
+      description: ""
+      operationId: "registerProvider"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Enveloped provider registration protobuff info"
+        required: true
+        schema:
+          $ref: "#/definitions/Provider"
+      responses:
+        "201":
+          description: "Register success"
+          schema: 
+            $ref: "#/definitions/APIResponse"
+          examples:
+            application/json:
+              message: "opration success"
+              data: {}
+        "400":
+          description: "Invalid request"
+          schema:
+            $ref: "#/definitions/APIResponse"
+          examples:
+            application/json:
+              message: "invalid private key"
+              data: {}
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/APIResponse"
+          examples:
+            application/json:
+              message: "internal server error: <error message>"
+              data: {}
+  
+  /metadata/list:
+    get:
+      tags:
+      - "metadata"
+      summary: "get a list involved all the metadata snapshot cids"
+      description: ""
+      operationId: "listMetadataSnapshots"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "ok"
+          schema: 
+            $ref: "#/definitions/APIResponse"
+          examples:
+            application/json:
+              message: "operation success"
+              data:
+                metadata:
+                - "cid1"
+                - "cid2"
+  /metadata/snapshot:
+    get:
+      tags:
+      - "metadata"
+      summary: "get a list involved all the metadata snapshot cids"
+      description: ""
+      operationId: "getMetadataSnapshotInfo"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+        - in: "query"
+          name: "height"
+          type: string
+          description: "Height of a snapshot to retrieve"
+          required: false
+        - in: query
+          name: "snapshotCid"
+          type: string
+          description: "Cid of a snapshot to retrive"
+          required: false
+      responses:
+        "200":
+          description: "ok"
+          schema: 
+            $ref: "#/definitions/APIResponse"
+          examples:
+            application/json:
+              message: "operation success"
+              data:
+                metadata:
+                - "cid1"
+                - "cid2"
+              
+definitions:
+  Provider:
+    type: "object"
+    properties:
+      cid: 
+        type: "string"
+      envelop: 
+        type: "string"
+  APIResponse:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+      data:
+        type: "object"
+externalDocs:
+  description: "Find out more about Pando"
+  url: "https://github.com/kenlabs/pando"

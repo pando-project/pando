@@ -1,4 +1,4 @@
-![pando](./documentation/images/pando.jpeg)
+![pando](docs/images/pando.jpeg)
 
 [![CircleCI](https://circleci.com/gh/kenlabs/pando/tree/main.svg?style=svg)](https://circleci.com/gh/kenlabs/pando/tree/main)
 [![codecov](https://codecov.io/gh/kenlabs/pando/branch/main/graph/badge.svg?token=MFD2QP8RWL)](https://codecov.io/gh/kenlabs/pando)
