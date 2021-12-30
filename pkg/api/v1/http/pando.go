@@ -1,4 +1,4 @@
-package v1
+package http
 
 import (
 	"context"
@@ -8,19 +8,20 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"net/http"
 	"pando/pkg/api/types"
+	"pando/pkg/api/v1"
 	"pando/pkg/metrics"
 	"strings"
 )
 
 func (a *API) registerPando() {
-	metadata := a.router.Group("/pando")
+	pando := a.router.Group("/pando")
 	{
-		metadata.GET("/subscribe", a.pandoSubscribe)
-		metadata.GET("/info", a.pandoInfo)
-		metadata.GET("/metrics", adapter.Wrap(func(h http.Handler) http.Handler {
+		pando.GET("/subscribe", a.pandoSubscribe)
+		pando.GET("/info", a.pandoInfo)
+		pando.GET("/metrics", adapter.Wrap(func(h http.Handler) http.Handler {
 			return metrics.Handler(coremetrics.DefaultViews)
 		}))
-		metadata.OPTIONS("/health", a.pandoHealth)
+		pando.OPTIONS("/health", a.pandoHealth)
 	}
 }
 
@@ -39,7 +40,7 @@ func (a *API) pandoSubscribe(ctx *gin.Context) {
 	err = a.core.LegsCore.Subscribe(context.Background(), providerPeerID)
 	if err != nil {
 		logger.Errorf("subscribe provider failed: %v\n", err)
-		handleError(ctx, http.StatusInternalServerError, InternalServerError)
+		handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 		return
 	}
 
@@ -53,7 +54,7 @@ func (a *API) pandoInfo(ctx *gin.Context) {
 	pandoInfo, err := a.core.StateTree.GetPandoInfo()
 	if err != nil {
 		logger.Errorf("get pando pandoInfo failed: %v", err)
-		handleError(ctx, http.StatusInternalServerError, InternalServerError)
+		handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 		return
 	}
 

@@ -3,7 +3,14 @@ package command
 import (
 	"context"
 	"fmt"
+	mutexDataStoreFactory "github.com/ipfs/go-datastore/sync"
+	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
+	blockStoreFactory "github.com/ipfs/go-ipfs-blockstore"
+	logging "github.com/ipfs/go-log/v2"
+	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	libp2pHost "github.com/libp2p/go-libp2p-core/host"
+	"github.com/spf13/cobra"
 	"math"
 	"os"
 	"os/signal"
@@ -18,14 +25,6 @@ import (
 	"pando/pkg/statetree/types"
 	"path/filepath"
 	"syscall"
-
-	mutexDataStoreFactory "github.com/ipfs/go-datastore/sync"
-	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
-	blockStoreFactory "github.com/ipfs/go-ipfs-blockstore"
-	logging "github.com/ipfs/go-log/v2"
-	"github.com/libp2p/go-libp2p"
-	libp2pHost "github.com/libp2p/go-libp2p-core/host"
-	"github.com/spf13/cobra"
 
 	"pando/pkg/system"
 )
@@ -63,20 +62,23 @@ func DaemonCmd() *cobra.Command {
 			}
 
 			server := api.MustNewAPIServer(Opt, c)
-			go server.Start()
+			go server.StartAllServers()
 
 			quit := make(chan os.Signal)
 			signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 			<-quit
-			fmt.Println("Shutting down server...")
-			go server.Stop()
-
+			fmt.Println("Shutting down servers...")
+			if err = server.StopAllServers(); err != nil {
+				return err
+			}
 			return nil
 		},
 	}
 }
 
 func setLoglevel() error {
+	// Supported LogLevel are: DEBUG, INFO, WARN, ERROR, DPANIC, PANIC, FATAL, and
+	// their lower-case forms.
 	logLevel, err := logging.LevelFromString(Opt.LogLevel)
 	if err != nil {
 		return err

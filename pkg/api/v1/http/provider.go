@@ -1,4 +1,4 @@
-package v1
+package http
 
 import (
 	"context"
@@ -9,15 +9,16 @@ import (
 	"io/ioutil"
 	"net/http"
 	"pando/pkg/api/types"
+	"pando/pkg/api/v1"
 	"pando/pkg/api/v1/model"
 	"pando/pkg/metrics"
 	"pando/pkg/registry"
 )
 
 func (a *API) registerProvider() {
-	metadata := a.router.Group("/provider")
+	provider := a.router.Group("/provider")
 	{
-		metadata.POST("/register", a.providerRegister)
+		provider.POST("/register", a.providerRegister)
 	}
 }
 
@@ -28,14 +29,14 @@ func (a *API) providerRegister(ctx *gin.Context) {
 	bodyBytes, err := ioutil.ReadAll(ctx.Request.Body)
 	if err != nil {
 		logger.Errorf("read register body failed: %v\n", err)
-		handleError(ctx, http.StatusInternalServerError, InternalServerError)
+		handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 		return
 	}
 
 	registerRequest, err := model.ReadRegisterRequest(bodyBytes)
 	if err != nil {
 		logger.Errorf("read register info failed: %v\n", err)
-		handleError(ctx, http.StatusInternalServerError, InternalServerError)
+		handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 		return
 	}
 
