@@ -1,14 +1,14 @@
 package mock
 
 import (
-	"Pando/config"
-	"Pando/internal/registry"
-	"Pando/internal/registry/discovery"
 	"context"
 	"errors"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"math/big"
+	"pando/pkg/option"
+	"pando/pkg/registry"
+	"pando/pkg/registry/discovery"
 	"time"
 )
 
@@ -26,18 +26,18 @@ const (
 	minerAddr2     = "/ip4/127.0.0.2/tcp/9999"
 )
 
-var MockDiscoveryCfg = config.Discovery{
-	Policy: config.Policy{
+var MockDiscoveryCfg = option.Discovery{
+	Policy: option.Policy{
 		Allow:       false,
 		Except:      []string{exceptID, trustedID, trustedID2},
 		Trust:       false,
 		TrustExcept: []string{trustedID, trustedID2},
 	},
-	PollInterval:   config.Duration(time.Second * 2),
-	RediscoverWait: config.Duration(time.Minute),
+	PollInterval:   option.Duration(time.Second * 2),
+	RediscoverWait: option.Duration(time.Minute),
 }
 
-var MockAclCfg = config.AccountLevel{Threshold: []int{1, 10, 99}}
+var MockAclCfg = option.AccountLevel{Threshold: []int{1, 10, 99}}
 
 func NewMockDiscoverer(providerID string) (*mockDiscoverer, error) {
 	peerID, err := peer.Decode(providerID)
