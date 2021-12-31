@@ -22,6 +22,7 @@ require (
 	github.com/gammazero/keymutex v0.0.2
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/graphql-go/graphql v0.8.0
 	github.com/gwatts/gin-adapter v0.0.0-20170508204228-c44433c485ad

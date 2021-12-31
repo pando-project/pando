@@ -43,9 +43,17 @@ type Options struct {
 
 // New creates a default Options.
 func New(root *cobra.Command) *Options {
-	opt := &Options{
-		flags: root.PersistentFlags(),
-		viper: viper.New(),
+	var opt *Options
+	if root == nil {
+		opt = &Options{
+			flags: pflag.NewFlagSet(os.Args[0], pflag.ContinueOnError),
+			viper: viper.New(),
+		}
+	} else {
+		opt = &Options{
+			flags: root.PersistentFlags(),
+			viper: viper.New(),
+		}
 	}
 
 	// options for root and daemon

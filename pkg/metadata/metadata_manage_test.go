@@ -20,7 +20,7 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 
 		Convey("test receive record, out update and backup because of maxInterval", func() {
 			BackupMaxInterval = time.Second * time.Second * 3
-			mm, err := New(context.Background(), pando.DS, pando.BS, nil)
+			mm, err := New(context.Background(), pando.DS, pando.BS, &pando.Opt.Backup)
 			So(err, ShouldBeNil)
 			provider, err := mock.NewMockProvider(pando)
 			So(err, ShouldBeNil)
@@ -61,7 +61,7 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 			BackupMaxInterval = time.Second * 60
 			BackupCheckNumInterval = time.Second
 			BackupMaxDagNums = 1
-			mm, err := New(context.Background(), pando.DS, pando.BS, nil)
+			mm, err := New(context.Background(), pando.DS, pando.BS, &pando.Opt.Backup)
 			So(err, ShouldBeNil)
 			provider, err := mock.NewMockProvider(pando)
 			So(err, ShouldBeNil)

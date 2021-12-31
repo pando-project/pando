@@ -1,4 +1,4 @@
-package model
+package register
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ func makeRequestEnvelop(rec record.Record, privateKey crypto.PrivKey) ([]byte, e
 
 	data, err := envelope.Marshal()
 	if err != nil {
-		return nil, fmt.Errorf("could not marshal request envelop: %s", err)
+		return nil, fmt.Errorf("could not marshal request register: %s", err)
 	}
 
 	return data, nil

@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"pando/pkg/api/types"
 	"pando/pkg/api/v1"
-	"pando/pkg/api/v1/model"
 	"pando/pkg/metrics"
+	"pando/pkg/register"
 	"pando/pkg/registry"
 )
 
@@ -33,7 +33,7 @@ func (a *API) providerRegister(ctx *gin.Context) {
 		return
 	}
 
-	registerRequest, err := model.ReadRegisterRequest(bodyBytes)
+	registerRequest, err := register.ReadRegisterRequest(bodyBytes)
 	if err != nil {
 		logger.Errorf("read register info failed: %v\n", err)
 		handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)

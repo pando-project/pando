@@ -1,9 +1,10 @@
-package model
+package register
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/record"
@@ -26,22 +27,23 @@ type RegisterRequest struct {
 	MinerAccount string
 }
 
-const RegisterRequestEnvelopeDomain = "pando-register-request-record"
+const RequestEnvelopeDomain = "pando-register-request-record"
 
-var RegisterRequestEnvelopePayloadType = []byte("pando-register-request")
+var RequestEnvelopePayloadType = []byte("pando-register-request")
 
+//
 func init() {
 	record.RegisterType(&RegisterRequest{})
 }
 
 // Domain is used when signing and validating IngestRequest records contained in Envelopes
 func (r *RegisterRequest) Domain() string {
-	return RegisterRequestEnvelopeDomain
+	return RequestEnvelopeDomain
 }
 
 // Codec is a binary identifier for the IngestRequest types
 func (r *RegisterRequest) Codec() []byte {
-	return RegisterRequestEnvelopePayloadType
+	return RequestEnvelopePayloadType
 }
 
 // UnmarshalRecord parses an IngestRequest from a byte slice.
@@ -53,7 +55,7 @@ func (r *RegisterRequest) UnmarshalRecord(data []byte) error {
 	return json.Unmarshal(data, r)
 }
 
-// MarshalRecord serializes an IngestRequesr to a byte slice.
+// MarshalRecord serializes an IngestRequest to a byte slice.
 func (r *RegisterRequest) MarshalRecord() ([]byte, error) {
 	return json.Marshal(r)
 }
@@ -76,10 +78,10 @@ func MakeRegisterRequest(providerID peer.ID, privateKey crypto.PrivKey, addrs []
 	return makeRequestEnvelop(rec, privateKey)
 }
 
-// ReadRegisterRequest unmarshals a account.PeerRequest from bytes, verifies the
+// ReadRegisterRequest unmarshal an account.PeerRequest from bytes, verifies the
 // signature, and returns a peer.PeerRecord
 func ReadRegisterRequest(data []byte) (*RegisterRequest, error) {
-	env, untypedRecord, err := record.ConsumeEnvelope(data, RegisterRequestEnvelopeDomain)
+	env, untypedRecord, err := record.ConsumeEnvelope(data, RequestEnvelopeDomain)
 	if err != nil {
 		return nil, fmt.Errorf("cannot consume register request envelope: %s", err)
 	}
