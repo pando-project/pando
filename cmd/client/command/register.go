@@ -6,6 +6,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/spf13/cobra"
+	"os"
 	"pando/pkg/register"
 )
 
@@ -47,7 +48,15 @@ func RegisterCmd() *cobra.Command {
 			data, err := register.MakeRegisterRequest(peerID, privateKey, ProviderInfo.addresses, ProviderInfo.miner)
 
 			if ProviderInfo.onlyEnvelop {
-				fmt.Println(data)
+				envelopFile, err := os.OpenFile("./envelop.data", os.O_RDWR|os.O_CREATE, 0755)
+				if err != nil {
+					return err
+				}
+				_, err = envelopFile.Write(data)
+				if err != nil {
+					return err
+				}
+				fmt.Println("envelop data saved at ./envelop.data")
 				return nil
 			}
 
