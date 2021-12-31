@@ -3,28 +3,23 @@ package api
 import (
 	"context"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
-	"golang.org/x/sync/errgroup"
 
 	"pando/pkg/api/core"
-	"pando/pkg/api/middleware"
-	v1Graphql "pando/pkg/api/v1/graphql"
-	v1Http "pando/pkg/api/v1/http"
 	"pando/pkg/option"
 )
 
 var logger = logging.Logger("http-server")
 
 type Server struct {
-	Opt   *option.Options
-	Core  *core.Core
-	Group *errgroup.Group
+	Opt  *option.Options
+	Core *core.Core
 
 	HttpServer     *http.Server
 	HttpListenAddr string
@@ -33,56 +28,39 @@ type Server struct {
 	GraphqlListenAddr string
 }
 
-func MustNewAPIServer(opt *option.Options, core *core.Core) *Server {
-	httpRouter := gin.New()
-	httpRouter.Use(middleware.WithLoggerFormatter())
-	httpRouter.Use(middleware.WithCorsAllowAllOrigin())
-	httpRouter.Use(gin.Recovery())
-
-	v1HttpAPI := v1Http.NewV1HttpAPI(httpRouter, core)
-	v1HttpAPI.RegisterAPIs()
-
-	graphqlRouter := gin.New()
-	graphqlRouter.Use(middleware.WithLoggerFormatter())
-	graphqlRouter.Use(middleware.WithCorsAllowAllOrigin())
-	graphqlRouter.Use(gin.Recovery())
-
-	v1GraphAPI := v1Graphql.NewV1GraphqlAPI(graphqlRouter, core)
-	v1GraphAPI.RegisterAPIs()
-
+func MustNewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
 	httpMultiAddress, err := multiaddr.NewMultiaddr(opt.ServerAddress.HttpAPIListenAddress)
 	if err != nil {
-		panic("parse http multiaddress failed")
+		return nil, err
 	}
 	httpListenAddress, err := manet.ToNetAddr(httpMultiAddress)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	graphqlMultiAddress, err := multiaddr.NewMultiaddr(opt.ServerAddress.GraphqlListenAddress)
 	if err != nil {
-		panic("parse graphql multiaddress failed")
+		return nil, err
 	}
 	graphqlListenAddress, err := manet.ToNetAddr(graphqlMultiAddress)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	return &Server{
 		Opt: opt,
 		HttpServer: &http.Server{
 			Addr:    httpListenAddress.String(),
-			Handler: httpRouter,
+			Handler: NewHttpRouter(core),
 		},
 		HttpListenAddr: httpListenAddress.String(),
 		GraphqlServer: &http.Server{
 			Addr:    graphqlListenAddress.String(),
-			Handler: graphqlRouter,
+			Handler: NewGraphqlRouter(core),
 		},
 		GraphqlListenAddr: graphqlListenAddress.String(),
 		Core:              core,
-		Group:             &errgroup.Group{},
-	}
+	}, nil
 }
 
 func (s *Server) StartHttpServer() error {
@@ -95,9 +73,35 @@ func (s *Server) StartHttpServer() error {
 	return nil
 }
 
+func (s *Server) StopHttpServer() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	fmt.Println("stop http server...")
+	err := s.HttpServer.Shutdown(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Server) StartGraphqlServer() error {
 	logger.Infof("graphql server listening at: %s", s.GraphqlListenAddr)
 	err := s.GraphqlServer.ListenAndServe()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Server) StopGraphqlServer() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	fmt.Println("stop graphql server...")
+	err := s.GraphqlServer.Shutdown(ctx)
 	if err != nil {
 		return err
 	}
@@ -122,22 +126,19 @@ func (s *Server) StartAllServers() {
 }
 
 func (s *Server) StopAllServers() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	fmt.Println("stop http server...")
-	err := s.HttpServer.Shutdown(ctx)
+	g := errgroup.Group{}
+	g.Go(func() error {
+		return s.StopHttpServer()
+	})
+	g.Go(func() error {
+		return s.StopGraphqlServer()
+	})
+	err := g.Wait()
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("stop graphql server...")
-	err = s.GraphqlServer.Shutdown(ctx)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Bye! Pando!")
+	fmt.Println("Bye, Pando!")
 
 	return nil
 }

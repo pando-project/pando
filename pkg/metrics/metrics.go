@@ -35,6 +35,8 @@ var (
 
 	GetSnapshotByHeightLatency = stats.Float64("meta/snap_info_by_height",
 		"Time to fetch snapshot info by height", stats.UnitMilliseconds)
+
+	// go-legs graph persistence
 	GraphPersistenceLatency = stats.Float64("graph/persistence_latency",
 		"Time to persistence DAG", stats.UnitMilliseconds)
 )

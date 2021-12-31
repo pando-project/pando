@@ -1,4 +1,4 @@
-package model
+package register
 
 import (
 	"errors"
@@ -41,7 +41,7 @@ func TestRegisterRequest(t *testing.T) {
 			So(err, ShouldResemble, errors.New("missing address"))
 			So(data, ShouldBeNil)
 		})
-		Convey("failed seal the envelop", func() {
+		Convey("failed seal the register", func() {
 			patch := ApplyFunc(record.Seal, func(rec record.Record, privateKey crypto.PrivKey) (*record.Envelope, error) {
 				return nil, errors.New("failed seal")
 			})
@@ -49,13 +49,13 @@ func TestRegisterRequest(t *testing.T) {
 			_, err := MakeRegisterRequest(peerID, privKey, addrs, account)
 			So(err, ShouldResemble, fmt.Errorf("could not sign request: failed seal"))
 		})
-		Convey("failed marshal the envelop", func() {
+		Convey("failed marshal the register", func() {
 			patch := ApplyMethod(reflect.TypeOf(&record.Envelope{}), "Marshal", func(_ *record.Envelope) ([]byte, error) {
 				return nil, errors.New("failed")
 			})
 			defer patch.Reset()
 			_, err := MakeRegisterRequest(peerID, privKey, addrs, account)
-			So(err, ShouldResemble, fmt.Errorf("could not marshal request envelop: failed"))
+			So(err, ShouldResemble, fmt.Errorf("could not marshal request register: failed"))
 		})
 	})
 }

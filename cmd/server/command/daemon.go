@@ -37,7 +37,8 @@ func DaemonCmd() *cobra.Command {
 		Use:   "daemon",
 		Short: "start pando server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := setLoglevel(); err != nil {
+			err := setLoglevel()
+			if err != nil {
 				return fmt.Errorf(failedError, err)
 			}
 
@@ -61,14 +62,19 @@ func DaemonCmd() *cobra.Command {
 				return fmt.Errorf(failedError, err)
 			}
 
-			server := api.MustNewAPIServer(Opt, c)
-			go server.StartAllServers()
+			server, err := api.MustNewAPIServer(Opt, c)
+			if err != nil {
+				return fmt.Errorf(failedError, err)
+			}
+
+			server.StartAllServers()
 
 			quit := make(chan os.Signal)
 			signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 			<-quit
 			fmt.Println("Shutting down servers...")
-			if err = server.StopAllServers(); err != nil {
+			err = server.StopAllServers()
+			if err != nil {
 				return err
 			}
 			return nil

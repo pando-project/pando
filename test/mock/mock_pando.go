@@ -10,12 +10,14 @@ import (
 	"github.com/libp2p/go-libp2p-core/host"
 	"pando/pkg/legs"
 	"pando/pkg/metadata"
+	"pando/pkg/option"
 	"pando/pkg/policy"
 	"pando/pkg/registry"
 	"pando/pkg/registry/discovery"
 )
 
 type PandoMock struct {
+	Opt      *option.Options
 	DS       datastore.Batching
 	BS       blockstore.Blockstore
 	Host     host.Host
@@ -63,6 +65,12 @@ func NewPandoMock() (*PandoMock, error) {
 	}
 	core.SetRatelimiter(limiter)
 
+	opt := option.New(nil)
+	_, err = opt.Parse()
+	if err != nil {
+		return nil, err
+	}
+
 	return &PandoMock{
 		DS:       mds,
 		BS:       bs,
@@ -71,6 +79,7 @@ func NewPandoMock() (*PandoMock, error) {
 		Registry: r,
 		Discover: mockDisco,
 		outMeta:  outCh,
+		Opt:      opt,
 	}, nil
 }
 

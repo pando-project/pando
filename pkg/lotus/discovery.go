@@ -13,7 +13,7 @@ import (
 	"pando/pkg/registry"
 	"pando/pkg/registry/discovery"
 
-	jsonrpc "github.com/filecoin-project/go-jsonrpc"
+	"github.com/filecoin-project/go-jsonrpc"
 	lotusapi "github.com/filecoin-project/lotus/api"
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/peer"

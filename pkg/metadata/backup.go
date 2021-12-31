@@ -36,35 +36,35 @@ type backupSystem struct {
 }
 
 func NewBackupSys(backupCfg *option.Backup) (*backupSystem, error) {
-	var gateway string
-	var shuttleGateway string
-	var apiKey string
+	//var gateway string
+	//var shuttleGateway string
+	//var apiKey string
 
-	if backupCfg == nil || backupCfg.EstuaryGateway == "" {
-		gateway = DefaultEstGateway
-	} else {
-		gateway = backupCfg.EstuaryGateway
-	}
-	if backupCfg == nil || backupCfg.ShuttleGateway == "" {
-		shuttleGateway = DefaultShuttleGateway
-	} else {
-		shuttleGateway = backupCfg.ShuttleGateway
-	}
-	if backupCfg == nil || backupCfg.ApiKey == "" {
-		apiKeyEnv, exist := os.LookupEnv(EstuaryApiKeyEnv)
-		if !exist {
-			return nil, fmt.Errorf("please set apikey in environment variable $%s", EstuaryApiKeyEnv)
-		}
-		apiKey = apiKeyEnv
-	} else {
-		apiKey = backupCfg.ApiKey
-	}
+	//if backupCfg == nil || backupCfg.EstuaryGateway == "" {
+	//	gateway = DefaultEstGateway
+	//} else {
+	//	gateway = backupCfg.EstuaryGateway
+	//}
+	//if backupCfg == nil || backupCfg.ShuttleGateway == "" {
+	//	shuttleGateway = DefaultShuttleGateway
+	//} else {
+	//	shuttleGateway = backupCfg.ShuttleGateway
+	//}
+	//if backupCfg == nil || backupCfg.ApiKey == "" {
+	//	apiKeyEnv, exist := os.LookupEnv(EstuaryApiKeyEnv)
+	//	if !exist {
+	//		return nil, fmt.Errorf("please set apikey in $%s", EstuaryApiKeyEnv)
+	//	}
+	//	apiKey = apiKeyEnv
+	//} else {
+	//	apiKey = backupCfg.ApiKey
+	//}
 
 	bs := &backupSystem{
-		gateway:        gateway,
-		shuttleGateway: shuttleGateway,
+		gateway:        backupCfg.EstuaryGateway,
+		shuttleGateway: backupCfg.ShuttleGateway,
 		checkInterval:  time.Second * 10,
-		apiKey:         apiKey,
+		apiKey:         backupCfg.ApiKey,
 		//fileDir:        TmpBackupFileDir,
 		toCheck: make(chan uint64, 1),
 	}
@@ -210,7 +210,7 @@ func (bs *backupSystem) backupToEstuary(filepath string) error {
 		return err
 	}
 
-	req.Header.Set("Authorization", bs.apiKey)
+	req.Header.Set("Authorization", "Bearer "+bs.apiKey)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 
