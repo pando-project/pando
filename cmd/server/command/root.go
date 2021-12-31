@@ -9,14 +9,11 @@ import (
 var Opt *option.Options
 
 var ExampleUsage = `
-# Init Pando configs.
+# Init Pando configs(default path is ~/.pando/config.yaml).
 pando-server init
 
 # StartHttpServer pando server.
-pando-server start
-
-# StartHttpServer pando server in daemon mode.
-pando-server start -d
+pando-server daemon
 `
 
 func NewRoot() *cobra.Command {

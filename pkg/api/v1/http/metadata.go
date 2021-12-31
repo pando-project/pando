@@ -19,8 +19,8 @@ import (
 func (a *API) registerMetadata() {
 	metadata := a.router.Group("/metadata")
 	{
-		metadata.GET("/metadataList", a.metadataList)
-		metadata.GET("/metadataSnapshot", a.metadataSnapshot)
+		metadata.GET("/list", a.metadataList)
+		metadata.GET("/snapshot", a.metadataSnapshot)
 	}
 }
 
@@ -43,15 +43,12 @@ func (a *API) metadataSnapshot(ctx *gin.Context) {
 	defer record()
 
 	heightQuery := ctx.Query("height")
-	snapshotCidQuery := ctx.Query("snapshotCid")
-
-	queryIsNull := true
+	snapshotCidQuery := ctx.Query("cid")
 
 	var snapshot *snapshotTypes.SnapShot
 	var err error
 
 	if snapshotCidQuery != "" {
-		queryIsNull = false
 		snapshot, err = a.getSnapshotByCid(snapshotCidQuery)
 		if err != nil {
 			if err == statetree.NotFoundErr {
@@ -64,10 +61,7 @@ func (a *API) metadataSnapshot(ctx *gin.Context) {
 			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 			return
 		}
-	}
-
-	if heightQuery != "" {
-		queryIsNull = false
+	} else if heightQuery != "" {
 		snapshot, err = a.getSnapshotByHeight(heightQuery)
 		if err != nil {
 			if err == statetree.NotFoundErr {
@@ -80,15 +74,12 @@ func (a *API) metadataSnapshot(ctx *gin.Context) {
 			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 			return
 		}
-	}
-
-	if queryIsNull {
+	} else {
 		handleError(ctx, http.StatusBadRequest, "height or snapshotCid is required")
 		return
 	}
 
 	ctx.JSON(http.StatusOK, types.NewOKResponse("metadataSnapshot found", snapshot))
-
 }
 
 func (a *API) getSnapshotByCid(cidStr string) (*snapshotTypes.SnapShot, error) {

@@ -7,22 +7,17 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"html/template"
 	"io"
 	"net/http"
-	"path"
-	"runtime"
 )
 
 func (a *API) registerGraphql() {
-	var templatesPath string
-	_, filename, _, ok := runtime.Caller(0)
-	if ok {
-		templatesPath = path.Join(path.Dir(filename), "./templates/*")
-	} else {
-		logger.Errorf("get local path failed")
+	tmpl, err := template.New("index.html").Parse(indexHTML())
+	if err != nil {
+		panic(err)
 	}
-	a.router.LoadHTMLGlob(templatesPath)
-
+	a.router.SetHTMLTemplate(tmpl)
 	a.router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{})
 	})

@@ -105,7 +105,18 @@ func New(root *cobra.Command) *Options {
 	// options for discovery
 	opt.flags.StringVar(&opt.Discovery.LotusGateway, "discovery-lotus-gateway", defaultLotusGateway,
 		"Lotus gateway address.")
-	//ToDo: define duration format flags at here
+
+	opt.flags.BoolVar(&opt.Discovery.Policy.Allow, "discovery-policy-allow", defaultAllow,
+		"Discovery allow all origin source host.")
+
+	opt.flags.BoolVar(&opt.Discovery.Policy.Trust, "discovery-policy-trust", defaultTrust,
+		"Enable discovery white-list.")
+
+	opt.Discovery.PollInterval = defaultPollInterval
+
+	opt.Discovery.RediscoverWait = defaultRediscoverWait
+
+	opt.Discovery.Timeout = defaultDiscoveryTimeout
 
 	// options for rate limits
 	opt.flags.IntSliceVar(&opt.AccountLevel.Threshold, "account-level", defaultAccountLevel,
