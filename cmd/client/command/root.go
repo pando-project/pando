@@ -19,7 +19,7 @@ func NewRoot() *cobra.Command {
 		"set pando api url")
 
 	childCommands := []*cobra.Command{
-		nil,
+		RegisterCmd(),
 	}
 	rootCmd.AddCommand(childCommands...)
 
