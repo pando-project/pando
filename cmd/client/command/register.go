@@ -10,10 +10,11 @@ import (
 )
 
 type providerInfo struct {
-	peerID     string
-	privateKey string
-	addresses  []string
-	miner      string
+	peerID      string
+	privateKey  string
+	addresses   []string
+	miner       string
+	onlyEnvelop bool
 }
 
 var ProviderInfo *providerInfo
@@ -45,6 +46,11 @@ func RegisterCmd() *cobra.Command {
 
 			data, err := register.MakeRegisterRequest(peerID, privateKey, ProviderInfo.addresses, ProviderInfo.miner)
 
+			if ProviderInfo.onlyEnvelop {
+				fmt.Println(data)
+				return nil
+			}
+
 			res, err := PandoClient.R().
 				SetBody(data).
 				SetHeader("Content-Type", "application/octet-stream").
@@ -70,6 +76,8 @@ func RegisterCmd() *cobra.Command {
 		"address array of provider, required")
 	registerCmd.Flags().StringVar(&ProviderInfo.miner, "miner", "",
 		"miner of provider")
+	registerCmd.Flags().BoolVarP(&ProviderInfo.onlyEnvelop, "only-envelop", "e", false,
+		"only generate envelop body")
 
 	return registerCmd
 }
