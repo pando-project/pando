@@ -1,4 +1,7 @@
-<!--
+package graphql
+
+func indexHTML() string {
+	return `<!--
  *  Copyright (c) 2020 GraphQL Contributors
  *  All rights reserved.
  *
@@ -80,4 +83,5 @@
     );
 </script>
 </body>
-</html>
+</html>`
+}

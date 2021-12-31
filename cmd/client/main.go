@@ -1,11 +1,14 @@
 package main
 
-import "pando/cmd/client/command"
+import (
+	"fmt"
+	"pando/cmd/client/command"
+)
 
 func main() {
 	rootCmd := command.NewRoot()
 	err := rootCmd.Execute()
 	if err != nil {
-		panic(err)
+		fmt.Println("Exit with error")
 	}
 }

@@ -1,14 +1,19 @@
-package command
+package provider
 
 import (
 	"encoding/base64"
 	"fmt"
+	"os"
+
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/spf13/cobra"
-	"os"
+
+	"pando/cmd/client/command/api"
 	"pando/pkg/register"
 )
+
+const registerPath = "/register"
 
 type providerInfo struct {
 	peerID      string
@@ -18,25 +23,23 @@ type providerInfo struct {
 	onlyEnvelop bool
 }
 
-var ProviderInfo *providerInfo
+var registerInfo = &providerInfo{}
 
-func RegisterCmd() *cobra.Command {
-	ProviderInfo = &providerInfo{}
-
-	registerCmd := &cobra.Command{
+func registerCmd() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "register",
 		Short: "register a provider to pando server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := ProviderInfo.validateFlags(); err != nil {
+			if err := registerInfo.validateFlags(); err != nil {
 				return err
 			}
 
-			peerID, err := peer.Decode(ProviderInfo.peerID)
+			peerID, err := peer.Decode(registerInfo.peerID)
 			if err != nil {
 				return nil
 			}
 
-			privateKeyEncoded, err := base64.StdEncoding.DecodeString(ProviderInfo.privateKey)
+			privateKeyEncoded, err := base64.StdEncoding.DecodeString(registerInfo.privateKey)
 			if err != nil {
 				return err
 			}
@@ -45,9 +48,9 @@ func RegisterCmd() *cobra.Command {
 				return err
 			}
 
-			data, err := register.MakeRegisterRequest(peerID, privateKey, ProviderInfo.addresses, ProviderInfo.miner)
+			data, err := register.MakeRegisterRequest(peerID, privateKey, registerInfo.addresses, registerInfo.miner)
 
-			if ProviderInfo.onlyEnvelop {
+			if registerInfo.onlyEnvelop {
 				envelopFile, err := os.OpenFile("./envelop.data", os.O_RDWR|os.O_CREATE, 0755)
 				if err != nil {
 					return err
@@ -60,35 +63,33 @@ func RegisterCmd() *cobra.Command {
 				return nil
 			}
 
-			res, err := PandoClient.R().
+			res, err := api.Client.R().
 				SetBody(data).
 				SetHeader("Content-Type", "application/octet-stream").
-				Post("/provider/register")
+				Post(joinAPIPath(registerPath))
 			if err != nil {
 				return nil
 			}
-			if res.IsError() {
-				return fmt.Errorf("response error: %v", res.Error())
-			}
-
-			fmt.Println("register success")
-
-			return nil
+			return api.PrintResponseData(res)
 		},
 	}
 
-	registerCmd.Flags().StringVar(&ProviderInfo.peerID, "peer-id", "",
-		"peerID of provider, required")
-	registerCmd.Flags().StringVar(&ProviderInfo.privateKey, "private-key", "",
-		"private key of provider, required")
-	registerCmd.Flags().StringSliceVar(&ProviderInfo.addresses, "addresses", []string{},
-		"address array of provider, required")
-	registerCmd.Flags().StringVar(&ProviderInfo.miner, "miner", "",
-		"miner of provider")
-	registerCmd.Flags().BoolVarP(&ProviderInfo.onlyEnvelop, "only-envelop", "e", false,
-		"only generate envelop body")
+	registerInfo.setFlags(cmd)
 
-	return registerCmd
+	return cmd
+}
+
+func (f *providerInfo) setFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&f.peerID, "peer-id", "",
+		"peerID of provider, required")
+	cmd.Flags().StringVar(&f.privateKey, "private-key", "",
+		"private key of provider, required")
+	cmd.Flags().StringSliceVar(&f.addresses, "addresses", []string{},
+		"address array of provider, required")
+	cmd.Flags().StringVar(&f.miner, "miner", "",
+		"miner of provider")
+	cmd.Flags().BoolVarP(&f.onlyEnvelop, "only-envelop", "e", false,
+		"only generate envelop body")
 }
 
 func (f *providerInfo) validateFlags() error {

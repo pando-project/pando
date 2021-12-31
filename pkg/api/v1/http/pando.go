@@ -59,12 +59,12 @@ func (a *API) pandoInfo(ctx *gin.Context) {
 	}
 
 	multiAddresses := strings.Fields(pandoInfo.MultiAddrs)
-	ctx.JSON(http.StatusOK, struct {
+	ctx.JSON(http.StatusOK, types.NewOKResponse("ok", struct {
 		PeerID         string
 		MultiAddresses []string
-	}{pandoInfo.PeerID, multiAddresses})
+	}{pandoInfo.PeerID, multiAddresses}))
 }
 
 func (a *API) pandoHealth(ctx *gin.Context) {
-	ctx.AbortWithStatus(200)
+	ctx.JSON(http.StatusOK, types.NewOKResponse("alive", nil))
 }

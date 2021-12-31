@@ -14,8 +14,8 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"pando/example/mock_provider/task"
 	"pando/pkg/legs"
-	"pando/test/mock_provider/task"
 	"strconv"
 	"time"
 

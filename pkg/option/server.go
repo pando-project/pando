@@ -1,11 +1,11 @@
 package option
 
 const (
-	defaultHttpAPIListenAddress = "/ip4/0.0.0.0/tcp/9000"
-	defaultGraphqlListenAddress = "/ip4/0.0.0.0/tcp/9001"
+	defaultHttpAPIListenAddress = "/ip4/127.0.0.1/tcp/9000"
+	defaultGraphqlListenAddress = "/ip4/127.0.0.1/tcp/9001"
 
 	defaultDisableP2P = false
-	defaultP2PAddress = "/ip4/0.0.0.0/tcp/8000"
+	defaultP2PAddress = "/ip4/127.0.0.1/tcp/9002"
 )
 
 type ServerAddress struct {

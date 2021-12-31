@@ -81,7 +81,7 @@ func checkConfigExists(configFile string) error {
 func setBandwidth() error {
 	var err error
 	if !Opt.DisableSpeedTest {
-		Opt.RateLimit.Bandwidth, err = system.TestInternetSpeed(true)
+		Opt.RateLimit.Bandwidth, err = system.TestInternetSpeed(false)
 		if err != nil {
 			return err
 		}

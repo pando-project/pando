@@ -52,6 +52,7 @@ paths:
             $ref: "#/definitions/APIResponse"
           examples:
             application/json:
+              code: 201
               message: "opration success"
               data: {}
         "400":
@@ -60,6 +61,7 @@ paths:
             $ref: "#/definitions/APIResponse"
           examples:
             application/json:
+              code: 400
               message: "invalid peerID"
               data: {}
   /pando/info:
@@ -209,19 +211,21 @@ paths:
               
 definitions:
   Provider:
-    type: "object"
+    type: object
     properties:
       cid: 
-        type: "string"
+        type: string
       envelop: 
-        type: "string"
+        type: string
   APIResponse:
-    type: "object"
+    type: object
     properties:
+      code:
+        type: integer
       message:
-        type: "string"
+        type: string
       data:
-        type: "object"
+        type: object
 externalDocs:
   description: "Find out more about Pando"
   url: "https://github.com/kenlabs/pando"
