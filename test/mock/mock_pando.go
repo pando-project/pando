@@ -42,14 +42,8 @@ func NewPandoMock() (*PandoMock, error) {
 	if err != nil {
 		return nil, err
 	}
-	outCh := make(chan *metadata.MetaRecord)
 
-	core, err := legs.NewLegsCore(ctx, &h, mds, bs, outCh, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	r, err := registry.NewRegistry(&MockDiscoveryCfg, &MockAclCfg, mds, mockDisco, core)
+	r, err := registry.NewRegistry(&MockDiscoveryCfg, &MockAclCfg, mds, mockDisco, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +57,13 @@ func NewPandoMock() (*PandoMock, error) {
 	if err != nil {
 		return nil, err
 	}
-	core.SetRatelimiter(limiter)
 
+	outCh := make(chan *metadata.MetaRecord)
+	core, err := legs.NewLegsCore(ctx, &h, mds, bs, outCh, limiter)
+	if err != nil {
+		return nil, err
+	}
+	r.SetCore(core)
 	opt := option.New(nil)
 	_, err = opt.Parse()
 	if err != nil {

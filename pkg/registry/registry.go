@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	legs_interface "pando/pkg/legs/interface"
 	"pando/pkg/option"
 	"pando/pkg/registry/discovery"
 	"pando/pkg/registry/policy"
@@ -35,6 +36,8 @@ type Registry struct {
 	dstore    datastore.Datastore
 	providers map[peer.ID]*ProviderInfo
 	sequences *sequences
+
+	core legs_interface.PandoCore
 
 	discoverer   discovery.Discoverer
 	discoWait    sync.WaitGroup
@@ -73,8 +76,8 @@ func (p *ProviderInfo) dsKey() datastore.Key {
 // interface.
 //
 // TODO: It is probably necessary to have multiple discoverer interfaces
-func NewRegistry(cfg *option.Discovery, accountLevel *option.AccountLevel, dstore datastore.Datastore, disco discovery.Discoverer) (*Registry, error) {
-	if cfg == nil || accountLevel == nil {
+func NewRegistry(cfg *option.Discovery, cfglevel *option.AccountLevel, dstore datastore.Datastore, disco discovery.Discoverer, core legs_interface.PandoCore) (*Registry, error) {
+	if cfg == nil || cfglevel == nil {
 		return nil, fmt.Errorf("nil config")
 	}
 
@@ -95,12 +98,13 @@ func NewRegistry(cfg *option.Discovery, accountLevel *option.AccountLevel, dstor
 		rediscoverWait:   time.Duration(cfg.RediscoverWait),
 		discoveryTimeout: time.Duration(cfg.Timeout),
 
-		accountLevel: accountLevel,
+		accountLevel: cfglevel,
 
 		discoverer: disco,
 		discoTimes: map[string]time.Time{},
 
 		dstore: dstore,
+		core:   core,
 	}
 
 	count, err := r.loadPersistedProviders()
@@ -199,6 +203,16 @@ func (r *Registry) Register(info *ProviderInfo) error {
 	}
 
 	log.Infow("registered provider", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
+
+	if r.core == nil {
+		log.Warnf("nil legs-core for subscribing the registered provider")
+	} else {
+		err = r.core.Subscribe(context.Background(), info.AddrInfo.ID)
+		if err != nil {
+			log.Warnf("failed to subscribe: %s, err: %s", info.AddrInfo.ID, err.Error())
+		}
+	}
+
 	return nil
 }
 
@@ -315,9 +329,7 @@ func (r *Registry) loadPersistedProviders() (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer func(results query.Results) {
-		_ = results.Close()
-	}(results)
+	defer results.Close()
 
 	var count int
 	for result := range results.Next() {
@@ -339,6 +351,14 @@ func (r *Registry) loadPersistedProviders() (int, error) {
 
 		r.providers[peerID] = pinfo
 		count++
+		if r.core == nil {
+			log.Warnf("nil legs-core for subscribing the registered provider")
+		} else {
+			err = r.core.Subscribe(context.Background(), peerID)
+			if err != nil {
+				log.Warnf("failed to subscribe: %s, err: %s", peerID, err.Error())
+			}
+		}
 	}
 	return count, nil
 }
@@ -362,4 +382,8 @@ func (r *Registry) cleanup() {
 		}
 	}
 	r.discoWait.Done()
+}
+
+func (r *Registry) SetCore(core legs_interface.PandoCore) {
+	r.core = core
 }
