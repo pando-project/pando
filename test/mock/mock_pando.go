@@ -1,11 +1,6 @@
 package mock
 
 import (
-	"Pando/internal/registry"
-	"Pando/internal/registry/discovery"
-	"Pando/legs"
-	"Pando/metadata"
-	"Pando/policy"
 	"context"
 	"fmt"
 	"github.com/ipfs/go-datastore"
@@ -13,9 +8,16 @@ import (
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
+	"pando/pkg/legs"
+	"pando/pkg/metadata"
+	"pando/pkg/option"
+	"pando/pkg/policy"
+	"pando/pkg/registry"
+	"pando/pkg/registry/discovery"
 )
 
 type PandoMock struct {
+	Opt      *option.Options
 	DS       datastore.Batching
 	BS       blockstore.Blockstore
 	Host     host.Host
@@ -40,14 +42,8 @@ func NewPandoMock() (*PandoMock, error) {
 	if err != nil {
 		return nil, err
 	}
-	outCh := make(chan *metadata.MetaRecord)
 
-	core, err := legs.NewLegsCore(ctx, &h, mds, bs, outCh, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	r, err := registry.NewRegistry(&MockDiscoveryCfg, &MockAclCfg, mds, mockDisco, core)
+	r, err := registry.NewRegistry(&MockDiscoveryCfg, &MockAclCfg, mds, mockDisco, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +57,18 @@ func NewPandoMock() (*PandoMock, error) {
 	if err != nil {
 		return nil, err
 	}
-	core.SetRatelimiter(limiter)
+
+	outCh := make(chan *metadata.MetaRecord)
+	core, err := legs.NewLegsCore(ctx, &h, mds, bs, outCh, limiter)
+	if err != nil {
+		return nil, err
+	}
+	r.SetCore(core)
+	opt := option.New(nil)
+	_, err = opt.Parse()
+	if err != nil {
+		return nil, err
+	}
 
 	return &PandoMock{
 		DS:       mds,
@@ -71,6 +78,7 @@ func NewPandoMock() (*PandoMock, error) {
 		Registry: r,
 		Discover: mockDisco,
 		outMeta:  outCh,
+		Opt:      opt,
 	}, nil
 }
 
