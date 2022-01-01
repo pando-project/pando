@@ -1,5 +1,7 @@
 package types
 
+import "net/http"
+
 type ResponseJson struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
@@ -15,6 +17,7 @@ func NewErrorResponse(code int, message string) *ResponseJson {
 
 func NewOKResponse(message string, data interface{}) *ResponseJson {
 	return &ResponseJson{
+		Code:    http.StatusOK,
 		Message: message,
 		Data:    data,
 	}
