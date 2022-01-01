@@ -208,5 +208,6 @@ func (opt *Options) Parse() (string, error) {
 }
 
 func (opt *Options) validate() error {
+	//ToDo: validate flags
 	return nil
 }
