@@ -63,7 +63,7 @@ Check if Pando is alive
 ./pando-client -a http://127.0.0.1:9000 pando info
 
 {
- "code": 0,
+ "code": 200,
  "message": "alive",
  "Data": null
 }
@@ -74,7 +74,7 @@ Show information of Pando server
 ./pando-client -a http://127.0.0.1:9000 pando info
 
 {
- "code": 0,
+ "code": 200,
  "message": "ok",
  "Data": {
   "MultiAddresses": [
@@ -93,7 +93,7 @@ Let Pando subscribe a topic with provider to start metadata synchronization
 ./pando-client -a http://127.0.0.1:9000 pando subscribe --provider-peerid 12D3KooWSS3sEujyAXB9SWUvVtQZmxH6vTi9NitqaaRQoUjeEk3M
 
 {
- "code": 0,
+ "code": 200,
  "message": "subscribe success",
  "Data": null
 }
@@ -109,7 +109,7 @@ Provider should be registered before using Pando service
   --addresses /ip4/127.0.0.1/tcp/9999
 
 {
- "code": 0,
+ "code": 200,
  "message": "register success",
  "Data": null
 }
@@ -133,7 +133,7 @@ List all cids of metadata snapshots
 ./pando-client -a http://127.0.0.1:9000 metadata list
 
 {
- "code": 0,
+ "code": 200,
  "message": "OK",
  "Data": [
   {
@@ -151,7 +151,7 @@ lookup and show snapshot information by its cid
   --snapshot-cid bafy2bzacea6qqju247jpt3udlzrafiz2zbe6tdgdxv6sm22ysujnynvz2c3uk
 
 {
- "code": 0,
+ "code": 200,
  "message": "metadataSnapshot found",
  "Data": {
   "CreateTime": 1640992855488796000,
@@ -182,7 +182,7 @@ or by snapshot's height
   --snapshot-height 0
 
 {
- "code": 0,
+ "code": 200,
  "message": "metadataSnapshot found",
  "Data": {
   "CreateTime": 1640992855488796000,
