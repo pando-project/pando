@@ -5,6 +5,7 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	. "github.com/smartystreets/goconvey/convey"
 	"net/http"
+	"pando/pkg/registry"
 	. "pando/pkg/registry"
 	"pando/pkg/syserr"
 	"pando/test/mock"
@@ -92,7 +93,7 @@ func TestRegisterAndDiscovery(t *testing.T) {
 			diso, err := mock.NewMockDiscoverer(peerID.String())
 			So(err, ShouldBeNil)
 			// reload the persisted info
-			r, err := NewRegistry(&mock.MockDiscoveryCfg, &mock.MockAclCfg, pando.DS, diso)
+			r, err := registry.NewRegistry(&mock.MockDiscoveryCfg, &mock.MockAclCfg, pando.DS, diso, nil)
 			So(err, ShouldBeNil)
 			info = r.ProviderInfo(peerID)
 			So(info, ShouldNotBeNil)

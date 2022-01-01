@@ -43,7 +43,7 @@ func NewPandoMock() (*PandoMock, error) {
 		return nil, err
 	}
 
-	r, err := registry.NewRegistry(&MockDiscoveryCfg, &MockAclCfg, mds, mockDisco)
+	r, err := registry.NewRegistry(&MockDiscoveryCfg, &MockAclCfg, mds, mockDisco, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func NewPandoMock() (*PandoMock, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	r.SetCore(core)
 	opt := option.New(nil)
 	_, err = opt.Parse()
 	if err != nil {
