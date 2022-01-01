@@ -194,8 +194,16 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 		}
 	}
 
+	c.LegsCore, err = legs.NewLegsCore(context.Background(),
+		&p2pHost,
+		storeInstance.MutexDataStore,
+		storeInstance.BlockStore,
+		c.MetaManager.GetMetaInCh(),
+		nil,
+	)
+
 	c.Registry, err = registry.NewRegistry(&Opt.Discovery, &Opt.AccountLevel,
-		storeInstance.DataStore, lotusDiscoverer, nil)
+		storeInstance.DataStore, lotusDiscoverer, c.LegsCore)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create provider registryInstance: %v", err)
 	}
@@ -212,17 +220,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 		return nil, err
 	}
 
-	c.LegsCore, err = legs.NewLegsCore(context.Background(),
-		&p2pHost,
-		storeInstance.MutexDataStore,
-		storeInstance.BlockStore,
-		c.MetaManager.GetMetaInCh(),
-		rateLimiter,
-	)
-	c.Registry.SetCore(c.LegsCore)
-	if err != nil {
-		return nil, err
-	}
+	c.LegsCore.SetRatelimiter(rateLimiter)
 
 	return c, nil
 }

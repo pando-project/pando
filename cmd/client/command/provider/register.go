@@ -85,7 +85,7 @@ func (f *providerInfo) setFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.privateKey, "private-key", "",
 		"private key of provider, required")
 	cmd.Flags().StringSliceVar(&f.addresses, "addresses", []string{},
-		"address array of provider, required")
+		"address array of provider")
 	cmd.Flags().StringVar(&f.miner, "miner", "",
 		"miner of provider")
 	cmd.Flags().BoolVarP(&f.onlyEnvelop, "only-envelop", "e", false,
@@ -93,7 +93,7 @@ func (f *providerInfo) setFlags(cmd *cobra.Command) {
 }
 
 func (f *providerInfo) validateFlags() error {
-	if len(f.addresses) == 0 || f.peerID == "" || f.privateKey == "" {
+	if f.peerID == "" || f.privateKey == "" {
 		return fmt.Errorf("all flags are requied, given:\n\taddresses: %v\n\tpeerID%v\n\tprivateKey%v",
 			f.addresses, f.peerID, f.privateKey)
 	}
