@@ -43,15 +43,15 @@ func (t *ExtraInfo) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	// t.MultiAddrs (string) (string)
-	if len(t.MultiAddrs) > cbg.MaxLength {
-		return xerrors.Errorf("Value in field t.MultiAddrs was too long")
+	// t.MultiAddresses (string) (string)
+	if len(t.MultiAddresses) > cbg.MaxLength {
+		return xerrors.Errorf("Value in field t.MultiAddresses was too long")
 	}
 
-	if err := cbg.WriteMajorTypeHeaderBuf(scratch, w, cbg.MajTextString, uint64(len(t.MultiAddrs))); err != nil {
+	if err := cbg.WriteMajorTypeHeaderBuf(scratch, w, cbg.MajTextString, uint64(len(t.MultiAddresses))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string(t.MultiAddrs)); err != nil {
+	if _, err := io.WriteString(w, string(t.MultiAddresses)); err != nil {
 		return err
 	}
 	return nil
@@ -85,7 +85,7 @@ func (t *ExtraInfo) UnmarshalCBOR(r io.Reader) error {
 
 		t.PeerID = string(sval)
 	}
-	// t.MultiAddrs (string) (string)
+	// t.MultiAddresses (string) (string)
 
 	{
 		sval, err := cbg.ReadStringBuf(br, scratch)
@@ -93,7 +93,7 @@ func (t *ExtraInfo) UnmarshalCBOR(r io.Reader) error {
 			return err
 		}
 
-		t.MultiAddrs = string(sval)
+		t.MultiAddresses = string(sval)
 	}
 	return nil
 }

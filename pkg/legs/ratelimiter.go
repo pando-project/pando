@@ -16,10 +16,10 @@ func (l *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
 		if peerRateLimiter == nil {
 			peerRateLimiter = l.addPeerLimiter(p, accountInfo.PeerType, accountInfo.AccountLevel)
 		}
-		log.Debugf("rate limit for peer %s is %f token/s, accountLevel is %v", p, peerRateLimiter.Limit(), accountInfo.AccountLevel)
+		log.Debugf("rate limit for peer %s is %f token/s, accountLevel is %v",
+			p, peerRateLimiter.Limit(), accountInfo.AccountLevel)
 		if !l.rateLimiter.Allow() || !peerRateLimiter.Allow() {
 			const limitError = "your request was paused because of the rate limit policy"
-			//go l.cancelRequest(request.ID())
 			go l.pauseRequest(request.ID())
 			log.Warnf(limitError)
 			go l.unpauseRequest(request.ID(), peerRateLimiter)

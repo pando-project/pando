@@ -21,8 +21,6 @@ const (
 	checkInterval         = time.Second * 10
 	DefaultShuttleGateway = "https://shuttle-4.estuary.tech"
 	DefaultEstGateway     = "https://api.estuary.tech"
-
-	EstuaryApiKeyEnv = "ESTKEY"
 )
 
 type backupSystem struct {
@@ -36,37 +34,12 @@ type backupSystem struct {
 }
 
 func NewBackupSys(backupCfg *option.Backup) (*backupSystem, error) {
-	//var gateway string
-	//var shuttleGateway string
-	//var apiKey string
-
-	//if backupCfg == nil || backupCfg.EstuaryGateway == "" {
-	//	gateway = DefaultEstGateway
-	//} else {
-	//	gateway = backupCfg.EstuaryGateway
-	//}
-	//if backupCfg == nil || backupCfg.ShuttleGateway == "" {
-	//	shuttleGateway = DefaultShuttleGateway
-	//} else {
-	//	shuttleGateway = backupCfg.ShuttleGateway
-	//}
-	//if backupCfg == nil || backupCfg.ApiKey == "" {
-	//	apiKeyEnv, exist := os.LookupEnv(EstuaryApiKeyEnv)
-	//	if !exist {
-	//		return nil, fmt.Errorf("please set apikey in $%s", EstuaryApiKeyEnv)
-	//	}
-	//	apiKey = apiKeyEnv
-	//} else {
-	//	apiKey = backupCfg.ApiKey
-	//}
-
 	bs := &backupSystem{
 		gateway:        backupCfg.EstuaryGateway,
 		shuttleGateway: backupCfg.ShuttleGateway,
 		checkInterval:  time.Second * 10,
 		apiKey:         backupCfg.ApiKey,
-		//fileDir:        TmpBackupFileDir,
-		toCheck: make(chan uint64, 1),
+		toCheck:        make(chan uint64, 1),
 	}
 	bs.run()
 
