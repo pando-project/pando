@@ -10,6 +10,6 @@ type SnapShot struct {
 }
 
 type ExtraInfo struct {
-	PeerID     string
-	MultiAddrs string
+	PeerID         string
+	MultiAddresses string
 }

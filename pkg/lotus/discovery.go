@@ -32,7 +32,7 @@ type ExpTipSet struct {
 	Height int64
 }
 
-// New creates a new lotus Discoverer
+// NewDiscoverer creates a new lotus Discoverer
 func NewDiscoverer(gateway string) (*Discoverer, error) {
 	u, err := url.Parse(gateway)
 	if err != nil {
@@ -69,7 +69,11 @@ func (d *Discoverer) _Discover(ctx context.Context, peerID peer.ID, minerAddr st
 
 	var api lotusapi.FullNodeStruct
 
-	closer, err := jsonrpc.NewMergeClient(context.Background(), "https://api.chain.love/rpc/v1", "Filecoin", []interface{}{&api.Internal, &api.CommonStruct.Internal}, headers)
+	closer, err := jsonrpc.NewMergeClient(context.Background(),
+		"https://api.chain.love/rpc/v1",
+		"Filecoin",
+		[]interface{}{&api.Internal, &api.CommonStruct.Internal},
+		headers)
 	if err != nil {
 		log.Fatalf("connecting with lotus failed: %s", err)
 	}

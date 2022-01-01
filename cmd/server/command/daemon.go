@@ -170,7 +170,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 
 	info := new(types.ExtraInfo)
 	for _, addr := range p2pHost.Addrs() {
-		info.MultiAddrs += addr.String() + " "
+		info.MultiAddresses += addr.String() + " "
 	}
 	info.PeerID = p2pHost.ID().String()
 

@@ -3,6 +3,7 @@ package graphql
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/graphql-go/graphql"
 
@@ -15,7 +16,7 @@ type postData struct {
 	Variables map[string]interface{} `json:"variables"`
 }
 
-var errUnexpectedType = "Unexpected type %T. expected %s"
+var errUnexpectedType = "unexpected type %T. expected %s"
 
 var StateType = graphql.NewObject(
 	graphql.ObjectConfig{
@@ -23,43 +24,43 @@ var StateType = graphql.NewObject(
 		Fields: graphql.Fields{
 			"Cidlist": &graphql.Field{
 				Type:    graphql.String,
-				Resolve: State__Cidlist__resolve,
+				Resolve: StateCidListResolver,
 			},
 			"LastUpdateHeight": &graphql.Field{
 				Type:    graphql.Int,
-				Resolve: State__LastHeight__resolve,
+				Resolve: StateLastHeightResolver,
 			},
 			"LastUpdate": &graphql.Field{
 				Type:    graphql.String,
-				Resolve: State__LastUpdate__resolve,
+				Resolve: StateLastUpdateResolver,
 			},
 		},
 	},
 )
 
-func State__Cidlist__resolve(p graphql.ResolveParams) (interface{}, error) {
-	ts, ok := p.Source.(*types.ProviderStateRes)
+func StateCidListResolver(params graphql.ResolveParams) (interface{}, error) {
+	ts, ok := params.Source.(*types.ProviderStateRes)
 	if ok {
 		return ts.State.Cidlist, nil
 	} else {
-		return nil, fmt.Errorf(errUnexpectedType, p.Source, "State.Cidlist")
+		return nil, fmt.Errorf(errUnexpectedType, params.Source, "State.Cidlist")
 	}
 }
-func State__LastHeight__resolve(p graphql.ResolveParams) (interface{}, error) {
-	ts, ok := p.Source.(*types.ProviderStateRes)
+func StateLastHeightResolver(params graphql.ResolveParams) (interface{}, error) {
+	ts, ok := params.Source.(*types.ProviderStateRes)
 	if ok {
 		return ts.State.LastCommitHeight, nil
 	} else {
-		return nil, fmt.Errorf(errUnexpectedType, p.Source, "State.LastUpdateHeight")
+		return nil, fmt.Errorf(errUnexpectedType, params.Source, "State.LastUpdateHeight")
 	}
 }
 
-func State__LastUpdate__resolve(p graphql.ResolveParams) (interface{}, error) {
-	ts, ok := p.Source.(*types.ProviderStateRes)
+func StateLastUpdateResolver(params graphql.ResolveParams) (interface{}, error) {
+	ts, ok := params.Source.(*types.ProviderStateRes)
 	if ok {
 		return ts.NewestUpdate, nil
 	} else {
-		return nil, fmt.Errorf(errUnexpectedType, p.Source, "State.LastUpdate")
+		return nil, fmt.Errorf(errUnexpectedType, params.Source, "State.LastUpdate")
 	}
 }
 
@@ -69,75 +70,75 @@ var SnapShotType = graphql.NewObject(
 		Fields: graphql.Fields{
 			"Height": &graphql.Field{
 				Type:    graphql.Int,
-				Resolve: Ss__Height__resolve,
+				Resolve: SnapshotHeightResolver,
 			},
 			"CreateTime": &graphql.Field{
 				Type:    graphql.String,
-				Resolve: Ss__CreateTime__resolve,
+				Resolve: SnapshotCreateTimeResolver,
 			},
 			"PreviousSnapShot": &graphql.Field{
 				Type:    graphql.String,
-				Resolve: Ss__PrevSs__resolve,
+				Resolve: SnapshotPreviousSnapshotResolver,
 			},
 			"ExtraInfo": &graphql.Field{
 				Type:    graphql.String,
-				Resolve: Ss__ExtraInfo__resolve,
+				Resolve: SnapshotExtraInfoResolver,
 			},
 			"Update": &graphql.Field{
 				Type:    graphql.String,
-				Resolve: Ss__Update__resolve,
+				Resolve: SnapshotUpdateResolver,
 			},
 		},
 	})
 
-func Ss__Height__resolve(p graphql.ResolveParams) (interface{}, error) {
-	ts, ok := p.Source.(*types.SnapShot)
+func SnapshotHeightResolver(params graphql.ResolveParams) (interface{}, error) {
+	snapshot, ok := params.Source.(*types.SnapShot)
 	if ok {
-		return ts.Height, nil
+		return snapshot.Height, nil
 	} else {
-		return nil, fmt.Errorf(errUnexpectedType, p.Source, "SnapShot.Height")
+		return nil, fmt.Errorf(errUnexpectedType, params.Source, "SnapShot.Height")
 	}
 }
 
-func Ss__CreateTime__resolve(p graphql.ResolveParams) (interface{}, error) {
-	ts, ok := p.Source.(*types.SnapShot)
+func SnapshotCreateTimeResolver(params graphql.ResolveParams) (interface{}, error) {
+	snapshot, ok := params.Source.(*types.SnapShot)
 	if ok {
-		return ts.CreateTime, nil
+		return snapshot.CreateTime, nil
 	} else {
-		return nil, fmt.Errorf(errUnexpectedType, p.Source, "SnapShot.CreateTime")
+		return nil, fmt.Errorf(errUnexpectedType, params.Source, "SnapShot.CreateTime")
 	}
 }
 
-func Ss__PrevSs__resolve(p graphql.ResolveParams) (interface{}, error) {
-	ts, ok := p.Source.(*types.SnapShot)
+func SnapshotPreviousSnapshotResolver(params graphql.ResolveParams) (interface{}, error) {
+	snapshot, ok := params.Source.(*types.SnapShot)
 	if ok {
-		return ts.PrevSnapShot, nil
+		return snapshot.PrevSnapShot, nil
 	} else {
-		return nil, fmt.Errorf(errUnexpectedType, p.Source, "SnapShot.PrevSnapShot")
+		return nil, fmt.Errorf(errUnexpectedType, params.Source, "SnapShot.PrevSnapShot")
 	}
 }
 
-func Ss__Update__resolve(p graphql.ResolveParams) (interface{}, error) {
-	ts, ok := p.Source.(*types.SnapShot)
+func SnapshotUpdateResolver(params graphql.ResolveParams) (interface{}, error) {
+	snapshot, ok := params.Source.(*types.SnapShot)
 	if ok {
-		str := ""
-		for peer, update := range ts.Update {
-			str += fmt.Sprintf("%s : %s", peer, update.String())
+		updateInfo := strings.Builder{}
+		for peer, update := range snapshot.Update {
+			updateInfo.WriteString(fmt.Sprintf("%s : %s\n", peer, update.String()))
 		}
-		return str, nil
+		return updateInfo, nil
 	} else {
-		return nil, fmt.Errorf(errUnexpectedType, p.Source, "SnapShot.Update")
+		return nil, fmt.Errorf(errUnexpectedType, params.Source, "SnapShot.Update")
 	}
 }
-func Ss__ExtraInfo__resolve(p graphql.ResolveParams) (interface{}, error) {
-	ts, ok := p.Source.(*types.SnapShot)
-	jsonBytes, err := json.Marshal(ts.ExtraInfo)
+func SnapshotExtraInfoResolver(params graphql.ResolveParams) (interface{}, error) {
+	snapshot, ok := params.Source.(*types.SnapShot)
+	jsonBytes, err := json.Marshal(snapshot.ExtraInfo)
 	if err != nil {
 		return nil, err
 	}
 	if ok {
-		return fmt.Sprintf("%s", string(jsonBytes)), nil
+		return string(jsonBytes), nil
 	} else {
-		return nil, fmt.Errorf(errUnexpectedType, p.Source, "SnapShot.ExtraInfo")
+		return nil, fmt.Errorf(errUnexpectedType, params.Source, "SnapShot.ExtraInfo")
 	}
 }

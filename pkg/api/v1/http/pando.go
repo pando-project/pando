@@ -58,7 +58,7 @@ func (a *API) pandoInfo(ctx *gin.Context) {
 		return
 	}
 
-	multiAddresses := strings.Fields(pandoInfo.MultiAddrs)
+	multiAddresses := strings.Fields(pandoInfo.MultiAddresses)
 	ctx.JSON(http.StatusOK, types.NewOKResponse("ok", struct {
 		PeerID         string
 		MultiAddresses []string
