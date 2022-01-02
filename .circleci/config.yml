@@ -38,12 +38,14 @@ jobs:
       - checkout
       - run:
           name: Build Service
-          command: go build -o pando
+          command: make
       - setup_remote_docker:
           version: 19.03.13
       - run:
           name: Build and push Docker image
           command: |
+            cp ./bin/pando-server ./build
+            cd ./build
             DOCKER_STR="${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${DOCKER_REPO}"
             TAG="${DOCKER_STR}:${CIRCLE_BUILD_NUM}"
             docker build -t ${TAG} .
