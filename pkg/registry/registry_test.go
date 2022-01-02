@@ -1,13 +1,18 @@
 package registry_test
 
 import (
+	"fmt"
+	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
 	. "github.com/smartystreets/goconvey/convey"
 	"net/http"
+	"pando/pkg/legs"
+	"pando/pkg/lotus"
+	"pando/pkg/option"
 	"pando/pkg/registry"
 	. "pando/pkg/registry"
-	"pando/pkg/syserr"
+	"pando/pkg/registry/internal/syserr"
 	"pando/test/mock"
 	"testing"
 	"time"
@@ -24,14 +29,27 @@ const (
 )
 
 func TestNewRegistryAndClose(t *testing.T) {
-	Convey("test create and close register with discovery", t, func() {
-		pando, err := mock.NewPandoMock()
-		So(err, ShouldBeNil)
-		r := pando.Registry
-		err = r.Close()
-		So(err, ShouldBeNil)
-		err = r.Close()
-		So(err, ShouldBeNil)
+	Convey("TestNewRegistryAndClose", t, func() {
+		Convey("return nil, err if config is nil when new registry", func() {
+			opt := option.New(nil)
+			reg, err := NewRegistry(nil,
+				&opt.AccountLevel,
+				&dataStoreFactory.Datastore{},
+				&lotus.Discoverer{},
+				&legs.Core{})
+			So(err, ShouldResemble, fmt.Errorf("nil config"))
+			So(reg, ShouldBeNil)
+		})
+
+		Convey("test create and close register with discovery", func() {
+			pando, err := mock.NewPandoMock()
+			So(err, ShouldBeNil)
+			r := pando.Registry
+			err = r.Close()
+			So(err, ShouldBeNil)
+			err = r.Close()
+			So(err, ShouldBeNil)
+		})
 	})
 }
 
@@ -70,6 +88,7 @@ func TestRegisterAndDiscovery(t *testing.T) {
 				expected: syserr.New(ErrNotAllowed, http.StatusForbidden),
 			},
 		}
+
 		Convey("register, get provider info and reload", func() {
 			for _, tt := range registerCases {
 				res := r.Register(tt.registerInfo)
@@ -102,181 +121,3 @@ func TestRegisterAndDiscovery(t *testing.T) {
 
 	})
 }
-
-//func TestDiscoveryAllowed(t *testing.T) {
-//	mockDisco := newMockDiscoverer(t, exceptID)
-//
-//	r, err := NewRegistry(&discoveryCfg, &aclCfg, nil, mockDisco)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	defer r.Close()
-//	t.Log("created new registry")
-//
-//	peerID, err := peer.Decode(exceptID)
-//	if err != nil {
-//		t.Fatal("bad provider ID:", err)
-//	}
-//
-//	err = r.Discover(peerID, minerDiscoAddr, true)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	t.Log("discovered mock miner", minerDiscoAddr)
-//
-//	info := r.ProviderInfoByAddr(minerDiscoAddr)
-//	if info == nil {
-//		t.Fatal("did not get provider info for miner")
-//	}
-//	t.Log("got provider info for miner")
-//
-//	assert.Equal(t, info.AddrInfo.ID, peerID, "did not get correct porvider id")
-//
-//	peerID, err = peer.Decode(trustedID)
-//	if err != nil {
-//		t.Fatal("bad provider ID:", err)
-//	}
-//	maddr, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/3002")
-//	if err != nil {
-//		t.Fatalf("Cannot create multiaddr: %s", err)
-//	}
-//	info = &ProviderInfo{
-//		AddrInfo: peer.AddrInfo{
-//			ID:    peerID,
-//			Addrs: []multiaddr.Multiaddr{maddr},
-//		},
-//	}
-//	err = r.Register(info)
-//	if err != nil {
-//		t.Error("failed to register directly:", err)
-//	}
-//
-//	infos := r.AllProviderInfo()
-//	if len(infos) != 2 {
-//		t.Fatal("expected 2 provider infos")
-//	}
-//
-//}
-//
-//func TestDiscoveryBlocked(t *testing.T) {
-//	mockDisco := newMockDiscoverer(t, exceptID)
-//
-//	peerID, err := peer.Decode(exceptID)
-//	if err != nil {
-//		t.Fatal("bad provider ID:", err)
-//	}
-//
-//	discoveryCfg.Policy.Allow = true
-//	defer func() {
-//		discoveryCfg.Policy.Allow = false
-//	}()
-//
-//	r, err := NewRegistry(&discoveryCfg, &aclCfg, nil, mockDisco)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	defer r.Close()
-//	t.Log("created new registry")
-//
-//	err = r.Discover(peerID, minerDiscoAddr, true)
-//	if !errors.Is(err, ErrNotAllowed) {
-//		t.Fatal("expected error:", ErrNotAllowed, "got:", err)
-//	}
-//
-//	into := r.ProviderInfoByAddr(minerDiscoAddr)
-//	if into != nil {
-//		t.Error("should not have found provider info for miner")
-//	}
-//}
-//
-//func TestDatastore(t *testing.T) {
-//	dataStorePath := t.TempDir()
-//	mockDisco := newMockDiscoverer(t, exceptID)
-//
-//	peerID, err := peer.Decode(trustedID)
-//	if err != nil {
-//		t.Fatal("bad provider ID:", err)
-//	}
-//	maddr, err := multiaddr.NewMultiaddr(minerAddr)
-//	if err != nil {
-//		t.Fatal("bad miner address:", err)
-//	}
-//	info1 := &ProviderInfo{
-//		AddrInfo: peer.AddrInfo{
-//			ID:    peerID,
-//			Addrs: []multiaddr.Multiaddr{maddr},
-//		},
-//	}
-//	peerID, err = peer.Decode(trustedID2)
-//	if err != nil {
-//		t.Fatal("bad provider ID:", err)
-//	}
-//	maddr, err = multiaddr.NewMultiaddr(minerAddr2)
-//	if err != nil {
-//		t.Fatal("bad miner address:", err)
-//	}
-//	info2 := &ProviderInfo{
-//		AddrInfo: peer.AddrInfo{
-//			ID:    peerID,
-//			Addrs: []multiaddr.Multiaddr{maddr},
-//		},
-//	}
-//
-//	// Create datastore
-//	dstore, err := leveldb.NewDatastore(dataStorePath, nil)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	r, err := NewRegistry(&discoveryCfg, &aclCfg, dstore, mockDisco)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	t.Log("created new registry with datastore")
-//
-//	err = r.Register(info1)
-//	if err != nil {
-//		t.Fatal("failed to register directly:", err)
-//	}
-//	err = r.Register(info2)
-//	if err != nil {
-//		t.Fatal("failed to register directly:", err)
-//	}
-//
-//	pinfo := r.ProviderInfo(peerID)
-//	if pinfo == nil {
-//		t.Fatal("did not find registered provider")
-//	}
-//
-//	err = r.Close()
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//
-//	// Create datastore
-//	dstore, err = leveldb.NewDatastore(dataStorePath, nil)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	r, err = NewRegistry(&discoveryCfg, &aclCfg, dstore, mockDisco)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	t.Log("re-created new registry with datastore")
-//
-//	infos := r.AllProviderInfo()
-//	if len(infos) != 2 {
-//		t.Fatal("expected 2 provider infos")
-//	}
-//
-//	for i := range infos {
-//		pid := infos[i].AddrInfo.ID
-//		if pid != info1.AddrInfo.ID && pid != info2.AddrInfo.ID {
-//			t.Fatalf("loaded invalid provider ID: %s", pid)
-//		}
-//	}
-//
-//	err = r.Close()
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//}
