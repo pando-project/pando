@@ -29,9 +29,9 @@ func TestOptions(t *testing.T) {
 			So(opt.DataStore.Dir, ShouldEqual, defaultDataStoreDir)
 			So(opt.Discovery.Policy.Allow, ShouldEqual, defaultAllow)
 			So(opt.Discovery.LotusGateway, ShouldEqual, defaultLotusGateway)
-			So(opt.Discovery.Timeout, ShouldEqual, defaultDiscoveryTimeout)
-			So(opt.Discovery.PollInterval, ShouldEqual, defaultPollInterval)
-			So(opt.Discovery.RediscoverWait, ShouldEqual, defaultRediscoverWait)
+			So(opt.Discovery.Timeout, ShouldEqual, defaultDiscoveryTimeout.String())
+			So(opt.Discovery.PollInterval, ShouldEqual, defaultPollInterval.String())
+			So(opt.Discovery.RediscoverWait, ShouldEqual, defaultRediscoverWait.String())
 			So(opt.AccountLevel.Threshold, ShouldResemble, defaultAccountLevel)
 			So(opt.RateLimit.SingleDAGSize, ShouldEqual, defaultSingleDAGSize)
 			So(opt.Backup.EstuaryGateway, ShouldEqual, defaultEstGateway)
@@ -66,7 +66,7 @@ func TestOptions(t *testing.T) {
 			So(opt.ServerAddress.GraphqlListenAddress, ShouldEqual, "/ip4/0.0.0.0/tcp/8002")
 			So(opt.ServerAddress.P2PAddress, ShouldEqual, "/ip4/0.0.0.0/tcp/8003")
 			So(opt.RateLimit.Bandwidth, ShouldEqual, 146.81)
-			So(opt.Backup.ApiKey, ShouldEqual, "EST0933b58d-65f9-470d-bb08-72aed39339f1ARY")
+			So(opt.Backup.APIKey, ShouldEqual, "EST0933b58d-65f9-470d-bb08-72aed39339f1ARY")
 		})
 
 		Convey("return error if privateKey / peerID is invalid", func() {
@@ -130,5 +130,5 @@ RateLimit:
 Backup:
   EstuaryGateway: https://api.estuary.tech
   ShuttleGateway: https://shuttle-4.estuary.tech
-  ApiKey: EST0933b58d-65f9-470d-bb08-72aed39339f1ARY`
+  APIKey: EST0933b58d-65f9-470d-bb08-72aed39339f1ARY`
 }

@@ -15,7 +15,7 @@ func TestBackUpFile(t *testing.T) {
 		cfg := &option.Backup{
 			EstuaryGateway: DefaultEstGateway,
 			ShuttleGateway: DefaultShuttleGateway,
-			ApiKey:         "EST75c4d3bb-d86f-42e4-80da-662d7fbde4c2ARY",
+			APIKey:         "EST75c4d3bb-d86f-42e4-80da-662d7fbde4c2ARY",
 		}
 		_, err = NewBackupSys(cfg)
 		So(err, ShouldBeNil)

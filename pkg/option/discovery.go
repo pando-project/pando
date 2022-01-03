@@ -17,7 +17,25 @@ type Discovery struct {
 	LotusGateway   string          `yaml:"LotusGateway"`
 	Peers          []peer.AddrInfo `yaml:"Peers"`
 	Policy         Policy          `yaml:"Policy"`
-	PollInterval   Duration        `yaml:"PollInterval"`
-	RediscoverWait Duration        `yaml:"RediscoverWait"`
-	Timeout        Duration        `yaml:"Timeout"`
+	PollInterval   string          `yaml:"PollInterval"`
+	RediscoverWait string          `yaml:"RediscoverWait"`
+	Timeout        string          `yaml:"Timeout"`
+}
+
+func (d *Discovery) PollIntervalInDurationFormat() Duration {
+	return unmarshalDurationString(d.PollInterval)
+}
+
+func (d *Discovery) RediscoverWaitInDurationFormat() Duration {
+	return unmarshalDurationString(d.RediscoverWait)
+}
+
+func (d *Discovery) TimeoutInDurationFormat() Duration {
+	return unmarshalDurationString(d.Timeout)
+}
+
+func unmarshalDurationString(durationStr string) Duration {
+	d := Duration(0)
+	_ = d.UnmarshalText([]byte(durationStr))
+	return d
 }

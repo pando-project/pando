@@ -38,7 +38,7 @@ func NewBackupSys(backupCfg *option.Backup) (*backupSystem, error) {
 		gateway:        backupCfg.EstuaryGateway,
 		shuttleGateway: backupCfg.ShuttleGateway,
 		checkInterval:  time.Second * 10,
-		apiKey:         backupCfg.ApiKey,
+		apiKey:         backupCfg.APIKey,
 		toCheck:        make(chan uint64, 1),
 	}
 	bs.run()

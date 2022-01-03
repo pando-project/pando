@@ -94,9 +94,9 @@ func NewRegistry(cfg *option.Discovery, cfglevel *option.AccountLevel, dstore da
 		providers: map[peer.ID]*ProviderInfo{},
 		sequences: newSequences(0),
 
-		pollInterval:     time.Duration(cfg.PollInterval),
-		rediscoverWait:   time.Duration(cfg.RediscoverWait),
-		discoveryTimeout: time.Duration(cfg.Timeout),
+		pollInterval:     time.Duration(cfg.PollIntervalInDurationFormat()),
+		rediscoverWait:   time.Duration(cfg.RediscoverWaitInDurationFormat()),
+		discoveryTimeout: time.Duration(cfg.TimeoutInDurationFormat()),
 
 		accountLevel: cfglevel,
 

@@ -3,16 +3,15 @@ package option
 import (
 	"fmt"
 	"github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 	"os"
 	"pando/pkg/version"
 	"path/filepath"
 	"strings"
-
-	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 )
 
 // Options is the server daemon start-up options
@@ -112,11 +111,11 @@ func New(root *cobra.Command) *Options {
 	opt.flags.BoolVar(&opt.Discovery.Policy.Trust, "discovery-policy-trust", defaultTrust,
 		"Enable discovery white-list.")
 
-	opt.Discovery.PollInterval = defaultPollInterval
+	opt.Discovery.PollInterval = defaultPollInterval.String()
 
-	opt.Discovery.RediscoverWait = defaultRediscoverWait
+	opt.Discovery.RediscoverWait = defaultRediscoverWait.String()
 
-	opt.Discovery.Timeout = defaultDiscoveryTimeout
+	opt.Discovery.Timeout = defaultDiscoveryTimeout.String()
 
 	// options for rate limits
 	opt.flags.IntSliceVar(&opt.AccountLevel.Threshold, "account-level", defaultAccountLevel,
@@ -134,6 +133,9 @@ func New(root *cobra.Command) *Options {
 
 	opt.flags.StringVar(&opt.Backup.ShuttleGateway, "backup-shuttle-gateway", defaultShuttleGateway,
 		"Estuary shuttle gateway address used to backup metadata files.")
+
+	opt.flags.StringVar(&opt.Backup.APIKey, "backup-apikey", "",
+		"Estuary api key used to backup metadata files.")
 
 	_ = opt.viper.BindPFlags(opt.flags)
 
@@ -161,8 +163,8 @@ func (opt *Options) Parse() (string, error) {
 	}
 
 	opt.viper.AutomaticEnv()
-	opt.viper.SetEnvPrefix("PD")
-	opt.viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	opt.viper.SetEnvPrefix("pd")
+	opt.viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	if opt.ConfigFile != "" {
 		opt.viper.SetConfigFile(filepath.Join(opt.PandoRoot, opt.ConfigFile))
@@ -177,11 +179,6 @@ func (opt *Options) Parse() (string, error) {
 	// Reference: https://github.com/spf13/viper/issues/188#issuecomment-399518663
 	for _, key := range opt.viper.AllKeys() {
 		val := opt.viper.Get(key)
-		// NOTE: We need to handle map[string]string
-		// Reference: https://github.com/spf13/viper/issues/911
-		if key == "labels" {
-			val = opt.viper.GetStringMapString(key)
-		}
 		opt.viper.Set(key, val)
 	}
 
