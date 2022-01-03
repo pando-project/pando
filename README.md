@@ -2,6 +2,17 @@
 
 [![CircleCI](https://circleci.com/gh/kenlabs/pando/tree/main.svg?style=svg)](https://circleci.com/gh/kenlabs/pando/tree/main)
 [![codecov](https://codecov.io/gh/kenlabs/pando/branch/main/graph/badge.svg?token=MFD2QP8RWL)](https://codecov.io/gh/kenlabs/pando)
+
+
+- [Pando](#Pando)
+- [Getting Started](#Getting Started)
+  - [How Pando persistence providers data](#How Pando persistence providers data)
+  - [Build Pando server and client](#Build Pando server and client)
+  - [Start a Pando server](#Start a Pando server)
+- [Pando Server configuration](#Pando Server configuration)
+- [Access Pando APIs with client](#Access Pando APIs with client)
+
+
 ## Pando
 Ensuring access to notarized metadata
 
@@ -13,13 +24,6 @@ However, there are nice properties of having this sort of metadata ecosystem mor
 * Provide light-weight, unbiased access to metadata
 * Discourage historical revisionism.
 
-
-- [Getting Started](#Getting Started)
-  - [How Pando persistence providers data](#How Pando persistence providers data)
-  - [Build Pando server and client](#Build Pando server and client)
-  - [Start a Pando server](#Start a Pando server)
-- [Pando Server configuration](#Pando Server configuration)
-- [Access Pando APIs with client](#Access Pando APIs with client)
 
 ## Getting Started
 
