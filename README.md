@@ -5,15 +5,15 @@
 
 
 - [Pando](#Pando)
-- [Getting Started](#Getting Started)
-  - [How Pando persistence providers data](#How Pando persistence providers data)
-  - [Build Pando server and client](#Build Pando server and client)
-  - [Start a Pando server](#Start a Pando server)
-- [Pando Server configuration](#Pando Server configuration)
-- [Access Pando APIs with client](#Access Pando APIs with client)
+  - [Getting Started](#Getting Started)
+    - [How Pando persistence providers data](#How Pando persistence providers data)
+    - [Build Pando server and client](#Build Pando server and client)
+    - [Start a Pando server](#Start a Pando server)
+  - [Pando Server configuration](#Pando Server configuration)
+  - [Access Pando APIs with client](#Access Pando APIs with client)
 
 
-## Pando
+# Pando
 Ensuring access to notarized metadata
 
 
