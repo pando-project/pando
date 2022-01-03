@@ -113,7 +113,7 @@ ServerAddress.HttpAPIListenAddress (string, example: /ip4/127.0.0.1/tcp/9000), h
 
 ServerAddress.GraphqlListenAddress (string), graphql api listen address in multi-address format
 - --graphql-listen-addr
-- PD_SERVERADDRESS_GRAPHQLISTENADDR
+- PD_SERVERADDRESS_GRAPHQLLISTENADDRESS
 - ServerAddress.GraphqlListenAddress
 
 ServerAddress.P2PAddress (string), p2p host listen address  in multi-address format
