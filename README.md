@@ -1,10 +1,11 @@
-![pando](docs/images/pando.jpeg)
+![pando](docs/images/pando_new.png)
 
 [![CircleCI](https://circleci.com/gh/kenlabs/pando/tree/main.svg?style=svg)](https://circleci.com/gh/kenlabs/pando/tree/main)
 [![codecov](https://codecov.io/gh/kenlabs/pando/branch/main/graph/badge.svg?token=MFD2QP8RWL)](https://codecov.io/gh/kenlabs/pando)
 
 
 - [Pando](#pando)
+  - [Architecture](#architecture) 
   - [Getting Started](#getting-started)
     - [How Pando persistence providers data](#how-pando-persistence-providers-data)
     - [Build Pando server and client](#build-pando-server-and-client)
@@ -23,6 +24,10 @@ However, there are nice properties of having this sort of metadata ecosystem mor
 * Keep included metadata consistently available
 * Provide light-weight, unbiased access to metadata
 * Discourage historical revisionism.
+
+
+## Architecture
+![architecture](docs/images/architecture.png)
 
 
 ## Getting Started
