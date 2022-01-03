@@ -9,5 +9,5 @@ const (
 type Backup struct {
 	EstuaryGateway string `yaml:"EstuaryGateway"`
 	ShuttleGateway string `yaml:"ShuttleGateway"`
-	ApiKey         string `yaml:"ApiKey"`
+	APIKey         string `yaml:"APIKey"`
 }

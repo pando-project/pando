@@ -33,8 +33,8 @@ var MockDiscoveryCfg = option.Discovery{
 		Trust:       false,
 		TrustExcept: []string{trustedID, trustedID2},
 	},
-	PollInterval:   option.Duration(time.Second * 2),
-	RediscoverWait: option.Duration(time.Minute),
+	PollInterval:   option.Duration(time.Second * 2).String(),
+	RediscoverWait: option.Duration(time.Minute).String(),
 }
 
 var MockAclCfg = option.AccountLevel{Threshold: []int{1, 10, 99}}
