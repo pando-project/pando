@@ -13,6 +13,13 @@ However, there are nice properties of having this sort of metadata ecosystem mor
 * Provide light-weight, unbiased access to metadata
 * Discourage historical revisionism.
 
+- [Getting Started](#Getting Started)
+  - [How Pando persistence providers data](#How Pando persistence providers data)
+  - [Build Pando server and client](#Build Pando server and client)
+  - [Start a Pando server](#Start a Pando server)
+- [Pando Server configuration](#Pando Server configuration)
+- [Access Pando APIs with client](#Access Pando APIs with client)
+
 ## Getting Started
 
 Pando using [go-legs](https://github.com/filecoin-project/go-legs) to synchronize IPLD DAG of data from providers.
@@ -53,7 +60,7 @@ or start with custom listen address (in multiaddress format):
   --graphql-listen-addr /ipv/0.0.0.0/tcp/8081
 ```
 
-### Pando Server configuration
+## Pando Server configuration
 Pando support three types of config resource, and it will look up config value in this order:
 - cli flag
 - environment variable
@@ -176,11 +183,11 @@ Backup.APIKey (string), estuary api key
 - PD_BACKUP_APIKEY
 - Backup.APIKey
 
-### Access Pando APIs with client
+## Access Pando APIs with client
 See [Pando API document](https://pando-api-doc.kencloud.com) for more details.
 Or check [Pando API Specification](https://github.com/kenlabs/pando/tree/main/pkg/api/swagger.yml)
 
-#### /pando/health 
+### /pando/health 
 Check if Pando is alive
 ```shell
 ./pando-client -a http://127.0.0.1:9000 pando info
@@ -191,7 +198,7 @@ Check if Pando is alive
  "Data": null
 }
 ```
-#### /pando/info
+### /pando/info
 Show information of Pando server
 ```shell
 ./pando-client -a http://127.0.0.1:9000 pando info
@@ -210,7 +217,7 @@ Show information of Pando server
 
 ```
 
-#### /pando/subscribe
+### /pando/subscribe
 Let Pando subscribe a topic with provider to start metadata synchronization
 ```shell
 ./pando-client -a http://127.0.0.1:9000 pando subscribe --provider-peerid 12D3KooWSS3sEujyAXB9SWUvVtQZmxH6vTi9NitqaaRQoUjeEk3M
@@ -223,7 +230,7 @@ Let Pando subscribe a topic with provider to start metadata synchronization
 
 ```
 
-#### /provider/register
+### /provider/register
 Provider should be registered before using Pando service
 ```shell
 ./pando-client -a http://127.0.0.1:9000 provider register \
@@ -250,7 +257,7 @@ to generate an envelop-data only, run:
 envelop data saved at ./envelop.data
 ```
 
-#### /metadata/list
+### /metadata/list
 List all cids of metadata snapshots
 ```shell
 ./pando-client -a http://127.0.0.1:9000 metadata list
@@ -266,7 +273,7 @@ List all cids of metadata snapshots
 }
 ```
 
-#### /metadata/snapshot
+### /metadata/snapshot
 lookup and show snapshot information by its cid
 ```shell
 ./pando-client -a http://127.0.0.1:9000 \
