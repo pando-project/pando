@@ -4,13 +4,13 @@
 [![codecov](https://codecov.io/gh/kenlabs/pando/branch/main/graph/badge.svg?token=MFD2QP8RWL)](https://codecov.io/gh/kenlabs/pando)
 
 
-- [Pando](#Pando)
-  - [Getting Started](#Getting Started)
-    - [How Pando persistence providers data](#How Pando persistence providers data)
-    - [Build Pando server and client](#Build Pando server and client)
-    - [Start a Pando server](#Start a Pando server)
-  - [Pando Server configuration](#Pando Server configuration)
-  - [Access Pando APIs with client](#Access Pando APIs with client)
+- [Pando](#pando)
+  - [Getting Started](#getting-started)
+    - [How Pando persistence providers data](#how-pando-persistence-providers-data)
+    - [Build Pando server and client](#build-pando-server-and-client)
+    - [Start a Pando server](#start-a-pando-server)
+  - [Pando Server configuration](#pando-server-configuration)
+  - [Access Pando APIs with client](#access-pando-apis-with-client)
 
 
 # Pando
