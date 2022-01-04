@@ -178,7 +178,7 @@ paths:
     get:
       tags:
       - "metadata"
-      summary: "get a list involved all the metadata snapshot cids"
+      summary: "get a snapshot detail, can queried by its height or cid"
       description: ""
       operationId: "getMetadataSnapshotInfo"
       consumes:
