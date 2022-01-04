@@ -196,8 +196,8 @@ Backup.APIKey (string), estuary api key
 - Backup.APIKey
 
 ## Access Pando APIs with client
-See [Pando API document](https://pando.kencloud.com:9011/swagger/doc) for more details.
-Or check [Pando API Specification](https://pando.kencloud.com:9011/swagger/specs)
+See [Pando API document](https://pando-api.kencloud.com/swagger/doc) for more details.
+Or check [Pando API Specification](https://pando-api.kencloud.com/swagger/specs)
 
 Pando integrates redoc style documentation, visit `http://127.0.0.1:9000/swagger/doc` for API documentation,
 or check `http://127.0.0.1:9000/swagger/specs` for swagger 2.0 specification.
