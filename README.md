@@ -76,6 +76,8 @@ Pando support three types of config resource, and it will look up config value i
 - environment variable
 - config file (yaml file)
 
+### Configuration items list
+
 ConfigFile (string), specify config file name(only name, not path, its parent path is PandoRoot):
 - -f, --config-file
 - PD_CONFIGFILE
