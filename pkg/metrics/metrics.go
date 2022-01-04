@@ -18,26 +18,23 @@ import (
 // Measures
 var (
 	// pando handlers
-	GetPandoSubscribeLatency = stats.Float64("graph/sub_latency",
+	GetPandoSubscribeLatency = stats.Float64("get/pando/subscribe_latency",
 		"Time to subscribe a provider", stats.UnitMilliseconds)
-	GetPandoInfoLatency = stats.Float64("meta/list_info",
+	GetPandoInfoLatency = stats.Float64("get/pando/info_latency",
 		"Time to list pando info", stats.UnitMilliseconds)
 
 	// provider handlers
-	PostProviderRegisterLatency = stats.Float64("providers/register_latency",
+	PostProviderRegisterLatency = stats.Float64("post/provider/register_latency",
 		"Time to respond to register a provider", stats.UnitMilliseconds)
 
 	// metadata handlers
-	GetMetadataListLatency = stats.Float64("meta/list_latency",
+	GetMetadataListLatency = stats.Float64("get/metadata/list_latency",
 		"Time to fetch metadata snapshots", stats.UnitMilliseconds)
-	GetMetadataSnapshotLatency = stats.Float64("meta/snap_info_latency",
+	GetMetadataSnapshotLatency = stats.Float64("get/metadata/snapshot_latency",
 		"Time to fetch snapshot info", stats.UnitMilliseconds)
 
-	GetSnapshotByHeightLatency = stats.Float64("meta/snap_info_by_height",
-		"Time to fetch snapshot info by height", stats.UnitMilliseconds)
-
 	// go-legs graph persistence
-	GraphPersistenceLatency = stats.Float64("graph/persistence_latency",
+	GraphPersistenceLatency = stats.Float64("sync/graph/persistence_latency",
 		"Time to persistence DAG", stats.UnitMilliseconds)
 )
 
@@ -49,7 +46,6 @@ var (
 		{Measure: GetPandoSubscribeLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetMetadataListLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetMetadataSnapshotLatency, Aggregation: view.Distribution(bounds...)},
-		{Measure: GetSnapshotByHeightLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GraphPersistenceLatency, Aggregation: view.Distribution(bounds...)},
 	}
 )
