@@ -4,7 +4,6 @@ go 1.16
 
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0
-	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/agiledragon/gomonkey/v2 v2.3.1
 	github.com/briandowns/spinner v1.11.1
 	github.com/filecoin-project/go-address v0.0.6
@@ -43,13 +42,14 @@ require (
 	github.com/ipfs/go-merkledag v0.4.1
 	github.com/ipld/go-car v0.3.2
 	github.com/ipld/go-ipld-prime v0.12.4-0.20211026094848-168715526f2d
-	github.com/justinas/nosurf v1.1.1 // indirect
+	github.com/kevinburke/go-bindata v3.22.0+incompatible
 	github.com/libp2p/go-libp2p v0.15.1
 	github.com/libp2p/go-libp2p-core v0.9.0
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.4.1
+	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/montanaflynn/stats v0.6.6
 	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multicodec v0.3.1-0.20210902112759-1539a079fd61
@@ -62,14 +62,14 @@ require (
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.7.0
-	github.com/turtlemonvh/gin-wraphh v0.0.0-20160304035037-ea8e4927b3a6
 	github.com/urfave/cli/v2 v2.3.0 // indirect
 	github.com/whyrusleeping/cbor-gen v0.0.0-20210713220151-be142a5ae1a8
 	go.opencensus.io v0.23.0
 	go.uber.org/zap v1.19.1 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
+	golang.org/x/tools v0.1.8 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	gopkg.in/yaml.v2 v2.4.0
 )
