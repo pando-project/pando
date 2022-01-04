@@ -14,6 +14,7 @@ func NewHttpRouter(core *core.Core) *gin.Engine {
 	httpRouter.Use(middleware.WithLoggerFormatter())
 	httpRouter.Use(middleware.WithCorsAllowAllOrigin())
 	httpRouter.Use(gin.Recovery())
+	httpRouter.Use(middleware.WithAPIDoc())
 
 	v1HttpAPI := v1Http.NewV1HttpAPI(httpRouter, core)
 	v1HttpAPI.RegisterAPIs()

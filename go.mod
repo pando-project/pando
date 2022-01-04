@@ -4,9 +4,9 @@ go 1.16
 
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0
+	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/agiledragon/gomonkey/v2 v2.3.1
 	github.com/briandowns/spinner v1.11.1
-	github.com/envoyproxy/go-control-plane v0.9.9-0.20210512163311-63b5d3c536b0 // indirect
 	github.com/filecoin-project/go-address v0.0.6
 	github.com/filecoin-project/go-cbor-util v0.0.1 // indirect
 	github.com/filecoin-project/go-commp-utils v0.1.3 // indirect
@@ -22,6 +22,7 @@ require (
 	github.com/gammazero/keymutex v0.0.2
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
+	github.com/go-openapi/runtime v0.21.0
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/graphql-go/graphql v0.8.0
@@ -42,12 +43,13 @@ require (
 	github.com/ipfs/go-merkledag v0.4.1
 	github.com/ipld/go-car v0.3.2
 	github.com/ipld/go-ipld-prime v0.12.4-0.20211026094848-168715526f2d
+	github.com/justinas/nosurf v1.1.1 // indirect
 	github.com/libp2p/go-libp2p v0.15.1
 	github.com/libp2p/go-libp2p-core v0.9.0
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/mitchellh/mapstructure v1.1.2
+	github.com/mitchellh/mapstructure v1.4.1
 	github.com/montanaflynn/stats v0.6.6
 	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multicodec v0.3.1-0.20210902112759-1539a079fd61
@@ -60,6 +62,7 @@ require (
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.7.0
+	github.com/turtlemonvh/gin-wraphh v0.0.0-20160304035037-ea8e4927b3a6
 	github.com/urfave/cli/v2 v2.3.0 // indirect
 	github.com/whyrusleeping/cbor-gen v0.0.0-20210713220151-be142a5ae1a8
 	go.opencensus.io v0.23.0
