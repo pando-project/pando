@@ -21,7 +21,7 @@ func (a *API) registerPando() {
 		pando.GET("/metrics", adapter.Wrap(func(h http.Handler) http.Handler {
 			return metrics.Handler(coremetrics.DefaultViews)
 		}))
-		pando.OPTIONS("/health", a.pandoHealth)
+		pando.OPTIONS("/health")
 	}
 }
 
@@ -63,8 +63,4 @@ func (a *API) pandoInfo(ctx *gin.Context) {
 		PeerID         string
 		MultiAddresses []string
 	}{pandoInfo.PeerID, multiAddresses}))
-}
-
-func (a *API) pandoHealth(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, types.NewOKResponse("alive", nil))
 }

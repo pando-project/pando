@@ -1,6 +1,7 @@
 package pando
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"pando/cmd/client/command/api"
 )
@@ -17,7 +18,13 @@ func healthCmd() *cobra.Command {
 				return err
 			}
 
-			return api.PrintResponseData(res)
+			if res.StatusCode() >= 200 && res.StatusCode() < 300 {
+				fmt.Println("I'm good.")
+			} else {
+				fmt.Println("Not healthy.")
+			}
+
+			return nil
 		},
 	}
 
