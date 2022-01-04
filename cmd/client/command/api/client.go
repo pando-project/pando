@@ -7,13 +7,14 @@ import (
 	"pando/pkg/api/types"
 	"path"
 	"strings"
+	"time"
 )
 
 var Client *resty.Client
 var PandoAPIBaseURL string
 
 func NewClient(apiBaseURL string) {
-	Client = resty.New().SetBaseURL(apiBaseURL).SetDebug(false)
+	Client = resty.New().SetBaseURL(apiBaseURL).SetDebug(false).SetTimeout(10 * time.Second)
 }
 
 func PrintResponseData(res *resty.Response) error {
