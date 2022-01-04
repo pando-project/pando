@@ -2,7 +2,6 @@ package register
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -63,9 +62,9 @@ func (r *RegisterRequest) MarshalRecord() ([]byte, error) {
 // MakeRegisterRequest creates a signed peer.PeerRecord as a register request
 // and marshals this into bytes
 func MakeRegisterRequest(providerID peer.ID, privateKey crypto.PrivKey, addrs []string, account string) ([]byte, error) {
-	if len(addrs) == 0 {
-		return nil, errors.New("missing address")
-	}
+	//if len(addrs) == 0 {
+	//	return nil, errors.New("missing address")
+	//}
 
 	rec := &RegisterRequest{}
 	rec.PeerID = providerID

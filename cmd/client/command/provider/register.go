@@ -49,6 +49,9 @@ func registerCmd() *cobra.Command {
 			}
 
 			data, err := register.MakeRegisterRequest(peerID, privateKey, registerInfo.addresses, registerInfo.miner)
+			if err != nil {
+				return err
+			}
 
 			if registerInfo.onlyEnvelop {
 				envelopFile, err := os.OpenFile("./envelop.data", os.O_RDWR|os.O_CREATE, 0755)
@@ -68,7 +71,7 @@ func registerCmd() *cobra.Command {
 				SetHeader("Content-Type", "application/octet-stream").
 				Post(joinAPIPath(registerPath))
 			if err != nil {
-				return nil
+				return err
 			}
 			return api.PrintResponseData(res)
 		},
@@ -94,7 +97,7 @@ func (f *providerInfo) setFlags(cmd *cobra.Command) {
 
 func (f *providerInfo) validateFlags() error {
 	if f.peerID == "" || f.privateKey == "" {
-		return fmt.Errorf("all flags are requied, given:\n\taddresses: %v\n\tpeerID%v\n\tprivateKey%v",
+		return fmt.Errorf("peerID and privateKey are requied, given:\n\taddresses: %v\n\tpeerID%v\n\tprivateKey%v",
 			f.addresses, f.peerID, f.privateKey)
 	}
 
