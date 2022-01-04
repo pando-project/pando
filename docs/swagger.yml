@@ -9,7 +9,7 @@ info:
   license:
     name: "Apache 2.0 and MIT"
     url: "https://github.com/kenlabs/pando"
-host: "pando.kencloud.com"
+host: "pando.kencloud.com:9011"
 basePath: "/"
 
 
