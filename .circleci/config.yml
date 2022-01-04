@@ -45,7 +45,7 @@ jobs:
           name: Build and push Docker image
           command: |
             cp ./bin/pando-server ./build
-            cp ./docs ./build/
+            cp -r ./docs ./build/
             cd ./build
             DOCKER_STR="${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${DOCKER_REPO}"
             TAG="${DOCKER_STR}:${CIRCLE_BUILD_NUM}"
