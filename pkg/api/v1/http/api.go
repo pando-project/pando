@@ -29,7 +29,6 @@ func (a *API) RegisterAPIs() {
 	a.registerProvider()
 	a.registerPando()
 	a.registerSwagger()
-	a.registerMetrics()
 }
 
 func handleError(ctx *gin.Context, code int, errStr string) {

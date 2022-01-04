@@ -77,6 +77,6 @@ func (d *DAGProvider) Close() error {
 	return d.LegsPublisher.Close()
 }
 
-func (d *DAGProvider) Push(node ipldFormat.Node) {
-	d.LegsPublisher.UpdateRoot(context.Background(), node.Cid())
+func (d *DAGProvider) Push(node ipldFormat.Node) error {
+	return d.LegsPublisher.UpdateRoot(context.Background(), node.Cid())
 }
