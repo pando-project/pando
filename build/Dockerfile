@@ -2,7 +2,6 @@ FROM ubuntu
 
 ADD ./pando-server /opt/pando-server
 ADD start.sh /opt/start.sh
-ADD ./swagger.yml /opt/swagger.yml
 
 RUN apt-get -qq update &&\
     apt-get -qq install -y --no-install-recommends ca-certificates curl &&\

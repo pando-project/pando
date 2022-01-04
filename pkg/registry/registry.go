@@ -3,7 +3,6 @@ package registry
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	legs_interface "pando/pkg/legs/interface"
@@ -158,9 +157,9 @@ func (r *Registry) run() {
 // Register is used to directly register a provider, bypassing discovery and
 // adding discovered data directly to the registry.
 func (r *Registry) Register(info *ProviderInfo) error {
-	if len(info.AddrInfo.Addrs) == 0 {
-		return syserr.New(errors.New("missing provider address"), http.StatusBadRequest)
-	}
+	//if len(info.AddrInfo.Addrs) == 0 {
+	//	return syserr.New(errors.New("missing provider address"), http.StatusBadRequest)
+	//}
 
 	// If provider is not allowed, then ignore request
 	if !r.policy.Allowed(info.AddrInfo.ID) {

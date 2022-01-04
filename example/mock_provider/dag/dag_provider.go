@@ -50,7 +50,7 @@ func getDagNodes(n int) [][]format.Node {
 	return dags
 }
 
-// eg: CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w= 1 12D3KooWC3jxxw4TdQtoZDv3QNwmh9rtuiyVL8CADpnJYKHh9AiA /ip4/52.14.211.248/tcp/9000 30
+// eg: CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w= 1 12D3KooWLRXhKinvwAEVcFHveg2pMiszkZAXJpXS4bb8BoS3Q5C3 /ip4/52.14.211.248/tcp/9013 30
 func main() {
 	if len(os.Args) < 5 {
 		fmt.Println("please input:\r\n1. provider private key\n2. mock dag number\n3. Pando PeerID\n4. Pando MultiAddr\n5. Time wait for data transferring[optional, int]")
@@ -80,6 +80,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	peerIDProvider, err := peer.IDFromPrivateKey(privkey)
+	fmt.Printf("peer id of this provider: %s\n", peerIDProvider.String())
 
 	rand.Seed(time.Now().UnixNano())
 	dstore, err := leveldb.NewDatastore("", nil)
