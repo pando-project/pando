@@ -194,8 +194,8 @@ Backup.APIKey (string), estuary api key
 - Backup.APIKey
 
 ## Access Pando APIs with client
-See [Pando API document](https://pando-api-doc.kencloud.com) for more details.
-Or check [Pando API Specification](https://github.com/kenlabs/pando/tree/main/pkg/api/swagger.yml)
+See [Pando API document](https://pando.kencloud.com:9011/swagger/doc) for more details.
+Or check [Pando API Specification](https://pando.kencloud.com:9011/swagger/specs)
 
 ### /pando/health 
 Check if Pando is alive
