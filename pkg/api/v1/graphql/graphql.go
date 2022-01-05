@@ -17,6 +17,10 @@ func (a *API) registerGraphql() {
 	if err != nil {
 		panic(err)
 	}
+	err = a.NewSchema()
+	if err != nil {
+		panic(err)
+	}
 	a.router.SetHTMLTemplate(tmpl)
 	a.router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{})
