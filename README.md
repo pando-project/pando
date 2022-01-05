@@ -6,6 +6,9 @@
 
 - [Pando](#pando)
   - [Architecture](#architecture) 
+  - [Integrate with Pando](#integrate-with-pando)
+    - [As a Provider](#as-a-provider)
+    - [As a Consumer](#as-a-consumer)
   - [Getting Started](#getting-started)
     - [How Pando persistence providers data](#how-pando-persistence-providers-data)
     - [Build Pando server and client](#build-pando-server-and-client)
@@ -29,15 +32,18 @@ However, there are nice properties of having this sort of metadata ecosystem mor
 ## Architecture
 ![architecture](docs/images/architecture.png)
 
-
-## Getting Started
-
-Pando using [go-legs](https://github.com/filecoin-project/go-legs) to synchronize IPLD DAG of data from providers.
+## Integrate with Pando
+### As a Provider
+Pando uses [go-legs](https://github.com/filecoin-project/go-legs) to synchronize data in IPLD DAG structure from providers.
 We will develop an SDK for providers to integrate with Pando in a more efficient way in the future (maybe a week).
 For now, providers have to initialize go-legs instance and publish your data to a topic which Pando subscribed.
 
 Check [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
 
+### As a Consumer
+TBD
+
+## Getting Started
 ### How Pando persistence providers data
 ToDo
 

@@ -23,7 +23,7 @@ func snapshotCmd() *cobra.Command {
 		Short: "lookup a snapshot with specified snapshot cid or its height",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := snapshotQuery.validateFlags(); err != nil {
-				return nil
+				return err
 			}
 
 			req := api.Client.R()
