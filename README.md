@@ -38,14 +38,29 @@ Pando uses [go-legs](https://github.com/filecoin-project/go-legs) to synchronize
 We will develop an SDK for providers to integrate with Pando in a more efficient way in the future (maybe a week).
 For now, providers have to initialize go-legs instance and publish your data to a topic which Pando subscribed.
 
+Integration could follow the steps below:
+1. Implement go-legs publisher, see [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
+2. Register in pando through client cli:
+```shell
+./pando-client -a https://pando-api.kencloud.com provider register \
+  --peer-id PROVIDER_PEER_ID_STR \
+  --private-key PROVIDER_PRIVATE_KEY_STR
+```
+3. execute updateRoot() to publish updated DAG root cid into pubsub topic: "PandoPubSub"
+Note: we will not upload Provider's private key to any network. 
+CLI uses private key only for signing registration information, 
+because Pando will verify that the peerID provided by provider matches the public key to prevent 
+illegal provider falsely use the peerID of other providers.
+
 Check [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
 
 ### As a Consumer
-TBD
+To fetch metadata/snapshot status and content via graphql api, 
+[click here to get a try and dig more](https://pando-graphql.kencloud.com/).
 
 ## Getting Started
 ### How Pando persistence providers data
-ToDo
+TBD
 
 ### Build Pando server and client
 run `make`, that's all. Binaries will be built at `bin`.
@@ -209,6 +224,8 @@ Backup.APIKey (string), estuary api key
 ## Access Pando APIs with client
 See [Pando API document](https://pando-api.kencloud.com/swagger/doc) for more details.
 Or check [Pando API Specification](https://pando-api.kencloud.com/swagger/specs)
+
+See [graphql api documentation](https://pando-graphql.kencloud.com/) to query metadata/snapshot status and details.
 
 Pando integrates redoc style documentation, visit `http://127.0.0.1:9000/swagger/doc` for API documentation,
 or check `http://127.0.0.1:9000/swagger/specs` for swagger 2.0 specification.
