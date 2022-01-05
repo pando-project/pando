@@ -51,7 +51,7 @@ func MustNewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
 		Opt: opt,
 		HttpServer: &http.Server{
 			Addr:    httpListenAddress.String(),
-			Handler: NewHttpRouter(core),
+			Handler: NewHttpRouter(core, opt),
 		},
 		HttpListenAddr: httpListenAddress.String(),
 		GraphqlServer: &http.Server{

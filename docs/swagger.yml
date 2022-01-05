@@ -81,9 +81,14 @@ paths:
           examples:
             application/json:
               message: "ok"
+              code: 200
               data:
                 peerID: "12D3KooWEpehzfFV4U1SQFcWEXBkP3zseGszEGAPfApS9as2Swgi"
-                multiAddr: "/ip4/104.21.0.228/tcp/9000"
+                APIAddresses:
+                  GRAPHQL_API: "/ip4/1.1.1.1/tcp/8002"
+                  GRAPHSYNC_API: "/ip4/1.1.1.1/tcp/8003"
+                  HTTP_API: "/ip4/1.1.1.1/tcp/8001"
+
   /pando/metrics:
     get:
       tags:
