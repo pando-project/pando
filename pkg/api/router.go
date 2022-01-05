@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"pando/pkg/option"
 
 	"pando/pkg/api/core"
 	"pando/pkg/api/middleware"
@@ -9,14 +10,14 @@ import (
 	v1Http "pando/pkg/api/v1/http"
 )
 
-func NewHttpRouter(core *core.Core) *gin.Engine {
+func NewHttpRouter(core *core.Core, opt *option.Options) *gin.Engine {
 	httpRouter := gin.New()
 	httpRouter.Use(middleware.WithLoggerFormatter())
 	httpRouter.Use(middleware.WithCorsAllowAllOrigin())
 	httpRouter.Use(gin.Recovery())
 	httpRouter.Use(middleware.WithAPIDoc())
 
-	v1HttpAPI := v1Http.NewV1HttpAPI(httpRouter, core)
+	v1HttpAPI := v1Http.NewV1HttpAPI(httpRouter, core, opt)
 	v1HttpAPI.RegisterAPIs()
 
 	return httpRouter

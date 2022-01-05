@@ -14,4 +14,6 @@ type ServerAddress struct {
 
 	DisableP2P bool   `yaml:"DisableP2P"`
 	P2PAddress string `yaml:"P2PAddress"`
+
+	ExternalIP string `yaml:"ExternalIP"`
 }

@@ -94,6 +94,9 @@ func New(root *cobra.Command) *Options {
 	opt.flags.StringVar(&opt.ServerAddress.P2PAddress, "p2p-address", defaultP2PAddress,
 		fmt.Sprintf("P2P hosting address(in multiaddress format, like %s).", defaultP2PAddress))
 
+	opt.flags.StringVar(&opt.ServerAddress.ExternalIP, "external-ip", "unknown",
+		fmt.Sprintf("Pando public IP address for API serve"))
+
 	// options for datastore
 	opt.flags.StringVar(&opt.DataStore.Type, "datastore-type", defaultDataStoreType,
 		"Datastore type, support levelds only for now.")

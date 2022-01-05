@@ -129,6 +129,11 @@ ServerAddress.P2PAddress (string), p2p host listen address  in multi-address for
 - PD_SERVERADDRESS_P2PADDRESS
 - ServerAddress.P2PAddress
 
+ServerAddress.ExternalIP (string), public IP of Pando to serve API
+- --external-ip
+- PD_SERVERADDRESS_EXTERNALIP
+- ServerAddress.ExternalIP
+
 DataStore.Type (string), datastore type, support "levelds" only for now
 - --datastore-type
 - PD_DATASTORE_TYPE
@@ -225,15 +230,16 @@ Show information of Pando server
 ./pando-client -a http://127.0.0.1:9000 pando info
 
 {
- "code": 200,
- "message": "ok",
- "Data": {
-  "MultiAddresses": [
-   "/ip4/127.0.0.1/tcp/8000",
-   "/ip4/192.168.2.224/tcp/8000"
-  ],
-  "PeerID": "12D3KooWDdL1G1osCHaYb27dVFeixDVoTtGJ1FpSdpBYTMcCM6dC"
- }
+"code": 200,
+"message": "ok",
+"Data": {
+    "PeerID": "12D3KooWKw5hu5QcbbFuokt3NrYe7gak5kKHzt8h1FJNqByHQ157",
+    "APIAddresses": {
+        "GRAPHQL_API": "/ip4/1.1.1.1/tcp/8002",
+        "GRAPHSYNC_API": "/ip4/1.1.1.1/tcp/8003",
+        "HTTP_API": "/ip4/1.1.1.1/tcp/8001"
+    }
+}
 }
 
 ```
