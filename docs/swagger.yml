@@ -192,9 +192,9 @@ paths:
           description: "Height of a snapshot to retrieve"
           required: false
         - in: query
-          name: "snapshotCid"
+          name: "cid"
           type: string
-          description: "Cid of a snapshot to retrive"
+          description: "Cid of a snapshot to retrieve"
           required: false
       responses:
         "200":

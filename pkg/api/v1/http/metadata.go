@@ -58,7 +58,7 @@ func (a *API) metadataSnapshot(ctx *gin.Context) {
 			}
 
 			logger.Errorf("get metadataSnapshot failed: %v", err)
-			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
+			handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid cid: %v", err))
 			return
 		}
 	} else if heightQuery != "" {
