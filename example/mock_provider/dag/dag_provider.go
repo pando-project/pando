@@ -4,6 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"log"
+	"math/rand"
+	"os"
+	"pando/pkg/legs"
+	"strconv"
+	"time"
+
 	"github.com/ipfs/go-blockservice"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
@@ -13,12 +20,6 @@ import (
 	ic "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
-	"log"
-	"math/rand"
-	"os"
-	"pando/pkg/legs"
-	"strconv"
-	"time"
 
 	golegs "github.com/filecoin-project/go-legs"
 	dssync "github.com/ipfs/go-datastore/sync"
@@ -50,17 +51,25 @@ func getDagNodes(n int) [][]format.Node {
 	return dags
 }
 
-// eg: CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w= 1 12D3KooWLRXhKinvwAEVcFHveg2pMiszkZAXJpXS4bb8BoS3Q5C3 /ip4/52.14.211.248/tcp/9013 30
+// eg: CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w= 1 12D3KooWC3jxxw4TdQtoZDv3QNwmh9rtuiyVL8CADpnJYKHh9AiA /ip4/52.14.211.248/tcp/9000 30
 func main() {
 	if len(os.Args) < 5 {
-		fmt.Println("please input:\r\n1. provider private key\n2. mock dag number\n3. Pando PeerID\n4. Pando MultiAddr\n5. Time wait for data transferring[optional, int]")
+		fmt.Println("Usage:")
+		fmt.Println("    dag [privkey] [countdag] [peerid] [multiaddr] [wait]")
+		fmt.Println()
+		fmt.Println("Arguments:")
+		fmt.Println("    privkey:   provider private key")
+		fmt.Println("    countdag:  count of dag to send")
+		fmt.Println("    peerid:    pando peer id")
+		fmt.Println("    multiaddr: pando multiaddr")
+		fmt.Println("    wait:      seconds of waiting time for data transfer (optional)")
 		os.Exit(1)
 	}
 
 	privstr := os.Args[1]
 	dagnum, err := strconv.Atoi(os.Args[2])
 	if err != nil {
-		log.Fatal("dag number must be integer, not: ", os.Args[2])
+		log.Fatal("The count of dag must be integer, not: ", os.Args[2])
 	}
 	PandoPeerID := os.Args[3]
 	PandoAddrStr := os.Args[4]
@@ -80,9 +89,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	peerIDProvider, err := peer.IDFromPrivateKey(privkey)
-	fmt.Printf("peer id of this provider: %s\n", peerIDProvider.String())
 
 	rand.Seed(time.Now().UnixNano())
 	dstore, err := leveldb.NewDatastore("", nil)
