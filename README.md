@@ -6,6 +6,9 @@
 
 - [Pando](#pando)
   - [Architecture](#architecture) 
+  - [Integrate with Pando](#integrate-with-pando)
+    - [As a Provider](#as-a-provider)
+    - [As a Consumer](#as-a-consumer)
   - [Getting Started](#getting-started)
     - [How Pando persistence providers data](#how-pando-persistence-providers-data)
     - [Build Pando server and client](#build-pando-server-and-client)
