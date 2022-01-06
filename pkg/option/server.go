@@ -6,6 +6,8 @@ const (
 
 	defaultDisableP2P = false
 	defaultP2PAddress = "/ip4/127.0.0.1/tcp/9002"
+
+	defaultProfileListenAddress = "/ip4/127.0.0.1/tcp/9010"
 )
 
 type ServerAddress struct {
@@ -14,6 +16,8 @@ type ServerAddress struct {
 
 	DisableP2P bool   `yaml:"DisableP2P"`
 	P2PAddress string `yaml:"P2PAddress"`
+
+	ProfileListenAddress string `yaml:"ProfileListenAddress"`
 
 	ExternalIP string `yaml:"ExternalIP"`
 }

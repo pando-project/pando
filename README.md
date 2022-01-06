@@ -46,11 +46,12 @@ Integration could follow the steps below:
   --peer-id PROVIDER_PEER_ID_STR \
   --private-key PROVIDER_PRIVATE_KEY_STR
 ```
-3. execute updateRoot() to publish updated DAG root cid into pubsub topic: "PandoPubSub"
-Note: we will not upload Provider's private key to any network. 
-CLI uses private key only for signing registration information, 
-because Pando will verify that the peerID provided by provider matches the public key to prevent 
+Note: we will not upload Provider's private key to any network.
+CLI uses private key only for signing registration information,
+because Pando will verify that the peerID provided by provider matches the public key to prevent
 illegal provider falsely use the peerID of other providers.
+
+3. execute updateRoot() to publish updated DAG root cid into pubsub topic: "PandoPubSub"
 
 Check [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
 

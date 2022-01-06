@@ -38,7 +38,7 @@ func NewBackupSys(backupCfg *option.Backup) (*backupSystem, error) {
 		gateway:        backupCfg.EstuaryGateway,
 		shuttleGateway: backupCfg.ShuttleGateway,
 		checkInterval:  time.Second * 10,
-		apiKey:         backupCfg.APIKey,
+		apiKey:         "Bearer " + backupCfg.APIKey,
 		toCheck:        make(chan uint64, 1),
 	}
 	bs.run()
@@ -183,7 +183,7 @@ func (bs *backupSystem) backupToEstuary(filepath string) error {
 		return err
 	}
 
-	req.Header.Set("Authorization", "Bearer "+bs.apiKey)
+	req.Header.Set("Authorization", bs.apiKey)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 
