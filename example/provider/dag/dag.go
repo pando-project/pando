@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	peerHelper "pando/pkg/util/peer"
 	"syscall"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	ipldFormat "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
 
-	peerHelper "pando/pkg/peer"
 	pandoSdk "pando/sdk/pkg/provider"
 )
 

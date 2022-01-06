@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"golang.org/x/sync/errgroup"
 	"net/http"
+	_ "net/http/pprof"
 	"time"
 
 	logging "github.com/ipfs/go-log/v2"
-	"github.com/multiformats/go-multiaddr"
-	manet "github.com/multiformats/go-multiaddr/net"
 
 	"pando/pkg/api/core"
 	"pando/pkg/option"
+	"pando/pkg/util/multiaddress"
 )
 
 var logger = logging.Logger("http-server")
@@ -26,51 +26,53 @@ type Server struct {
 
 	GraphqlServer     *http.Server
 	GraphqlListenAddr string
+
+	ProfileServer     *http.Server
+	ProfileListenAddr string
 }
 
-func MustNewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
-	httpMultiAddress, err := multiaddr.NewMultiaddr(opt.ServerAddress.HttpAPIListenAddress)
-	if err != nil {
-		return nil, err
-	}
-	httpListenAddress, err := manet.ToNetAddr(httpMultiAddress)
+func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
+	httpListenAddress, err := multiaddress.MultiaddressToNetAddress(opt.ServerAddress.HttpAPIListenAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	graphqlMultiAddress, err := multiaddr.NewMultiaddr(opt.ServerAddress.GraphqlListenAddress)
+	graphqlListenAddress, err := multiaddress.MultiaddressToNetAddress(opt.ServerAddress.GraphqlListenAddress)
 	if err != nil {
 		return nil, err
 	}
-	graphqlListenAddress, err := manet.ToNetAddr(graphqlMultiAddress)
+
+	profileListenAddress, err := multiaddress.MultiaddressToNetAddress(opt.ServerAddress.ProfileListenAddress)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Server{
-		Opt: opt,
+		Opt:  opt,
+		Core: core,
+
 		HttpServer: &http.Server{
-			Addr:    httpListenAddress.String(),
+			Addr:    httpListenAddress,
 			Handler: NewHttpRouter(core, opt),
 		},
-		HttpListenAddr: httpListenAddress.String(),
+		HttpListenAddr: httpListenAddress,
+
 		GraphqlServer: &http.Server{
-			Addr:    graphqlListenAddress.String(),
+			Addr:    graphqlListenAddress,
 			Handler: NewGraphqlRouter(core),
 		},
-		GraphqlListenAddr: graphqlListenAddress.String(),
-		Core:              core,
+		GraphqlListenAddr: graphqlListenAddress,
+
+		ProfileServer: &http.Server{
+			Addr: profileListenAddress,
+		},
+		ProfileListenAddr: profileListenAddress,
 	}, nil
 }
 
 func (s *Server) StartHttpServer() error {
 	logger.Infof("http server listening at: %s", s.HttpListenAddr)
-	err := s.HttpServer.ListenAndServe()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.HttpServer.ListenAndServe()
 }
 
 func (s *Server) StopHttpServer() error {
@@ -78,22 +80,12 @@ func (s *Server) StopHttpServer() error {
 	defer cancel()
 
 	fmt.Println("stop http server...")
-	err := s.HttpServer.Shutdown(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.HttpServer.Shutdown(ctx)
 }
 
 func (s *Server) StartGraphqlServer() error {
 	logger.Infof("graphql server listening at: %s", s.GraphqlListenAddr)
-	err := s.GraphqlServer.ListenAndServe()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.GraphqlServer.ListenAndServe()
 }
 
 func (s *Server) StopGraphqlServer() error {
@@ -101,15 +93,23 @@ func (s *Server) StopGraphqlServer() error {
 	defer cancel()
 
 	fmt.Println("stop graphql server...")
-	err := s.GraphqlServer.Shutdown(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.GraphqlServer.Shutdown(ctx)
 }
 
-func (s *Server) StartAllServers() {
+func (s *Server) StartProfileServer() error {
+	logger.Infof("profile server listening at: %s", s.ProfileListenAddr)
+	return s.ProfileServer.ListenAndServe()
+}
+
+func (s *Server) StopProfileServer() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	fmt.Println("stop profile server...")
+	return s.ProfileServer.Shutdown(ctx)
+}
+
+func (s *Server) MustStartAllServers() {
 	go func() {
 		err := s.StartHttpServer()
 		if err != nil && err != http.ErrServerClosed {
@@ -123,6 +123,13 @@ func (s *Server) StartAllServers() {
 			panic(fmt.Sprintf("graphql server cannot start: %v", err))
 		}
 	}()
+
+	go func() {
+		err := s.StartProfileServer()
+		if err != nil && err != http.ErrServerClosed {
+			panic(fmt.Sprintf("profile server cannot start: %v", err))
+		}
+	}()
 }
 
 func (s *Server) StopAllServers() error {
@@ -132,6 +139,9 @@ func (s *Server) StopAllServers() error {
 	})
 	g.Go(func() error {
 		return s.StopGraphqlServer()
+	})
+	g.Go(func() error {
+		return s.StopProfileServer()
 	})
 	err := g.Wait()
 	if err != nil {

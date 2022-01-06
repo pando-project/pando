@@ -62,12 +62,12 @@ func DaemonCmd() *cobra.Command {
 				return fmt.Errorf(failedError, err)
 			}
 
-			server, err := api.MustNewAPIServer(Opt, c)
+			server, err := api.NewAPIServer(Opt, c)
 			if err != nil {
 				return fmt.Errorf(failedError, err)
 			}
 
-			server.StartAllServers()
+			server.MustStartAllServers()
 
 			quit := make(chan os.Signal)
 			signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

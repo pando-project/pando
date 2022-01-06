@@ -88,6 +88,9 @@ func New(root *cobra.Command) *Options {
 	opt.flags.StringVar(&opt.ServerAddress.GraphqlListenAddress, "graphql-listen-addr", defaultGraphqlListenAddress,
 		fmt.Sprintf("Graphql server listen address(in multiaddress format, like %s).", defaultGraphqlListenAddress))
 
+	opt.flags.StringVar(&opt.ServerAddress.ProfileListenAddress, "profile-listen-addr", defaultProfileListenAddress,
+		fmt.Sprintf("Profile server listen address(in multiaddress format, like %s).", defaultProfileListenAddress))
+
 	opt.flags.BoolVar(&opt.ServerAddress.DisableP2P, "p2p-disable", defaultDisableP2P,
 		"Disable libp2p hosting.")
 
