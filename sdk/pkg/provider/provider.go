@@ -1,4 +1,4 @@
-package sdk
+package provider
 
 import ipldFormat "github.com/ipfs/go-ipld-format"
 

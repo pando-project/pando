@@ -26,6 +26,7 @@ require (
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/graphql-go/graphql v0.8.0
 	github.com/gwatts/gin-adapter v0.0.0-20170508204228-c44433c485ad
+	github.com/hashicorp/go-uuid v1.0.1
 	github.com/ipfs/go-bitswap v0.4.0 // indirect
 	github.com/ipfs/go-block-format v0.0.3
 	github.com/ipfs/go-blockservice v0.1.7
@@ -42,14 +43,12 @@ require (
 	github.com/ipfs/go-merkledag v0.4.1
 	github.com/ipld/go-car v0.3.2
 	github.com/ipld/go-ipld-prime v0.12.4-0.20211026094848-168715526f2d
-	github.com/kevinburke/go-bindata v3.22.0+incompatible
 	github.com/libp2p/go-libp2p v0.15.1
 	github.com/libp2p/go-libp2p-core v0.9.0
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.4.1
-	github.com/mjibson/esc v0.2.0 // indirect
 	github.com/montanaflynn/stats v0.6.6
 	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multicodec v0.3.1-0.20210902112759-1539a079fd61
