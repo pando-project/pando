@@ -4,26 +4,29 @@ go 1.16
 
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0
-	github.com/agiledragon/gomonkey/v2 v2.3.1
+	github.com/agiledragon/gomonkey/v2 v2.4.0
 	github.com/briandowns/spinner v1.11.1
-	github.com/filecoin-project/go-address v0.0.6
+	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
+	github.com/fatih/color v1.9.0 // indirect
+	github.com/filecoin-project/go-address v0.0.6 // indirect
+	github.com/filecoin-project/go-bitfield v0.2.4 // indirect
 	github.com/filecoin-project/go-cbor-util v0.0.1 // indirect
-	github.com/filecoin-project/go-commp-utils v0.1.3 // indirect
 	github.com/filecoin-project/go-data-transfer v1.11.4
-	github.com/filecoin-project/go-fil-markets v1.13.3 // indirect
 	github.com/filecoin-project/go-indexer-core v0.2.6
-	github.com/filecoin-project/go-jsonrpc v0.1.4-0.20210217175800-45ea43ac2bec
 	github.com/filecoin-project/go-legs v0.0.0-20211116112108-61960ef1f8ef
 	github.com/filecoin-project/go-state-types v0.1.1-0.20210915140513-d354ccf10379
-	github.com/filecoin-project/lotus v1.13.0
+	github.com/filecoin-project/go-statemachine v1.0.1 // indirect
+	github.com/filecoin-project/go-statestore v0.1.1 // indirect
+	github.com/filecoin-project/specs-actors v0.9.14 // indirect
+	github.com/filecoin-project/specs-actors/v2 v2.3.5 // indirect
+	github.com/filecoin-project/specs-actors/v3 v3.1.1 // indirect
 	github.com/filecoin-project/specs-actors/v5 v5.0.4
-	github.com/filecoin-project/specs-actors/v6 v6.0.1 // indirect
 	github.com/gammazero/keymutex v0.0.2
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-openapi/runtime v0.21.0
 	github.com/go-resty/resty/v2 v2.7.0
-	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/golang/snappy v0.0.2-0.20190904063534-ff6b7dc882cf // indirect
 	github.com/graphql-go/graphql v0.8.0
 	github.com/gwatts/gin-adapter v0.0.0-20170508204228-c44433c485ad
 	github.com/hashicorp/go-uuid v1.0.1
@@ -41,10 +44,14 @@ require (
 	github.com/ipfs/go-ipld-format v0.2.0
 	github.com/ipfs/go-log/v2 v2.3.0
 	github.com/ipfs/go-merkledag v0.4.1
+	github.com/ipfs/go-unixfs v0.2.6 // indirect
 	github.com/ipld/go-car v0.3.2
 	github.com/ipld/go-ipld-prime v0.12.4-0.20211026094848-168715526f2d
 	github.com/libp2p/go-libp2p v0.15.1
 	github.com/libp2p/go-libp2p-core v0.9.0
+	github.com/libp2p/go-libp2p-peerstore v0.3.0 // indirect
+	github.com/libp2p/go-libp2p-record v0.1.3 // indirect
+	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-homedir v1.1.0

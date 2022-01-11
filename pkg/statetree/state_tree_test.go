@@ -2,7 +2,9 @@ package statetree
 
 import (
 	"context"
+	"fmt"
 	"github.com/ipfs/go-cid"
+	"github.com/ipfs/go-datastore"
 	"github.com/libp2p/go-libp2p-core/peer"
 	. "github.com/smartystreets/goconvey/convey"
 	types2 "pando/pkg/statetree/types"
@@ -77,4 +79,74 @@ func TestStateTreeRoundTrip_(t *testing.T) {
 		close(ch)
 		So(<-st.ctx.Done(), ShouldNotBeNil)
 	})
+	Convey("when call api then get pando info", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		core := pando.Core
+		So(core, ShouldNotBeNil)
+
+		ex := &types2.ExtraInfo{}
+		ch := make(chan map[peer.ID]*types2.ProviderState)
+		st, err := New(context.Background(), core.DS, core.BS, ch, ex)
+		So(err, ShouldBeNil)
+		_ex, err := st.GetPandoInfo()
+		So(_ex, ShouldResemble, &types2.ExtraInfo{})
+		err = st.Shutdown()
+		So(err, ShouldBeNil)
+		st, err = New(context.Background(), core.DS, core.BS, ch, nil)
+		_ex, err = st.GetPandoInfo()
+		So(err, ShouldResemble, fmt.Errorf("nil info"))
+		So(_ex, ShouldBeNil)
+	})
+}
+
+func TestStateTreeDeleteDS(t *testing.T) {
+	Convey("when delete statetree data then get nil in ds", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		core := pando.Core
+		So(core, ShouldNotBeNil)
+
+		ex := &types2.ExtraInfo{}
+		ch := make(chan map[peer.ID]*types2.ProviderState)
+		st, err := New(context.Background(), core.DS, core.BS, ch, ex)
+		So(err, ShouldBeNil)
+
+		err = st.DeleteInfo()
+		So(err, ShouldBeNil)
+		root, err := pando.DS.Get(datastore.NewKey(RootKey))
+		So(err, ShouldResemble, datastore.ErrNotFound)
+		So(root, ShouldBeNil)
+		snapShotList, err := pando.DS.Get(datastore.NewKey(SnapShotList))
+		So(err, ShouldResemble, datastore.ErrNotFound)
+		So(snapShotList, ShouldBeNil)
+
+	})
+}
+
+func TestStateTreeInitFailed(t *testing.T) {
+	Convey("when failed to init then reinitialize or return error", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		core := pando.Core
+		So(core, ShouldNotBeNil)
+
+		//patch := gomonkey.ApplyFunc(adt.AsMap, func(_ adt.Store, _ cid.Cid, _ int) (*adt.Map, error) {
+		//	return nil, fmt.Errorf("unknown error")
+		//})
+		//defer patch.Reset()
+		err = pando.DS.Put(datastore.NewKey(RootKey), []byte("testdata"))
+		So(err, ShouldBeNil)
+
+		ch := make(chan map[peer.ID]*types2.ProviderState)
+		st, err := New(context.Background(), core.DS, core.BS, ch, nil)
+		So(err, ShouldResemble, fmt.Errorf("failed to load the State root from datastore"))
+
+		err = pando.DS.Put(datastore.NewKey(RootKey), testCid1.Bytes())
+		st, err = New(context.Background(), core.DS, core.BS, ch, nil)
+		So(err, ShouldBeNil)
+		err = st.Shutdown()
+		So(err, ShouldBeNil)
+	})
+
 }

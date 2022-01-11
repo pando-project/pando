@@ -68,17 +68,22 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, u
 		log.Debugf("find root cid %s, loading...", rootcid.String())
 
 		m, err := adt.AsMap(store, rootcid, builtin.DefaultHamtBitwidth)
-		if err != nil && !Reinitialize {
-			return nil, fmt.Errorf("failed to create hamt root by cid: %s\r\n%s", rootcid.String(), err.Error())
-		} else if err != nil {
-			emptyRoot, err := adt.MakeEmptyMap(store, builtin.DefaultHamtBitwidth)
-			if err != nil {
-				return nil, err
+		// failed to load hamt root
+		if err != nil {
+			if !Reinitialize {
+				return nil, fmt.Errorf("failed to load hamt root from cid: %s\r\n%s", rootcid.String(), err.Error())
+			} else {
+				emptyRoot, err := adt.MakeEmptyMap(store, builtin.DefaultHamtBitwidth)
+				if err != nil {
+					return nil, err
+				}
+				st.root = emptyRoot
 			}
-			st.root = emptyRoot
+			// load root successfully
 		} else {
 			st.root = m
 		}
+		// err not nil or nil root cid, create new root
 	} else {
 		emptyRoot, err := adt.MakeEmptyMap(store, builtin.DefaultHamtBitwidth)
 		if err != nil {

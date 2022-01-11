@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-const (
+var (
 	checkInterval         = time.Second * 10
 	DefaultShuttleGateway = "https://shuttle-4.estuary.tech"
 	DefaultEstGateway     = "https://api.estuary.tech"
@@ -47,7 +47,7 @@ func NewBackupSys(backupCfg *option.Backup) (*backupSystem, error) {
 }
 
 func (bs *backupSystem) run() {
-	// if there is car file, back up it then deletes file
+	// if there is car file, back up it then delete file
 	go func() {
 		for range time.NewTicker(time.Second).C {
 			files, err := ioutil.ReadDir(BackupTmpPath)
@@ -75,7 +75,7 @@ func (bs *backupSystem) run() {
 
 func (bs *backupSystem) checkDeal() {
 	waitCheckList := make([]uint64, 0)
-	mux := new(sync.Mutex)
+	mux := sync.Mutex{}
 	go func() {
 		for estId := range bs.toCheck {
 			mux.Lock()
@@ -93,6 +93,7 @@ func (bs *backupSystem) checkDeal() {
 			}
 			// delete from waitCheckList
 			if success {
+				log.Debugf("est : %d is successful to back up in filecoin!", checkId)
 				mux.Lock()
 				if waitCheckList[idx] == checkId {
 					waitCheckList = append(waitCheckList[:idx], waitCheckList[idx+1:]...)
@@ -105,6 +106,7 @@ func (bs *backupSystem) checkDeal() {
 						}
 					}
 				}
+				mux.Unlock()
 			} else {
 				// todo: metrics for failure
 			}
@@ -219,7 +221,7 @@ func (bs *backupSystem) checkDealStatus(cs *est_utils.ContentStatus) (bool, erro
 	if cs == nil {
 		return false, fmt.Errorf("nil conten status")
 	}
-	if cs.Deals == nil {
+	if len(cs.Deals) == 0 {
 		return false, nil
 	}
 

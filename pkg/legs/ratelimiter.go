@@ -1,7 +1,6 @@
 package legs
 
 import (
-	"context"
 	"github.com/ipfs/go-graphsync"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"golang.org/x/time/rate"
@@ -30,12 +29,12 @@ func (l *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
 	}
 }
 
-func (l *Core) cancelRequest(request graphsync.RequestID) {
-	if err := l.lms.GraphSync().CancelRequest(context.Background(), request); err != nil {
-		log.Warnf("cancel request failed, error: %s", err.Error())
-	}
-	log.Debugf("request %d canceled", request)
-}
+//func (l *Core) cancelRequest(request graphsync.RequestID) {
+//	if err := l.lms.GraphSync().CancelRequest(context.Background(), request); err != nil {
+//		log.Warnf("cancel request failed, error: %s", err.Error())
+//	}
+//	log.Debugf("request %d canceled", request)
+//}
 
 func (l *Core) pauseRequest(request graphsync.RequestID) {
 	if err := l.lms.GraphSync().PauseRequest(request); err != nil {

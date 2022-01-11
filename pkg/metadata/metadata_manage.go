@@ -94,18 +94,18 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, b
 	cctx, cncl := context.WithCancel(ctx)
 
 	mm := &MetaManager{
-		flushTime:         SnapShotDuration,
-		recvCh:            make(chan *MetaRecord),
-		outStateTreeCh:    make(chan map[peer.ID]*types.ProviderState),
-		backupCh:          make(chan cid.Cid, 1000),
-		ds:                ds,
-		bs:                bs,
-		cache:             make(map[peer.ID][]*MetaRecord),
-		dagServ:           dag.NewDAGService(bsrv.New(bs, offline.Exchange(bs))),
-		backupMaxInterval: BackupMaxInterval,
-		estBackupSys:      ebs,
-		ctx:               cctx,
-		cncl:              cncl,
+		flushTime:      SnapShotDuration,
+		recvCh:         make(chan *MetaRecord),
+		outStateTreeCh: make(chan map[peer.ID]*types.ProviderState),
+		backupCh:       make(chan cid.Cid, 1000),
+		ds:             ds,
+		bs:             bs,
+		cache:          make(map[peer.ID][]*MetaRecord),
+		dagServ:        dag.NewDAGService(bsrv.New(bs, offline.Exchange(bs))),
+		//backupMaxInterval: BackupMaxInterval,
+		estBackupSys: ebs,
+		ctx:          cctx,
+		cncl:         cncl,
 	}
 
 	go mm.dealReceivedMeta()
@@ -172,8 +172,8 @@ func (mm *MetaManager) GetUpdateOut() <-chan map[peer.ID]*types.ProviderState {
 func (mm *MetaManager) backupDagToCarLocally(ctx context.Context) {
 	backupMutex := new(sync.Mutex)
 	waitBackupRecoed := make([]*backupRecord, 0)
-	t := time.NewTicker(time.Minute)
 	go func() {
+		t := time.NewTicker(time.Minute)
 		for c := range mm.backupCh {
 			log.Debugw("received dag to backup")
 			waitBackupRecoed = append(waitBackupRecoed, &backupRecord{
@@ -194,7 +194,7 @@ func (mm *MetaManager) backupDagToCarLocally(ctx context.Context) {
 	}()
 
 	go func() {
-		for range time.NewTicker(mm.backupMaxInterval).C {
+		for range time.NewTicker(BackupMaxInterval).C {
 			backupMutex.Lock()
 			log.Debugw("start backup the car in local")
 			// for update the isBackup later because the original slice has changed

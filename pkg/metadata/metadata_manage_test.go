@@ -18,8 +18,8 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 		err = logging.SetLogLevel("meta-manager", "debug")
 		So(err, ShouldBeNil)
 
-		Convey("test receive record, out update and backup because of maxInterval", func() {
-			BackupMaxInterval = time.Second * time.Second * 3
+		Convey("give records when wait for maxInterval then update and backup", func() {
+			BackupMaxInterval = time.Second * 3
 			mm, err := New(context.Background(), pando.DS, pando.BS, &pando.Opt.Backup)
 			So(err, ShouldBeNil)
 			provider, err := mock.NewMockProvider(pando)

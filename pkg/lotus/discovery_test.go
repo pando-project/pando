@@ -26,18 +26,20 @@ func TestDiscoverMock(t *testing.T) {
 			Balance:  big.NewInt(0).Mul(registry.FIL, big.NewInt(5)),
 		})
 	})
+	Convey("when give wrong info then get error", t, func() {
 
-}
-
-func TestDiscover(t *testing.T) {
-	Convey("test get peer addrInfo from miner account", t, func() {
-		peerID, err := peer.Decode("12D3KooWGuQafP1HDkE2ixXZnX6q6LLygsUG1uoxaQEtfPAt5ygp")
-		So(err, ShouldBeNil)
-		// Now use the default url, not the gateway input
-		diso, err := NewDiscoverer("???")
-		So(err, ShouldBeNil)
-		data, err := diso._Discover(context.Background(), peerID, testMinerAddr)
-		So(err, ShouldBeNil)
-		So(data.AddrInfo.ID, ShouldEqual, peerID)
 	})
 }
+
+//func TestDiscover(t *testing.T) {
+//	Convey("test get peer addrInfo from miner account", t, func() {
+//		peerID, err := peer.Decode("12D3KooWGuQafP1HDkE2ixXZnX6q6LLygsUG1uoxaQEtfPAt5ygp")
+//		So(err, ShouldBeNil)
+//		// Now use the default url, not the gateway input
+//		diso, err := NewDiscoverer("???")
+//		So(err, ShouldBeNil)
+//		data, err := diso._Discover(context.Background(), peerID, testMinerAddr)
+//		So(err, ShouldBeNil)
+//		So(data.AddrInfo.ID, ShouldEqual, peerID)
+//	})
+//}
