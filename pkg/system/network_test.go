@@ -45,7 +45,7 @@ func Test_SpeedTestError(t *testing.T) {
 		downloadSpeed, err = TestInternetSpeed(true)
 		patch.Reset()
 
-		patch = gomonkey.ApplyMethod(reflect.TypeOf(speedtest.Server{}), "DownloadTest", func(_ bool) error {
+		patch = gomonkey.ApplyMethod(reflect.TypeOf(&speedtest.Server{}), "DownloadTest", func(_ *speedtest.Server, _ bool) error {
 			return fmt.Errorf("unknown error3")
 		})
 		downloadSpeed, err = TestInternetSpeed(true)

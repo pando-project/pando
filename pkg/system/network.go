@@ -2,6 +2,7 @@ package system
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -61,6 +62,11 @@ func TestInternetSpeed(onlyOneTarget bool) (float64, error) {
 
 	sort.Float64s(downloadSpeedList)
 	medianSpeed, err := stats.Median(downloadSpeedList)
+	if err != nil {
+		return 0, fmt.Errorf(FailedError, err)
+	} else if medianSpeed == math.NaN() {
+		return 0, fmt.Errorf("nil value")
+	}
 	medianSpeed, _ = decimal.NewFromFloat(medianSpeed).Round(2).Float64()
 	fmt.Printf("speed test complete(takes %s in total), median download speed is %f Mbps\n", timeDuration, medianSpeed)
 	return medianSpeed, nil
