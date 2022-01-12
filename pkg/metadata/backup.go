@@ -86,6 +86,9 @@ func (bs *backupSystem) checkDeal() {
 
 	for range time.NewTicker(checkInterval).C {
 		for idx, checkId := range waitCheckList {
+			if len(waitCheckList) < idx+1 {
+				continue
+			}
 			success, err := bs.checkDealForBackup(checkId)
 			if err != nil {
 				log.Errorf("failed to check deal status of content id : %d, err : %s", checkId, err.Error())
@@ -96,7 +99,11 @@ func (bs *backupSystem) checkDeal() {
 				log.Debugf("est : %d is successful to back up in filecoin!", checkId)
 				mux.Lock()
 				if waitCheckList[idx] == checkId {
-					waitCheckList = append(waitCheckList[:idx], waitCheckList[idx+1:]...)
+					if len(waitCheckList) > 1 {
+						waitCheckList = append(waitCheckList[:idx], waitCheckList[idx+1:]...)
+					} else {
+						waitCheckList = make([]uint64, 0)
+					}
 				} else {
 					// maybe the waitCheckList is adding while checking status
 					for i := idx + 1; i < len(waitCheckList); i++ {

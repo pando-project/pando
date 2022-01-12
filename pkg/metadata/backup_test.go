@@ -68,12 +68,13 @@ func TestCheckSuccess(t *testing.T) {
 		patch2 := gomonkey.ApplyGlobalVar(&BackupTmpPath, tmpDir)
 		defer patch2.Reset()
 
-		bs, err := NewBackupSys(cfg)
-		So(err, ShouldBeNil)
-		patch3 := gomonkey.ApplyPrivateMethod(reflect.TypeOf(bs), "checkDealForBackup", func(_ *backupSystem, _ uint64) (bool, error) {
+		patch3 := gomonkey.ApplyPrivateMethod(reflect.TypeOf(&backupSystem{}), "checkDealForBackup", func(_ *backupSystem, _ uint64) (bool, error) {
 			return true, nil
 		})
 		defer patch3.Reset()
+		_, err = NewBackupSys(cfg)
+		So(err, ShouldBeNil)
+
 		err = genTmpCarFiles(tmpDir)
 		So(err, ShouldBeNil)
 		err = genTmpCarFiles(tmpDir)
