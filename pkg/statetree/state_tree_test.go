@@ -3,12 +3,14 @@ package statetree
 import (
 	"context"
 	"fmt"
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	"github.com/libp2p/go-libp2p-core/peer"
 	. "github.com/smartystreets/goconvey/convey"
 	types2 "pando/pkg/statetree/types"
 	"pando/test/mock"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -44,6 +46,10 @@ func TestStateTreeRoundTrip_(t *testing.T) {
 		ss, err := st.GetSnapShotByHeight(0)
 		So(ss.Height, ShouldEqual, uint64(0))
 		So(st.height, ShouldEqual, uint64(1))
+		ss, err = st.GetSnapShotByHeight(1000)
+		So(err, ShouldResemble, NotFoundErr)
+		//ss, err = st.GetSnapShotByHeight(-1)
+		//So(err, ShouldResemble, fmt.Errorf("height must be positive"))
 
 		pstate, err := st.GetProviderStateByPeerID(testPeer)
 		So(err, ShouldBeNil)
@@ -131,10 +137,6 @@ func TestStateTreeInitFailed(t *testing.T) {
 		core := pando.Core
 		So(core, ShouldNotBeNil)
 
-		//patch := gomonkey.ApplyFunc(adt.AsMap, func(_ adt.Store, _ cid.Cid, _ int) (*adt.Map, error) {
-		//	return nil, fmt.Errorf("unknown error")
-		//})
-		//defer patch.Reset()
 		err = pando.DS.Put(datastore.NewKey(RootKey), []byte("testdata"))
 		So(err, ShouldBeNil)
 
@@ -149,4 +151,47 @@ func TestStateTreeInitFailed(t *testing.T) {
 		So(err, ShouldBeNil)
 	})
 
+}
+
+func TestStateTreeErrorHandle(t *testing.T) {
+	Convey("when got unexpected errors then handle them", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		core := pando.Core
+		So(core, ShouldNotBeNil)
+		patch := gomonkey.ApplyMethod(reflect.TypeOf(&StateTree{}), "UpdateRoot", func(_ *StateTree, _ context.Context, _ map[peer.ID]*types2.ProviderState) (cid.Cid, error) {
+			return cid.Undef, fmt.Errorf("unknown error")
+		})
+		ch := make(chan map[peer.ID]*types2.ProviderState)
+		st, err := New(context.Background(), core.DS, core.BS, ch, nil)
+		So(err, ShouldBeNil)
+		mockUpdate := map[peer.ID]*types2.ProviderState{
+			testPeer: {
+				Cidlist: []cid.Cid{testCid1, testCid2, testCid3},
+			},
+		}
+		ch <- mockUpdate
+		time.Sleep(time.Millisecond * 500)
+		err = st.Shutdown()
+		So(err, ShouldBeNil)
+
+		patch.Reset()
+		patch = gomonkey.ApplyMethod(reflect.TypeOf(st), "CreateSnapShot", func(_ *StateTree, _ context.Context, newRoot cid.Cid, update map[peer.ID]*types2.ProviderState) error {
+			return fmt.Errorf("unknown error")
+		})
+		defer patch.Reset()
+		ch = make(chan map[peer.ID]*types2.ProviderState)
+		st, err = New(context.Background(), core.DS, core.BS, ch, nil)
+		So(err, ShouldBeNil)
+		mockUpdate = map[peer.ID]*types2.ProviderState{
+			testPeer: {
+				Cidlist: []cid.Cid{testCid1, testCid2, testCid3},
+			},
+		}
+		ch <- mockUpdate
+		time.Sleep(time.Millisecond * 500)
+		err = st.Shutdown()
+		So(err, ShouldBeNil)
+
+	})
 }
