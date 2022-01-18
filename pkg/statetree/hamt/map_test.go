@@ -18,6 +18,7 @@ import (
 )
 
 func TestMapSaveAndLoad(t *testing.T) {
+	ctx := context.Background()
 	ds := datastore.NewMapDatastore()
 	mds := dssync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
@@ -47,10 +48,10 @@ func TestMapSaveAndLoad(t *testing.T) {
 	assert.NoError(t, err)
 
 	fmt.Println(newRootCid.String())
-	err = ds.Put(datastore.NewKey("TESTROOTKEY"), newRootCid.Bytes())
+	err = ds.Put(ctx, datastore.NewKey("TESTROOTKEY"), newRootCid.Bytes())
 	assert.NoError(t, err)
 
-	rootCidBytest, err := ds.Get(datastore.NewKey("TESTROOTKEY"))
+	rootCidBytest, err := ds.Get(ctx, datastore.NewKey("TESTROOTKEY"))
 	assert.NoError(t, err)
 
 	_, rootcid, err := cid.CidFromBytes(rootCidBytest)

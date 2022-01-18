@@ -2,6 +2,7 @@ package legs
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-graphsync"
@@ -26,7 +27,7 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 		if !ok {
 			return nil, fmt.Errorf("unsupported link types")
 		}
-		block, err := bs.Get(asCidLink.Cid)
+		block, err := bs.Get(lnkCtx.Ctx, asCidLink.Cid)
 		if err != nil {
 			return nil, err
 		}
@@ -44,7 +45,7 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 			if err != nil {
 				return err
 			}
-			err = bs.Put(block)
+			err = bs.Put(lnkCtx.Ctx, block)
 			return err
 		}
 		return &buffer, committer, nil
@@ -77,19 +78,19 @@ func (sb *settableBuffer) Bytes() []byte {
 // When we receive a block, if it is not an advertisement it means that we
 // finished storing the list of entries of the advertisement, so we are ready
 // to process them and ingest into the indexer core.
-func (l *Core) storageHook() graphsync.OnIncomingBlockHook {
+func (c *Core) storageHook() graphsync.OnIncomingBlockHook {
 	return func(p peer.ID, responseData graphsync.ResponseData, blockData graphsync.BlockData, hookActions graphsync.IncomingBlockHookActions) {
 		log.Debug("hook - Triggering after a block has been stored")
 		// Get cid of the node received.
-		c := blockData.Link().(cidlink.Link).Cid
+		cid := blockData.Link().(cidlink.Link).Cid
 
 		// Get entries node from datastore.
-		_, err := l.BS.Get(c)
+		_, err := c.BS.Get(context.Background(), cid)
 		if err != nil {
 			log.Errorf("Error while fetching the node from datastore: %s", err)
 			return
 		}
 
-		log.Debugf("[recv] block from graphysnc.cid %s\n", c.String())
+		log.Debugf("[recv] block from graphysnc.cid %s\n", cid.String())
 	}
 }

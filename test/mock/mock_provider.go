@@ -3,6 +3,7 @@ package mock
 import (
 	"context"
 	goLegs "github.com/filecoin-project/go-legs"
+	"github.com/filecoin-project/go-legs/dtsync"
 	"github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
@@ -21,7 +22,7 @@ import (
 
 type ProviderMock struct {
 	ID           peer.ID
-	LegsProvider goLegs.LegPublisher
+	LegsProvider goLegs.Publisher
 	lsys         *linking.LinkSystem
 	DagService   format.DAGService
 }
@@ -59,7 +60,7 @@ func getDagNodes() []format.Node {
 func NewMockProvider(p *PandoMock) (*ProviderMock, error) {
 	rand.Seed(time.Now().UnixNano())
 	// mock provider legs
-	srcHost, err := libp2p.New(context.Background())
+	srcHost, err := libp2p.New()
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +68,7 @@ func NewMockProvider(p *PandoMock) (*ProviderMock, error) {
 	srcBlockstore := blockstore.NewBlockstore(srcDatastore)
 	srcLinkSystem := legs.MkLinkSystem(srcBlockstore)
 	dags := merkledag.NewDAGService(blockservice.New(srcBlockstore, offline.Exchange(srcBlockstore)))
-	legsPublisher, err := goLegs.NewPublisher(context.Background(), srcHost, srcDatastore, srcLinkSystem, "PandoPubSub")
+	legsPublisher, err := dtsync.NewPublisher(srcHost, srcDatastore, srcLinkSystem, "PandoPubSub")
 	if err != nil {
 		return nil, err
 	}

@@ -247,7 +247,7 @@ func (mm *MetaManager) backupRecordsAndUpdateStatus(ctx context.Context, _waitBa
 		return NoRecordBackup
 	}
 	fname := fmt.Sprintf(BackFileName, time.Now().UnixNano())
-	err := ExportMetaCar(mm.dagServ, waitBackupCidList, fname, mm.bs)
+	err := ExportMetaCar(ctx, mm.dagServ, waitBackupCidList, fname, mm.bs)
 	log.Debugf("back up as file: %s", fname)
 	if err != nil {
 		log.Errorf("failed to write Dags to car, err: %s", err.Error())
@@ -267,7 +267,7 @@ func (mm *MetaManager) Close() {
 	close(mm.recvCh)
 }
 
-func ExportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, filename string, bs blockstore.Blockstore) error {
+func ExportMetaCar(ctx context.Context, dagds format.NodeGetter, cidlist []cid.Cid, filename string, bs blockstore.Blockstore) error {
 	f, err := os.OpenFile(path.Join(BackupTmpPath, filename), os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Errorf("open file error : %s", err.Error())
@@ -278,7 +278,7 @@ func ExportMetaCar(dagds format.NodeGetter, cidlist []cid.Cid, filename string, 
 	}(f)
 
 	for _, c := range cidlist {
-		_, e := bs.Get(c)
+		_, e := bs.Get(ctx, c)
 		if e != nil {
 			return e
 		}

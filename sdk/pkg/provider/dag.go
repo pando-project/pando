@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"github.com/filecoin-project/go-legs"
+	"github.com/filecoin-project/go-legs/dtsync"
+
 	"github.com/ipfs/go-blockservice"
 	datastoreSync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
@@ -28,7 +30,7 @@ type core struct {
 type DAGProvider struct {
 	Host           host.Host
 	PrivateKey     crypto.PrivKey
-	LegsPublisher  legs.LegPublisher
+	LegsPublisher  legs.Publisher
 	Core           *core
 	ConnectTimeout time.Duration
 	PushTimeout    time.Duration
@@ -44,7 +46,7 @@ func NewDAGProvider(privateKeyStr string, connectTimeout time.Duration, pushTime
 		return nil, err
 	}
 
-	providerHost, err := libp2p.New(context.Background(), libp2p.Identity(privateKey))
+	providerHost, err := libp2p.New(libp2p.Identity(privateKey))
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +59,7 @@ func NewDAGProvider(privateKeyStr string, connectTimeout time.Duration, pushTime
 		storageCore.blockstore, offline.Exchange(storageCore.blockstore)))
 
 	linkSys := link.MkLinkSystem(storageCore.blockstore)
-	legsPublisher, err := legs.NewPublisher(context.Background(),
-		providerHost, datastore, linkSys, "PandoPubSub")
+	legsPublisher, err := dtsync.NewPublisher(providerHost, datastore, linkSys, "PandoPubSub")
 
 	time.Sleep(2 * time.Second)
 

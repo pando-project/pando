@@ -8,20 +8,20 @@ import (
 	"time"
 )
 
-func (l *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
+func (c *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
 	return func(p peer.ID, request graphsync.RequestData, hookActions graphsync.OutgoingRequestHookActions) {
-		accountInfo := account.FetchPeerType(p, l.rateLimiter.Config().Registry)
-		peerRateLimiter := l.rateLimiter.PeerLimiter(p)
+		accountInfo := account.FetchPeerType(p, c.rateLimiter.Config().Registry)
+		peerRateLimiter := c.rateLimiter.PeerLimiter(p)
 		if peerRateLimiter == nil {
-			peerRateLimiter = l.addPeerLimiter(p, accountInfo.PeerType, accountInfo.AccountLevel)
+			peerRateLimiter = c.addPeerLimiter(p, accountInfo.PeerType, accountInfo.AccountLevel)
 		}
 		log.Debugf("rate limit for peer %s is %f token/s, accountLevel is %v",
 			p, peerRateLimiter.Limit(), accountInfo.AccountLevel)
-		if !l.rateLimiter.Allow() || !peerRateLimiter.Allow() {
+		if !c.rateLimiter.Allow() || !peerRateLimiter.Allow() {
 			const limitError = "your request was paused because of the rate limit policy"
-			go l.pauseRequest(request.ID())
+			go c.pauseRequest(request.ID())
 			log.Warnf(limitError)
-			go l.unpauseRequest(request.ID(), peerRateLimiter)
+			go c.unpauseRequest(request.ID(), peerRateLimiter)
 			log.Debugf("leave rateLimitHook")
 			return
 		}
@@ -36,43 +36,43 @@ func (l *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
 //	log.Debugf("request %d canceled", request)
 //}
 
-func (l *Core) pauseRequest(request graphsync.RequestID) {
-	if err := l.lms.GraphSync().PauseRequest(request); err != nil {
+func (c *Core) pauseRequest(request graphsync.RequestID) {
+	if err := c.gs.PauseRequest(request); err != nil {
 		log.Warnf("pause request failed, error: %s", err.Error())
 	}
 }
 
-func (l *Core) unpauseRequest(request graphsync.RequestID, peerRateLimiter *rate.Limiter) {
+func (c *Core) unpauseRequest(request graphsync.RequestID, peerRateLimiter *rate.Limiter) {
 	time.Sleep(time.Second)
-	if l.rateLimiter.Allow() && peerRateLimiter.Allow() {
-		if err := l.lms.GraphSync().UnpauseRequest(request); err != nil {
+	if c.rateLimiter.Allow() && peerRateLimiter.Allow() {
+		if err := c.gs.UnpauseRequest(request); err != nil {
 			log.Warnf("unpause request %d failed, error: %s", request, err.Error())
 		} else {
 			log.Debugf("request %d unpaused", request)
 		}
 	} else {
-		l.unpauseRequest(request, peerRateLimiter)
+		c.unpauseRequest(request, peerRateLimiter)
 	}
 }
 
-func (l *Core) addPeerLimiter(peerID peer.ID, peerType account.PeerType, accountLevel int) *rate.Limiter {
+func (c *Core) addPeerLimiter(peerID peer.ID, peerType account.PeerType, accountLevel int) *rate.Limiter {
 	const action = "add peer limiter"
 	var limiter *rate.Limiter
 	var err error
-	baseTokenRate := l.rateLimiter.Config().BaseTokenRate
+	baseTokenRate := c.rateLimiter.Config().BaseTokenRate
 	switch peerType {
 	case account.UnregisteredPeer:
-		limiter, err = l.rateLimiter.UnregisteredLimiter(baseTokenRate)
+		limiter, err = c.rateLimiter.UnregisteredLimiter(baseTokenRate)
 		checkError(action, err)
 	case account.WhiteListPeer:
-		limiter, err = l.rateLimiter.WhitelistLimiter(baseTokenRate)
+		limiter, err = c.rateLimiter.WhitelistLimiter(baseTokenRate)
 		checkError(action, err)
 	case account.RegisteredPeer:
-		limiter, err = l.rateLimiter.RegisteredLimiter(baseTokenRate, accountLevel, l.rateLimiter.Config().Registry.AccountLevelCount())
+		limiter, err = c.rateLimiter.RegisteredLimiter(baseTokenRate, accountLevel, c.rateLimiter.Config().Registry.AccountLevelCount())
 		checkError(action, err)
 	}
 
-	return l.rateLimiter.AddPeerLimiter(peerID, limiter)
+	return c.rateLimiter.AddPeerLimiter(peerID, limiter)
 }
 
 func checkError(action string, e error) {

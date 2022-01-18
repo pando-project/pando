@@ -59,7 +59,7 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, u
 		cncl:         cncl,
 	}
 	// get the latest root(cid) from ds
-	root, err := ds.Get(datastore.NewKey(RootKey))
+	root, err := ds.Get(ctx, datastore.NewKey(RootKey))
 	if err == nil && root != nil {
 		_, rootcid, err := cid.CidFromBytes(root)
 		if err != nil {
@@ -174,11 +174,11 @@ func (st *StateTree) UpdateRoot(ctx context.Context, update map[peer.ID]*types2.
 	}
 	// put the latest root(cid) into ds
 	log.Debugf("saving the new root, cid: %s", newRootCid.String())
-	err = st.ds.Delete(datastore.NewKey(RootKey))
+	err = st.ds.Delete(ctx, datastore.NewKey(RootKey))
 	if err != nil {
 		return cid.Undef, fmt.Errorf("failed to clean the old root cid")
 	}
-	err = st.ds.Put(datastore.NewKey(RootKey), newRootCid.Bytes())
+	err = st.ds.Put(ctx, datastore.NewKey(RootKey), newRootCid.Bytes())
 	if err != nil {
 		return cid.Undef, fmt.Errorf("failed to save the newest root cid")
 	}
@@ -224,7 +224,7 @@ func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update
 		return fmt.Errorf("falied to save the snapshot. %s", err.Error())
 	}
 	st.snapShot = ssCid
-	err = st.UpdateSnapShotCidList(ssCid)
+	err = st.UpdateSnapShotCidList(ctx, ssCid)
 	if err != nil {
 		return fmt.Errorf("error happened while updating the cidlist of snapshot.%s", err.Error())
 	}
@@ -232,8 +232,8 @@ func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update
 	return nil
 }
 
-func (st *StateTree) UpdateSnapShotCidList(newSsCid cid.Cid) error {
-	snapShotList, err := st.ds.Get(datastore.NewKey(SnapShotList))
+func (st *StateTree) UpdateSnapShotCidList(ctx context.Context, newSsCid cid.Cid) error {
+	snapShotList, err := st.ds.Get(ctx, datastore.NewKey(SnapShotList))
 	if err == nil && snapShotList != nil {
 		ssCidList := new(SnapShotCidList)
 		err := json.Unmarshal(snapShotList, ssCidList)
@@ -246,7 +246,7 @@ func (st *StateTree) UpdateSnapShotCidList(newSsCid cid.Cid) error {
 		if err != nil {
 			return fmt.Errorf("failed to marshal the cidlist of snapshot. %s", err.Error())
 		}
-		err = st.ds.Put(datastore.NewKey(SnapShotList), ssCidListBytes)
+		err = st.ds.Put(ctx, datastore.NewKey(SnapShotList), ssCidListBytes)
 		if err != nil {
 			return fmt.Errorf("failed to save the new snap shot cid list in ds")
 		}
@@ -256,7 +256,7 @@ func (st *StateTree) UpdateSnapShotCidList(newSsCid cid.Cid) error {
 		if err != nil {
 			return fmt.Errorf("failed to marshal the cidlist of snapshot. %s", err.Error())
 		}
-		err = st.ds.Put(datastore.NewKey(SnapShotList), ssCidListBytes)
+		err = st.ds.Put(ctx, datastore.NewKey(SnapShotList), ssCidListBytes)
 		if err != nil {
 			return fmt.Errorf("failed to save the new snap shot cid list in ds")
 		}
@@ -265,7 +265,7 @@ func (st *StateTree) UpdateSnapShotCidList(newSsCid cid.Cid) error {
 }
 
 func (st *StateTree) GetSnapShotCidList() ([]cid.Cid, error) {
-	snapShotList, err := st.ds.Get(datastore.NewKey(SnapShotList))
+	snapShotList, err := st.ds.Get(context.Background(), datastore.NewKey(SnapShotList))
 	if err == nil && snapShotList != nil {
 		ssCidList := new(SnapShotCidList)
 		err := json.Unmarshal(snapShotList, ssCidList)
@@ -337,12 +337,12 @@ func (st *StateTree) GetProviderStateByPeerID(id peer.ID) (*types2.ProviderState
 	}
 }
 
-func (st *StateTree) DeleteInfo() error {
-	err := st.ds.Delete(datastore.NewKey(RootKey))
+func (st *StateTree) DeleteInfo(ctx context.Context) error {
+	err := st.ds.Delete(ctx, datastore.NewKey(RootKey))
 	if err != nil {
 		return err
 	}
-	err = st.ds.Delete(datastore.NewKey(SnapShotList))
+	err = st.ds.Delete(ctx, datastore.NewKey(SnapShotList))
 	if err != nil {
 		return err
 	}

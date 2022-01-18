@@ -118,12 +118,14 @@ func TestStateTreeDeleteDS(t *testing.T) {
 		st, err := New(context.Background(), core.DS, core.BS, ch, ex)
 		So(err, ShouldBeNil)
 
-		err = st.DeleteInfo()
+		ctx := context.Background()
+
+		err = st.DeleteInfo(ctx)
 		So(err, ShouldBeNil)
-		root, err := pando.DS.Get(datastore.NewKey(RootKey))
+		root, err := pando.DS.Get(ctx, datastore.NewKey(RootKey))
 		So(err, ShouldResemble, datastore.ErrNotFound)
 		So(root, ShouldBeNil)
-		snapShotList, err := pando.DS.Get(datastore.NewKey(SnapShotList))
+		snapShotList, err := pando.DS.Get(ctx, datastore.NewKey(SnapShotList))
 		So(err, ShouldResemble, datastore.ErrNotFound)
 		So(snapShotList, ShouldBeNil)
 
@@ -136,15 +138,15 @@ func TestStateTreeInitFailed(t *testing.T) {
 		So(err, ShouldBeNil)
 		core := pando.Core
 		So(core, ShouldNotBeNil)
-
-		err = pando.DS.Put(datastore.NewKey(RootKey), []byte("testdata"))
+		ctx := context.Background()
+		err = pando.DS.Put(ctx, datastore.NewKey(RootKey), []byte("testdata"))
 		So(err, ShouldBeNil)
 
 		ch := make(chan map[peer.ID]*types2.ProviderState)
 		st, err := New(context.Background(), core.DS, core.BS, ch, nil)
 		So(err, ShouldResemble, fmt.Errorf("failed to load the State root from datastore"))
 
-		err = pando.DS.Put(datastore.NewKey(RootKey), testCid1.Bytes())
+		err = pando.DS.Put(ctx, datastore.NewKey(RootKey), testCid1.Bytes())
 		st, err = New(context.Background(), core.DS, core.BS, ch, nil)
 		So(err, ShouldBeNil)
 		err = st.Shutdown()

@@ -2,15 +2,10 @@ package legs_test
 
 import (
 	"context"
-	"fmt"
 	"github.com/agiledragon/gomonkey/v2"
-	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
-	"github.com/libp2p/go-libp2p-core/peer"
 	. "github.com/smartystreets/goconvey/convey"
-	. "pando/pkg/legs"
 	"pando/test/mock"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -22,9 +17,9 @@ func TestCreate(t *testing.T) {
 		p, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
 		c := p.Core
-		err = c.Close(context.Background())
+		err = c.Close()
 		So(err, ShouldBeNil)
-		err = c.Close(context.Background())
+		err = c.Close()
 		So(err, ShouldBeNil)
 	})
 
@@ -32,6 +27,7 @@ func TestCreate(t *testing.T) {
 
 func TestGetMetaRecord(t *testing.T) {
 	Convey("test get meta record", t, func() {
+		//_ = logging.SetLogLevel("*", "debug")
 		ctx, cncl := context.WithTimeout(context.Background(), time.Minute*5)
 		p, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
@@ -40,7 +36,7 @@ func TestGetMetaRecord(t *testing.T) {
 		So(err, ShouldBeNil)
 		provider, err := mock.NewMockProvider(p)
 		So(err, ShouldBeNil)
-		err = core.Subscribe(context.Background(), provider.ID)
+		//err = core.Subscribe(context.Background(), provider.ID)
 		So(err, ShouldBeNil)
 		time.Sleep(time.Second * 2)
 		cidlist, err := provider.SendDag()
@@ -58,54 +54,20 @@ func TestGetMetaRecord(t *testing.T) {
 			if err := provider.Close(); err != nil {
 				t.Error(err)
 			}
-			if err := core.Close(context.Background()); err != nil {
+			if err := core.Close(); err != nil {
 				t.Error(err)
 			}
 		})
 	})
 }
 
-func TestRepeatSubAndUnsub(t *testing.T) {
-	Convey("when repeat subscribing and unsubscribing provider then get error", t, func() {
-		ctx, cncl := context.WithTimeout(context.Background(), time.Minute*5)
-		defer cncl()
-		testPeer, _ := peer.Decode("12D3KooWNtUworDmrdTUBrLqeD8s36MLnpRX1QJGQ46HXaJVBXV4")
-		testPeer2, _ := peer.Decode("12D3KooWNtUworDmrdBTBrLqeD5s26MLnpRX1QJGQ46HXaJVBXV4")
-		p, err := mock.NewPandoMock()
-		So(err, ShouldBeNil)
-		core := p.Core
-		err = core.Subscribe(ctx, testPeer)
-		So(err, ShouldBeNil)
-		err = core.Subscribe(ctx, testPeer)
-		So(err, ShouldBeNil)
-		patch := gomonkey.ApplyPrivateMethod(reflect.TypeOf(core), "getLatestSync", func(_ *Core, peerID peer.ID) (cid.Cid, error) {
-			return cid.Undef, fmt.Errorf("unknown error")
-		})
-		defer patch.Reset()
-		err = core.Unsubscribe(ctx, testPeer)
-		So(err, ShouldBeNil)
-
-		err = core.Subscribe(ctx, testPeer)
-		So(err, ShouldResemble, fmt.Errorf("unknown error"))
-
-		err = core.Unsubscribe(ctx, testPeer2)
-		So(err, ShouldBeNil)
-	})
-
-}
-
 func TestRateLimiter(t *testing.T) {
 	Convey("Test rate limiter", t, func() {
 		patch := gomonkey.ApplyGlobalVar(&mock.BaseTokenRate, float64(1))
 		defer patch.Reset()
-		ctx, cncl := context.WithTimeout(context.Background(), time.Minute*5)
-		defer cncl()
 		p, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
-		core := p.Core
 		provider, err := mock.NewMockProvider(p)
-		So(err, ShouldBeNil)
-		err = core.Subscribe(ctx, provider.ID)
 		So(err, ShouldBeNil)
 
 		for i := 0; i < 1000; i++ {

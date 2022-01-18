@@ -16,7 +16,7 @@ func NewPandoCmd() *cobra.Command {
 	}
 
 	childCommands := []*cobra.Command{
-		subscribeCmd(),
+		//subscribeCmd(),
 		infoCmd(),
 		healthCmd(),
 	}
