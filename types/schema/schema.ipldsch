@@ -1,0 +1,34 @@
+type Map {String:nullable Any}
+type List [nullable Any]
+type Any union {
+	| Bool bool
+	| Int int
+	| Float float
+	| String string
+	| Bytes bytes
+	| Map map
+	| List list
+	| Link link
+} representation kinded
+
+type EntryChunk struct {
+	Entries List_Bytes
+	Next optional Link_EntryChunk
+}
+
+type Link_EntryChunk &EntryChunk
+type List_String [String]
+type List_Bytes [Bytes]
+
+type Advertisement struct {
+	# Previous advertisement.
+	PreviousID optional Link_Advertisement
+	# Provider ID of the advertisement.
+	Provider String
+	# Advertisement signature.
+	Signature Bytes
+	# Entries with a link to the dag data
+	Entries Link
+}
+
+type Link_Advertisement &Advertisement

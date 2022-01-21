@@ -98,6 +98,10 @@ func setLoglevel() error {
 	if err != nil {
 		return err
 	}
+	err = logging.SetLogLevel("meta-manager", "warn")
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

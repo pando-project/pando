@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"github.com/filecoin-project/go-legs"
 	"github.com/filecoin-project/go-legs/dtsync"
 
@@ -110,6 +111,7 @@ func (p *DAGProvider) PushMany(nodes []ipldFormat.Node) error {
 	}
 
 	for _, node := range nodes {
+		fmt.Printf("pushing cid: %s\n", node.Cid().String())
 		err := p.LegsPublisher.UpdateRoot(ctx, node.Cid())
 		if err != nil {
 			return err
