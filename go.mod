@@ -42,7 +42,7 @@ require (
 	github.com/ipfs/go-log/v2 v2.3.0
 	github.com/ipfs/go-merkledag v0.4.1
 	github.com/ipld/go-car v0.3.2
-	github.com/ipld/go-ipld-prime v0.12.4-0.20211026094848-168715526f2d
+	github.com/ipld/go-ipld-prime v0.14.3
 	github.com/libp2p/go-libp2p v0.15.1
 	github.com/libp2p/go-libp2p-core v0.9.0
 	github.com/mattn/go-isatty v0.0.14 // indirect
