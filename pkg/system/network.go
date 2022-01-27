@@ -2,13 +2,14 @@ package system
 
 import (
 	"fmt"
+	"github.com/shopspring/decimal"
+	"math"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/montanaflynn/stats"
-	"github.com/shopspring/decimal"
 	"github.com/showwin/speedtest-go/speedtest"
 )
 
@@ -61,7 +62,10 @@ func TestInternetSpeed(onlyOneTarget bool) (float64, error) {
 
 	sort.Float64s(downloadSpeedList)
 	medianSpeed, err := stats.Median(downloadSpeedList)
-	medianSpeed, _ = decimal.NewFromFloat(medianSpeed).Round(2).Float64()
+	if !math.IsNaN(medianSpeed) {
+		medianSpeed, _ = decimal.NewFromFloat(medianSpeed).Round(2).Float64()
+	}
+
 	fmt.Printf("speed test complete(takes %s in total), median download speed is %f Mbps\n", timeDuration, medianSpeed)
 	return medianSpeed, nil
 }

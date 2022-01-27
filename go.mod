@@ -52,6 +52,7 @@ require (
 	github.com/montanaflynn/stats v0.6.6
 	github.com/multiformats/go-multiaddr v0.4.1
 	github.com/multiformats/go-multicodec v0.3.1-0.20210902112759-1539a079fd61
+	github.com/multiformats/go-multihash v0.1.0 // indirect
 	github.com/prometheus/client_golang v1.11.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/showwin/speedtest-go v1.1.4

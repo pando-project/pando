@@ -4,17 +4,18 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime"
 	"log"
 	"math/rand"
 	"os"
 	"pando/pkg/legs"
+	schema2 "pando/types/schema"
 	"strconv"
 	"time"
 
-	"github.com/ipfs/go-blockservice"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
 	ic "github.com/libp2p/go-libp2p-core/crypto"
@@ -28,27 +29,26 @@ import (
 	"github.com/libp2p/go-libp2p"
 )
 
-func getDagNodes(n int) [][]format.Node {
-	var dags [][]format.Node
-	for i := 0; i < n; i++ {
-		a := merkledag.NewRawNode([]byte("aaaaa" + string(rune(rand.Intn(100000)))))
-		b := merkledag.NewRawNode([]byte("bbbbb" + string(rune(rand.Intn(100000)))))
-		c := merkledag.NewRawNode([]byte("ccccc" + string(rune(rand.Intn(100000)))))
-
-		nd1 := &merkledag.ProtoNode{}
-		nd1.AddNodeLink("cat", a)
-
-		nd2 := &merkledag.ProtoNode{}
-		nd2.AddNodeLink("first", nd1)
-		nd2.AddNodeLink("dog", b)
-
-		nd3 := &merkledag.ProtoNode{}
-		nd3.AddNodeLink("second", nd2)
-		nd3.AddNodeLink("bear", c)
-		dags = append(dags, []format.Node{nd3, nd2, nd1, c, b, a})
+func createMetadata(linkSystem ipld.LinkSystem) cid.Cid {
+	metadata1, _ := schema2.NewMetadata(nil)
+	metadataLink1, err := schema2.MetadataLink(linkSystem, metadata1)
+	if err != nil {
+		panic(err)
 	}
 
-	return dags
+	metadata2, _ := schema2.NewMetadata(metadataLink1)
+	metadataLink2, err := schema2.MetadataLink(linkSystem, metadata2)
+	if err != nil {
+		panic(err)
+	}
+
+	metadata3, _ := schema2.NewMetadata(metadataLink2)
+	metadataLink3, err := schema2.MetadataLink(linkSystem, metadata3)
+	if err != nil {
+		panic(err)
+	}
+
+	return metadataLink3.ToCid()
 }
 
 // eg: CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w= 1 12D3KooWC3jxxw4TdQtoZDv3QNwmh9rtuiyVL8CADpnJYKHh9AiA /ip4/52.14.211.248/tcp/9000 30
@@ -67,7 +67,7 @@ func main() {
 	}
 
 	privstr := os.Args[1]
-	dagnum, err := strconv.Atoi(os.Args[2])
+	_, err := strconv.Atoi(os.Args[2])
 	if err != nil {
 		log.Fatal("The count of dag must be integer, not: ", os.Args[2])
 	}
@@ -99,14 +99,15 @@ func main() {
 	fmt.Println("p2pHost addr:", h.Addrs())
 	fmt.Println("p2pHost id:", h.ID())
 	bs := blockstore.NewBlockstore(srcStore)
-	srcLnkS := legs.MkLinkSystem(bs)
-	dags := merkledag.NewDAGService(blockservice.New(bs, offline.Exchange(bs)))
+	linkSystem := legs.MkLinkSystem(bs)
+	metadataRootCid := createMetadata(linkSystem)
+
 	// connect Pando
-	ma, err := multiaddr.NewMultiaddr(PandoAddrStr + "/ipfs/" + PandoPeerID)
+	multiAddr, err := multiaddr.NewMultiaddr(PandoAddrStr + "/ipfs/" + PandoPeerID)
 	if err != nil {
 		log.Fatal(err)
 	}
-	peerInfo, err := peer.AddrInfoFromP2pAddr(ma)
+	peerInfo, err := peer.AddrInfoFromP2pAddr(multiAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -114,31 +115,16 @@ func main() {
 		log.Fatal(err)
 	}
 	// create provider legs
-	lp, err := golegs.NewPublisher(context.Background(), h, srcStore, srcLnkS, "PandoPubSub")
+	lp, err := golegs.NewPublisher(context.Background(), h, srcStore, linkSystem, "PandoPubSub")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer lp.Close()
 	time.Sleep(time.Second * 2)
 
-	// store test dag
-	dagsNodes := getDagNodes(dagnum)
-	for _, dagNodes := range dagsNodes {
-		for i := 0; i < len(dagNodes); i++ {
-			err = dags.Add(context.Background(), dagNodes[i])
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}
-
-	time.Sleep(time.Second)
-	for _, dagNodes := range dagsNodes {
-		fmt.Printf("the dag root cid is: %s\r\n", dagNodes[0].Cid())
-		err = lp.UpdateRoot(context.Background(), dagNodes[0].Cid())
-		if err != nil {
-			log.Fatal(err)
-		}
+	err = lp.UpdateRoot(context.Background(), metadataRootCid)
+	if err != nil {
+		log.Fatal(err)
 	}
 	fmt.Println("waiting for data transferring completed")
 
