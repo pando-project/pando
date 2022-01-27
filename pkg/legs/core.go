@@ -8,6 +8,8 @@ import (
 	"github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/ipld/go-ipld-prime/traversal/selector/builder"
 	"pando/pkg/metadata"
 	"pando/pkg/policy"
 	"time"
@@ -51,8 +53,13 @@ func NewLegsCore(ctx context.Context,
 	outMetaCh chan<- *metadata.MetaRecord,
 	rateLimiter *policy.Limiter) (*Core, error) {
 
-	lnkSys := MkLinkSystem(bs)
-	lms, err := golegs.NewMultiSubscriber(ctx, *host, ds, lnkSys, PubSubTopic, nil)
+	lnkSys := MkLinkSystem(ds)
+	ssb := builder.NewSelectorSpecBuilder(basicnode.Prototype.Any)
+	selector := ssb.ExploreFields(
+		func(efsb builder.ExploreFieldsSpecBuilder) {
+			efsb.Insert("PreviousID", ssb.ExploreRecursiveEdge())
+		}).Node()
+	lms, err := golegs.NewMultiSubscriber(ctx, *host, ds, lnkSys, PubSubTopic, selector)
 	if err != nil {
 		return nil, err
 	}

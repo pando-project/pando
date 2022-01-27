@@ -196,7 +196,7 @@ func (mm *MetaManager) backupDagToCarLocally(ctx context.Context) {
 	go func() {
 		for range time.NewTicker(mm.backupMaxInterval).C {
 			backupMutex.Lock()
-			log.Debugw("start backup the car in local")
+			// log.Debugw("start backup the car in local")
 			// for update the isBackup later because the original slice has changed
 			_waitBackupRecoed := make([]*backupRecord, len(waitBackupRecoed))
 			copy(_waitBackupRecoed, waitBackupRecoed)

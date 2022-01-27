@@ -15,9 +15,6 @@ import (
 	"time"
 
 	leveldb "github.com/ipfs/go-ds-leveldb"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	format "github.com/ipfs/go-ipld-format"
-	"github.com/ipfs/go-merkledag"
 	ic "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
@@ -96,10 +93,10 @@ func main() {
 	h, _ := libp2p.New(context.Background(),
 		libp2p.Identity(privkey),
 	)
-	fmt.Println("p2pHost addr:", h.Addrs())
-	fmt.Println("p2pHost id:", h.ID())
-	bs := blockstore.NewBlockstore(srcStore)
-	linkSystem := legs.MkLinkSystem(bs)
+	fmt.Println("MultiAddr:", h.Addrs())
+	fmt.Println("Peer id:", h.ID())
+	// bs := blockstore.NewBlockstore(srcStore)
+	linkSystem := legs.MkLinkSystem(dstore)
 	metadataRootCid := createMetadata(linkSystem)
 
 	// connect Pando
