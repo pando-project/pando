@@ -110,30 +110,16 @@ func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, 
 	}
 	// todo
 	//defer dtManager.Stop(ctx)
-	ls, err := golegs.NewSubscriber(h, ds, lnkSys, PubSubTopic, nil, golegs.AllowPeer(reg.Authorized), golegs.DtManager(dtManager))
+	ls, err := golegs.NewSubscriber(h, ds, lnkSys, PubSubTopic, nil, golegs.AllowPeer(reg.Authorized), golegs.DtManager(dtManager), golegs.BlockHook(c.storageHook))
 	if err != nil {
 		return nil, nil, err
 	}
 
-	gs.RegisterIncomingBlockHook(c.storageHook())
 	gs.RegisterOutgoingRequestHook(c.rateLimitHook())
 	dtManager.SubscribeToEvents(onDataTransferComplete)
 
 	return ls, gs, nil
 }
-
-// Get the latest cid synced for the account.
-//func (l *Core) getLatestSync(peerID peer.ID) (cid.Cid, error) {
-//	b, err := l.DS.Get(datastore.NewKey(syncPrefix + peerID.String()))
-//	if err != nil {
-//		if err == datastore.ErrNotFound {
-//			return cid.Undef, nil
-//		}
-//		return cid.Undef, err
-//	}
-//	_, c, err := cid.CidFromBytes(b)
-//	return c, err
-//}
 
 func (c *Core) Close() error {
 	c.cancelSyncFn()
@@ -142,49 +128,6 @@ func (c *Core) Close() error {
 	// Close leg transport.
 	err := c.ls.Close()
 	return err
-}
-
-//func (l *Core) listenSubUpdates(sub *subscriber) {
-//	for c := range sub.watcher {
-//		// Persist the latest sync
-//		if err := l.putLatestSync(sub.peerID, c); err != nil {
-//			log.Errorf("Error persisting latest sync: %s", err)
-//		}
-//
-//		l.recvMetaCh <- &metadata.MetaRecord{
-//			Cid:        c,
-//			ProviderID: sub.peerID,
-//			Time:       uint64(time.Now().Unix()),
-//		}
-//	}
-//}
-
-//// Tracks the latest sync for a specific account.
-//func (l *Core) putLatestSync(peerID peer.ID, c cid.Cid) error {
-//	// Do not save if empty CIDs are received. Closing the channel
-//	// may lead to receiving empty CIDs.
-//	if c == cid.Undef {
-//		return nil
-//	}
-//
-//	return l.DS.Put(datastore.NewKey(syncPrefix+peerID.String()), c.Bytes())
-//}
-//
-//func (l *Core) Close(ctx context.Context) error {
-//	// Unsubscribe from all peers
-//	for k := range l.subs {
-//		err := l.Unsubscribe(ctx, k)
-//		if err != nil {
-//			return err
-//		}
-//	}
-//	// Close leg transport.
-//	err := l.lms.Close(ctx)
-//	return err
-//}
-//
-func (c *Core) SetRatelimiter(rl *policy.Limiter) {
-	c.rateLimiter = rl
 }
 
 // restoreLatestSync reads the latest sync for each previously synced provider,
@@ -230,6 +173,10 @@ func (c *Core) restoreLatestSync() error {
 	}
 	log.Infow("Loaded latest sync for providers", "count", count)
 	return nil
+}
+
+func (c *Core) SetRatelimiter(rl *policy.Limiter) {
+	c.rateLimiter = rl
 }
 
 // watchSyncFinished reads legs.SyncFinished events and records the latest sync

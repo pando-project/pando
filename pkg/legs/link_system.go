@@ -5,10 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ipfs/go-graphsync"
+	blocks "github.com/ipfs/go-block-format"
+	"github.com/ipfs/go-cid"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/codec/dagjson"
+	"github.com/ipld/go-ipld-prime/multicodec"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"io"
@@ -39,146 +40,54 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 		buf := bytes.NewBuffer(nil)
 		return buf, func(lnk ipld.Link) error {
 			c := lnk.(cidlink.Link).Cid
+			codec := lnk.(cidlink.Link).Prefix().Codec
 			origBuf := buf.Bytes()
 
 			log := log.With("cid", c)
 
 			// Decode the node to check its type.
-			n, err := decodeIPLDNode(buf)
+			n, err := decodeIPLDNode(codec, buf)
 			if err != nil {
 				log.Errorw("Error decoding IPLD node in linksystem", "err", err)
 				return errors.New("bad ipld data")
 			}
 			// If it is an advertisement.
-			if isAdvertisement(n) {
+			if isMetadata(n) {
 				log.Infow("Received advertisement")
-
-				// Verify that the signature is correct and the advertisement
-				// is valid.
-				ad, provID, err := verifyAdvertisement(n)
+				block, err := blocks.NewBlockWithCid(origBuf, c)
 				if err != nil {
 					return err
 				}
-
-				// Register provider or update existing registration.  The
-				// provider must be allowed by policy to be registered.
-				err = reg.RegisterOrUpdate(lctx.Ctx, provID, addrs, c)
-				if err != nil {
-					return err
-				}
-
-				// Store entries link into the reverse map so there is a way of
-				// identifying what advertisementID announced these entries
-				// when we come across the link.
-				log.Debug("Saving map of entries to advertisement and advertisement data")
-				elnk, err := ad.FieldEntries().AsLink()
-				if err != nil {
-					log.Errorw("Error getting link for entries from advertisement", "err", err)
-					return errBadAdvert
-				}
-				err = putCidToAdMapping(lctx.Ctx, ds, elnk, c)
-				if err != nil {
-					log.Errorw("Error storing reverse map for entries in datastore", "err", err)
-					return errors.New("cannot process advertisement")
-				}
-
-				// Persist the advertisement.  This is read later when
-				// processing each chunk of entries, to get info common to all
-				// entries in a chunk.
-				return ds.Put(lctx.Ctx, dsKey(c.String()), origBuf)
+				return bs.Put(lctx.Ctx, block)
 			}
-			log.Debug("Received IPLD node")
+			log.Debug("Received unexpected IPLD node, skip")
 			// Any other type of node (like entries) are stored right away.
-			return ds.Put(lctx.Ctx, dsKey(c.String()), origBuf)
+			return nil
 		}, nil
 	}
-	//lsys.StorageWriteOpener = func(lnkCtx ipld.LinkContext) (io.Writer, ipld.BlockWriteCommitter, error) {
-	//	var buffer settableBuffer
-	//	committer := func(lnk ipld.Link) error {
-	//		asCidLink, ok := lnk.(cidlink.Link)
-	//		if !ok {
-	//			return fmt.Errorf("unsupported link types")
-	//		}
-	//		fmt.Printf("[link-sys committer]time: %v, cid: %s\n", time.Now(), asCidLink.Cid)
-	//		block, err := blocks.NewBlockWithCid(buffer.Bytes(), asCidLink.Cid)
-	//		if err != nil {
-	//			return err
-	//		}
-	//		err = bs.Put(lnkCtx.Ctx, block)
-	//		return err
-	//	}
-	//	return &buffer, committer, nil
-	//}
 	return lsys
 }
 
-func decodeAd(n ipld.Node) (schema2.Advertisement, error) {
-	nb := schema2.Type.Advertisement.NewBuilder()
+func decodeAd(n ipld.Node) (schema2.Metadata, error) {
+	nb := schema2.Type.Metadata.NewBuilder()
 	err := nb.AssignNode(n)
 	if err != nil {
 		return nil, err
 	}
-	return nb.Build().(schema2.Advertisement), nil
-}
-
-func verifyAdvertisement(n ipld.Node) (schema2.Advertisement, peer.ID, error) {
-	ad, err := decodeAd(n)
-	if err != nil {
-		log.Errorw("Cannot decode advertisement", "err", err)
-		return nil, peer.ID(""), errBadAdvert
-	}
-	// Verify advertisement signature
-	signerID, err := schema2.VerifyAdvertisement(ad)
-	if err != nil {
-		// stop exchange, verification of signature failed.
-		log.Errorw("Advertisement signature verification failed", "err", err)
-		return nil, peer.ID(""), errInvalidAdvertSignature
-	}
-
-	// Get provider ID from advertisement.
-	provID, err := providerFromAd(ad)
-	if err != nil {
-		log.Errorw("Cannot get provider from advertisement", "err", err)
-		return nil, peer.ID(""), errBadAdvert
-	}
-
-	// Verify that the advertised provider has signed, and
-	// therefore approved, the advertisement regardless of who
-	// published the advertisement.
-	if signerID != provID {
-		// TODO: Have policy that allows a signer (publisher) to
-		// sign advertisements for certain providers.  This will
-		// allow that signer to add, update, and delete indexed
-		// content on behalf of those providers.
-		log.Errorw("Advertisement not signed by provider", "provider", provID, "signer", signerID)
-		return nil, peer.ID(""), errInvalidAdvertSignature
-	}
-
-	return ad, provID, nil
-}
-
-// providerFromAd reads the provider ID from an advertisement
-func providerFromAd(ad schema2.Advertisement) (peer.ID, error) {
-	provider, err := ad.FieldProvider().AsString()
-	if err != nil {
-		return peer.ID(""), fmt.Errorf("cannot read provider from advertisement: %s", err)
-	}
-
-	providerID, err := peer.Decode(provider)
-	if err != nil {
-		return peer.ID(""), fmt.Errorf("cannot decode provider peer id: %s", err)
-	}
-
-	return providerID, nil
+	return nb.Build().(schema2.Metadata), nil
 }
 
 // decodeIPLDNode decodes an ipld.Node from bytes read from an io.Reader.
-func decodeIPLDNode(r io.Reader) (ipld.Node, error) {
+func decodeIPLDNode(codec uint64, r io.Reader) (ipld.Node, error) {
 	// NOTE: Considering using the schema prototypes.  This was failing, using
 	// a map gives flexibility.  Maybe is worth revisiting this again in the
 	// future.
 	nb := basicnode.Prototype.Any.NewBuilder()
-	err := dagjson.Decode(nb, r)
+	decoder, err := multicodec.LookupDecoder(codec)
+	if err != nil {
+		return nil, err
+	}
+	err = decoder(nb, r)
 	if err != nil {
 		return nil, err
 	}
@@ -210,27 +119,79 @@ func (sb *settableBuffer) Bytes() []byte {
 // When we receive a block, if it is not an advertisement it means that we
 // finished storing the list of entries of the advertisement, so we are ready
 // to process them and ingest into the indexer core.
-func (c *Core) storageHook() graphsync.OnIncomingBlockHook {
-	return func(p peer.ID, responseData graphsync.ResponseData, blockData graphsync.BlockData, hookActions graphsync.IncomingBlockHookActions) {
-		log.Debug("hook - Triggering after a block has been stored")
-		// Get cid of the node received.
-		cid := blockData.Link().(cidlink.Link).Cid
+//func (c *Core) storageHook() graphsync.OnIncomingBlockHook {
+//	return func(p peer.ID, responseData graphsync.ResponseData, blockData graphsync.BlockData, hookActions graphsync.IncomingBlockHookActions) {
+//		log.Debug("hook - Triggering after a block has been stored")
+//		// Get cid of the node received.
+//		cid := blockData.Link().(cidlink.Link).Cid
+//
+//		// Get entries node from datastore.
+//		_, err := c.BS.Get(context.Background(), cid)
+//		if err != nil {
+//			log.Errorf("Error while fetching the node from blockstore: %s", err)
+//			return
+//		}
+//
+//		// Decode block to IPLD node
+//		node, err := decodeIPLDNode(c.Prefix().Codec, bytes.NewBuffer(val))
+//		if err != nil {
+//			log.Errorw("Error decoding ipldNode", "err", err)
+//			return
+//		}
+//
+//		log.Debugf("[recv] block from graphysnc.cid %s\n", cid.String())
+//	}
+//}
 
-		// Get entries node from datastore.
-		_, err := c.BS.Get(context.Background(), cid)
+func (c *Core) storageHook(pubID peer.ID, cc cid.Cid) {
+	log := log.With("publisher", pubID, "cid", cc)
+
+	// Get data corresponding to the block.
+	val, err := c.BS.Get(context.Background(), cc)
+	if err != nil {
+		log.Errorw("Error while fetching the node from datastore", "err", err)
+		return
+	}
+
+	// Decode block to IPLD node
+	node, err := decodeIPLDNode(cc.Prefix().Codec, bytes.NewBuffer(val.RawData()))
+	if err != nil {
+		log.Errorw("Error decoding ipldNode", "err", err)
+		return
+	}
+
+	// If this is an advertisement, sync entries within it.
+	if isMetadata(node) {
+		ad, err := decodeAd(node)
 		if err != nil {
-			log.Errorf("Error while fetching the node from datastore: %s", err)
+			log.Errorw("Error decoding advertisement", "err", err)
 			return
 		}
 
-		log.Debugf("[recv] block from graphysnc.cid %s\n", cid.String())
+		var prevCid cid.Cid
+		if ad.FieldPreviousID().Exists() {
+			lnk, err := ad.FieldPreviousID().Must().AsLink()
+			if err != nil {
+				log.Errorw("Cannot read previous link from metadata", "err", err)
+			} else {
+				prevCid = lnk.(cidlink.Link).Cid
+			}
+		}
+
+		log.Infow("Incoming block is a metadata", "prevAd", prevCid)
+
+		//go c.syncChainMeta(pubID, ad, cc, prevCid)
+		return
 	}
 }
 
-// Checks if an IPLD node is an advertisement, by looking to see if it has a
-// "Signature" field.  We may need additional checks if we extend the schema
+//func  (c *Core) syncChainMeta(from peer.ID, ad schema2.Metadata, adCid, prevCid cid.Cid){
+//}
+
+// Checks if an IPLD node is a Metadata, by looking to see if it has a
+// "PreviousID" field.  We may need additional checks if we extend the schema
 // with new types that are traversable.
-func isAdvertisement(n ipld.Node) bool {
-	indexID, _ := n.LookupByString("Signature")
-	return indexID != nil
+func isMetadata(n ipld.Node) bool {
+	prev, _ := n.LookupByString("PreviousID")
+	return prev != nil
 }

@@ -4,19 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	dag "github.com/ipfs/go-merkledag"
+	"github.com/ipld/go-car/v2"
+	"github.com/ipld/go-ipld-prime"
 	"pando/pkg/option"
 	"pando/pkg/statetree/types"
 	"path"
 
-	bsrv "github.com/ipfs/go-blockservice"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	offline "github.com/ipfs/go-ipfs-exchange-offline"
-	format "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log/v2"
-	"github.com/ipld/go-car"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"os"
 
@@ -65,11 +62,11 @@ type MetaManager struct {
 	backupCh          chan cid.Cid
 	ds                datastore.Datastore
 	bs                blockstore.Blockstore
-	dagServ           format.NodeGetter
 	cache             map[peer.ID][]*MetaRecord
 	mutex             sync.Mutex
 	backupMaxInterval time.Duration
 	estBackupSys      *backupSystem
+	ls                *ipld.LinkSystem
 	ctx               context.Context
 	cncl              context.CancelFunc
 }
@@ -85,7 +82,7 @@ type MetaRecord struct {
 	Time       uint64
 }
 
-func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, backupCfg *option.Backup) (*MetaManager, error) {
+func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, ls *ipld.LinkSystem, backupCfg *option.Backup) (*MetaManager, error) {
 	ebs, err := NewBackupSys(backupCfg)
 	if err != nil {
 		return nil, err
@@ -100,12 +97,11 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, b
 		backupCh:       make(chan cid.Cid, 1000),
 		ds:             ds,
 		bs:             bs,
+		ls:             ls,
 		cache:          make(map[peer.ID][]*MetaRecord),
-		dagServ:        dag.NewDAGService(bsrv.New(bs, offline.Exchange(bs))),
-		//backupMaxInterval: BackupMaxInterval,
-		estBackupSys: ebs,
-		ctx:          cctx,
-		cncl:         cncl,
+		estBackupSys:   ebs,
+		ctx:            cctx,
+		cncl:           cncl,
 	}
 
 	go mm.dealReceivedMeta()
@@ -247,7 +243,7 @@ func (mm *MetaManager) backupRecordsAndUpdateStatus(ctx context.Context, _waitBa
 		return NoRecordBackup
 	}
 	fname := fmt.Sprintf(BackFileName, time.Now().UnixNano())
-	err := ExportMetaCar(ctx, mm.dagServ, waitBackupCidList, fname, mm.bs)
+	err := ExportMetaCar(ctx, mm.ls, waitBackupCidList, fname, mm.bs)
 	log.Debugf("back up as file: %s", fname)
 	if err != nil {
 		log.Errorf("failed to write Dags to car, err: %s", err.Error())
@@ -267,7 +263,12 @@ func (mm *MetaManager) Close() {
 	close(mm.recvCh)
 }
 
-func ExportMetaCar(ctx context.Context, dagds format.NodeGetter, cidlist []cid.Cid, filename string, bs blockstore.Blockstore) error {
+type backInfo struct {
+	root cid.Cid
+	sel  ipld.Node
+}
+
+func ExportMetaCar(ctx context.Context, ls *ipld.LinkSystem, backInfos []backInfo, filename string, bs blockstore.Blockstore) error {
 	f, err := os.OpenFile(path.Join(BackupTmpPath, filename), os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Errorf("open file error : %s", err.Error())
@@ -277,24 +278,19 @@ func ExportMetaCar(ctx context.Context, dagds format.NodeGetter, cidlist []cid.C
 		_ = f.Close()
 	}(f)
 
-	for _, c := range cidlist {
-		_, e := bs.Get(ctx, c)
+	for _, c := range backInfos {
+		_, e := bs.Get(ctx, c.root)
 		if e != nil {
 			return e
 		}
 		//log.Debugf("[block] block value: ", vb.RawData())
-
-		_, e = dagds.Get(context.Background(), c)
-		if e != nil {
-			return e
+		_, err = car.TraverseV1(context.Background(), ls, c.root, c.sel, f)
+		if err != nil {
+			log.Errorf("failed to export the car for metadata, %s", err.Error())
+			return err
 		}
-		//log.Debugf("[dag] block value: ", v.String())
+
 	}
 
-	err = car.WriteCar(context.Background(), dagds, cidlist, f)
-	if err != nil {
-		log.Errorf("failed to export the car for metadata, %s", err.Error())
-		return err
-	}
 	return nil
 }
