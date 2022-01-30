@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/ipld/go-car/v2"
 	"github.com/ipld/go-ipld-prime"
+	selectParse "github.com/ipld/go-ipld-prime/traversal/selector/parse"
 	"pando/pkg/option"
 	"pando/pkg/statetree/types"
 	"path"
@@ -232,10 +233,13 @@ func (mm *MetaManager) backupDagToCarLocally(ctx context.Context) {
 }
 
 func (mm *MetaManager) backupRecordsAndUpdateStatus(ctx context.Context, _waitBackupRecord []*backupRecord) error {
-	waitBackupCidList := make([]cid.Cid, 0)
+	waitBackupCidList := make([]backInfo, 0)
 	for _, r := range _waitBackupRecord {
 		if !r.isBackup && r.cid != cid.Undef {
-			waitBackupCidList = append(waitBackupCidList, r.cid)
+			waitBackupCidList = append(waitBackupCidList, backInfo{
+				root: r.cid,
+				sel:  selectParse.CommonSelector_ExploreAllRecursively,
+			})
 		}
 	}
 	if len(waitBackupCidList) == 0 {

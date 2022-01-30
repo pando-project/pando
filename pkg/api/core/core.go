@@ -4,6 +4,7 @@ import (
 	"github.com/ipfs/go-datastore/sync"
 	"github.com/ipfs/go-ds-leveldb"
 	"github.com/ipfs/go-ipfs-blockstore"
+	"github.com/ipld/go-ipld-prime"
 	"pando/pkg/legs"
 	"pando/pkg/lotus"
 	"pando/pkg/metadata"
@@ -18,6 +19,7 @@ type Core struct {
 	Registry      *registry.Registry
 	LegsCore      *legs.Core
 	StoreInstance *StoreInstance
+	LinkSystem    *ipld.LinkSystem
 }
 
 type StoreInstance struct {

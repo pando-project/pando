@@ -13,7 +13,7 @@ import (
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"io"
-	schema2 "pando/types/schema"
+	"pando/pkg/types/schema"
 
 	// dagjson codec registered for encoding
 
@@ -68,13 +68,13 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 	return lsys
 }
 
-func decodeAd(n ipld.Node) (schema2.Metadata, error) {
-	nb := schema2.Type.Metadata.NewBuilder()
+func decodeAd(n ipld.Node) (schema.Metadata, error) {
+	nb := schema.Type.Metadata.NewBuilder()
 	err := nb.AssignNode(n)
 	if err != nil {
 		return nil, err
 	}
-	return nb.Build().(schema2.Metadata), nil
+	return nb.Build().(schema.Metadata), nil
 }
 
 // decodeIPLDNode decodes an ipld.Node from bytes read from an io.Reader.
@@ -162,15 +162,15 @@ func (c *Core) storageHook(pubID peer.ID, cc cid.Cid) {
 
 	// If this is an advertisement, sync entries within it.
 	if isMetadata(node) {
-		ad, err := decodeAd(node)
+		metadata, err := decodeAd(node)
 		if err != nil {
 			log.Errorw("Error decoding advertisement", "err", err)
 			return
 		}
 
 		var prevCid cid.Cid
-		if ad.FieldPreviousID().Exists() {
-			lnk, err := ad.FieldPreviousID().Must().AsLink()
+		if metadata.FieldPreviousID().Exists() {
+			lnk, err := metadata.FieldPreviousID().Must().AsLink()
 			if err != nil {
 				log.Errorw("Cannot read previous link from metadata", "err", err)
 			} else {
@@ -180,12 +180,12 @@ func (c *Core) storageHook(pubID peer.ID, cc cid.Cid) {
 
 		log.Infow("Incoming block is a metadata", "prevAd", prevCid)
 
-		//go c.syncChainMeta(pubID, ad, cc, prevCid)
+		//go c.syncChainMeta(pubID, metadata, cc, prevCid)
 		return
 	}
 }
 
-//func  (c *Core) syncChainMeta(from peer.ID, ad schema2.Metadata, adCid, prevCid cid.Cid){
+//func  (c *Core) syncChainMeta(from peer.ID, ad schema.Metadata, adCid, prevCid cid.Cid){
 //}
 
 // Checks if an IPLD node is a Metadata, by looking to see if it has a

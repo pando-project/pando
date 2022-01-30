@@ -171,9 +171,12 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	var err error
 
 	c.StoreInstance = storeInstance
+	linkSystem := legs.MkLinkSystem(c.StoreInstance.BlockStore)
+	c.LinkSystem = &linkSystem
 	c.MetaManager, err = metadata.New(context.Background(),
 		storeInstance.MutexDataStore,
 		storeInstance.BlockStore,
+		c.LinkSystem,
 		&Opt.Backup)
 	if err != nil {
 		return nil, err
