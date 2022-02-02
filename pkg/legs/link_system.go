@@ -53,7 +53,7 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 			}
 			// If it is an advertisement.
 			if isMetadata(n) {
-				log.Infow("Received advertisement")
+				log.Infow("Received metadata")
 				block, err := blocks.NewBlockWithCid(origBuf, c)
 				if err != nil {
 					return err
@@ -68,7 +68,7 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 	return lsys
 }
 
-func decodeAd(n ipld.Node) (schema.Metadata, error) {
+func decodeMetadata(n ipld.Node) (schema.Metadata, error) {
 	nb := schema.Type.Metadata.NewBuilder()
 	err := nb.AssignNode(n)
 	if err != nil {
@@ -153,6 +153,10 @@ func (c *Core) storageHook(pubID peer.ID, cc cid.Cid) {
 		return
 	}
 
+	fmt.Printf("\n==========START===========\n")
+	fmt.Println("data: ", val.RawData())
+	fmt.Printf("\n==========E=N=D===========\n")
+
 	// Decode block to IPLD node
 	node, err := decodeIPLDNode(cc.Prefix().Codec, bytes.NewBuffer(val.RawData()))
 	if err != nil {
@@ -162,7 +166,7 @@ func (c *Core) storageHook(pubID peer.ID, cc cid.Cid) {
 
 	// If this is an advertisement, sync entries within it.
 	if isMetadata(node) {
-		metadata, err := decodeAd(node)
+		metadata, err := decodeMetadata(node)
 		if err != nil {
 			log.Errorw("Error decoding advertisement", "err", err)
 			return
@@ -192,6 +196,6 @@ func (c *Core) storageHook(pubID peer.ID, cc cid.Cid) {
 // "PreviousID" field.  We may need additional checks if we extend the schema
 // with new types that are traversable.
 func isMetadata(n ipld.Node) bool {
-	prev, _ := n.LookupByString("PreviousID")
+	prev, _ := n.LookupByString("Payload")
 	return prev != nil
 }
