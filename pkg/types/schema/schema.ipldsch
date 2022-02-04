@@ -1,0 +1,8 @@
+
+type Metadata struct {
+	# Previous metadata.
+	PreviousID optional Link_Metadata
+	Payload    Bytes
+}
+
+type Link_Metadata &Metadata
