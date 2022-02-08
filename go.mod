@@ -28,7 +28,6 @@ require (
 	github.com/golang/snappy v0.0.2-0.20190904063534-ff6b7dc882cf // indirect
 	github.com/graphql-go/graphql v0.8.0
 	github.com/gwatts/gin-adapter v0.0.0-20170508204228-c44433c485ad
-	github.com/hashicorp/go-uuid v1.0.1
 	github.com/ipfs/go-block-format v0.0.3
 	github.com/ipfs/go-blockservice v0.2.1
 	github.com/ipfs/go-cid v0.1.0
@@ -54,6 +53,7 @@ require (
 	github.com/montanaflynn/stats v0.6.6
 	github.com/multiformats/go-multiaddr v0.5.0
 	github.com/multiformats/go-multicodec v0.4.0
+	github.com/multiformats/go-multihash v0.1.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/showwin/speedtest-go v1.1.4

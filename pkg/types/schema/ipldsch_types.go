@@ -68,7 +68,9 @@ type _Link_Metadata struct{ x datamodel.Link }
 type Metadata = *_Metadata
 type _Metadata struct {
 	PreviousID _Link_Metadata__Maybe
+	Provider   _String
 	Payload    _Bytes
+	Signature  _Bytes
 }
 
 // String matches the IPLD Schema type "String".  It has string kind.

@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+var apiKey = os.Getenv("APIKEY")
+
 func genTmpCarFiles(dir string) error {
 	timeStr := strconv.FormatInt(time.Now().UnixNano(), 10)
 	f, err := os.OpenFile(path.Join(dir, "/backup-"+timeStr+".car"), os.O_RDWR|os.O_CREATE, 0766)
@@ -38,7 +40,7 @@ func TestBackUpFile(t *testing.T) {
 		cfg := &option.Backup{
 			EstuaryGateway: DefaultEstGateway,
 			ShuttleGateway: DefaultShuttleGateway,
-			APIKey:         "ESTe3c31d99-5ad1-498f-89cc-bb28142f1107ARY",
+			APIKey:         apiKey,
 		}
 		tmpDir := t.TempDir()
 		patch2 := gomonkey.ApplyGlobalVar(&BackupTmpPath, tmpDir)
@@ -62,7 +64,7 @@ func TestCheckSuccess(t *testing.T) {
 		cfg := &option.Backup{
 			EstuaryGateway: DefaultEstGateway,
 			ShuttleGateway: DefaultShuttleGateway,
-			APIKey:         "ESTe3c31d99-5ad1-498f-89cc-bb28142f1107ARY",
+			APIKey:         apiKey,
 		}
 		tmpDir := t.TempDir()
 		patch2 := gomonkey.ApplyGlobalVar(&BackupTmpPath, tmpDir)

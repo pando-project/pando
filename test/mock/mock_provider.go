@@ -18,6 +18,7 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"math/rand"
 	"pando/pkg/legs"
@@ -27,6 +28,7 @@ import (
 
 type ProviderMock struct {
 	ID           peer.ID
+	pk           crypto.PrivKey
 	LegsProvider goLegs.Publisher
 	lsys         *linking.LinkSystem
 	DagService   format.DAGService
@@ -63,15 +65,18 @@ func getDagNodes() []format.Node {
 	return []format.Node{nd3, nd2, nd1, c, b, a}
 }
 
-func getMeta(link *datamodel.Link) (schema.Metadata, error) {
+func (p *ProviderMock) getMeta(link *datamodel.Link) (schema.Metadata, error) {
 	data := make([]byte, 256)
 	rand.Read(data)
 	var meta schema.Metadata
 	var err error
 	if link == nil {
-		meta = schema.NewMetadata(data)
+		meta, err = schema.NewMetadata(data, p.ID, p.pk)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create meta: %s", err.Error())
+		}
 	} else {
-		meta, err = schema.NewMetadataWithLink(data, link)
+		meta, err = schema.NewMetadataWithLink(data, p.ID, p.pk, link)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create meta with link: %s", err.Error())
 		}
@@ -87,6 +92,7 @@ func NewMockProvider(p *PandoMock) (*ProviderMock, error) {
 	if err != nil {
 		return nil, err
 	}
+	pk := srcHost.Peerstore().PrivKey(srcHost.ID())
 	srcDatastore := dssync.MutexWrap(datastore.NewMapDatastore())
 	srcBlockstore := blockstore.NewBlockstore(srcDatastore)
 	srcLinkSystem := legs.MkLinkSystem(srcBlockstore)
@@ -111,6 +117,7 @@ func NewMockProvider(p *PandoMock) (*ProviderMock, error) {
 		LegsProvider: legsPublisher,
 		lsys:         &srcLinkSystem,
 		DagService:   dags,
+		pk:           pk,
 	}, nil
 }
 
@@ -136,7 +143,7 @@ func (p *ProviderMock) SendDag() ([]cid.Cid, error) {
 }
 
 func (p *ProviderMock) SendMeta() (cid.Cid, error) {
-	meta, err := getMeta(p.prevMetaLink)
+	meta, err := p.getMeta(p.prevMetaLink)
 	if err != nil {
 		return cid.Undef, err
 	}

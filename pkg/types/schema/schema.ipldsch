@@ -1,8 +1,13 @@
 
 type Metadata struct {
 	# Previous metadata.
-	PreviousID optional Link_Metadata
-	Payload    Bytes
+	PreviousID nullable Link_Metadata
+    # Provider ID of the metadata
+    Provider String
+	# data
+	Payload   Bytes
+	# metadata signature.
+    Signature Bytes
 }
 
 type Link_Metadata &Metadata

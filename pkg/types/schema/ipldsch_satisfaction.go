@@ -1244,8 +1244,14 @@ type _Link_Metadata__ReprAssembler = _Link_Metadata__Assembler
 func (n _Metadata) FieldPreviousID() MaybeLink_Metadata {
 	return &n.PreviousID
 }
+func (n _Metadata) FieldProvider() String {
+	return &n.Provider
+}
 func (n _Metadata) FieldPayload() Bytes {
 	return &n.Payload
+}
+func (n _Metadata) FieldSignature() Bytes {
+	return &n.Signature
 }
 
 type _Metadata__Maybe struct {
@@ -1284,7 +1290,9 @@ func (m MaybeMetadata) Must() Metadata {
 
 var (
 	fieldName__Metadata_PreviousID = _String{"PreviousID"}
+	fieldName__Metadata_Provider   = _String{"Provider"}
 	fieldName__Metadata_Payload    = _String{"Payload"}
+	fieldName__Metadata_Signature  = _String{"Signature"}
 )
 var _ datamodel.Node = (Metadata)(&_Metadata{})
 var _ schema.TypedNode = (Metadata)(&_Metadata{})
@@ -1295,12 +1303,16 @@ func (Metadata) Kind() datamodel.Kind {
 func (n Metadata) LookupByString(key string) (datamodel.Node, error) {
 	switch key {
 	case "PreviousID":
-		if n.PreviousID.m == schema.Maybe_Absent {
-			return datamodel.Absent, nil
+		if n.PreviousID.m == schema.Maybe_Null {
+			return datamodel.Null, nil
 		}
 		return &n.PreviousID.v, nil
+	case "Provider":
+		return &n.Provider, nil
 	case "Payload":
 		return &n.Payload, nil
+	case "Signature":
+		return &n.Signature, nil
 	default:
 		return nil, schema.ErrNoSuchField{Type: nil /*TODO*/, Field: datamodel.PathSegmentOfString(key)}
 	}
@@ -1328,20 +1340,26 @@ type _Metadata__MapItr struct {
 }
 
 func (itr *_Metadata__MapItr) Next() (k datamodel.Node, v datamodel.Node, _ error) {
-	if itr.idx >= 2 {
+	if itr.idx >= 4 {
 		return nil, nil, datamodel.ErrIteratorOverread{}
 	}
 	switch itr.idx {
 	case 0:
 		k = &fieldName__Metadata_PreviousID
-		if itr.n.PreviousID.m == schema.Maybe_Absent {
-			v = datamodel.Absent
+		if itr.n.PreviousID.m == schema.Maybe_Null {
+			v = datamodel.Null
 			break
 		}
 		v = &itr.n.PreviousID.v
 	case 1:
+		k = &fieldName__Metadata_Provider
+		v = &itr.n.Provider
+	case 2:
 		k = &fieldName__Metadata_Payload
 		v = &itr.n.Payload
+	case 3:
+		k = &fieldName__Metadata_Signature
+		v = &itr.n.Signature
 	default:
 		panic("unreachable")
 	}
@@ -1349,14 +1367,14 @@ func (itr *_Metadata__MapItr) Next() (k datamodel.Node, v datamodel.Node, _ erro
 	return
 }
 func (itr *_Metadata__MapItr) Done() bool {
-	return itr.idx >= 2
+	return itr.idx >= 4
 }
 
 func (Metadata) ListIterator() datamodel.ListIterator {
 	return nil
 }
 func (Metadata) Length() int64 {
-	return 2
+	return 4
 }
 func (Metadata) IsAbsent() bool {
 	return false
@@ -1419,20 +1437,26 @@ type _Metadata__Assembler struct {
 
 	cm            schema.Maybe
 	ca_PreviousID _Link_Metadata__Assembler
+	ca_Provider   _String__Assembler
 	ca_Payload    _Bytes__Assembler
+	ca_Signature  _Bytes__Assembler
 }
 
 func (na *_Metadata__Assembler) reset() {
 	na.state = maState_initial
 	na.s = 0
 	na.ca_PreviousID.reset()
+	na.ca_Provider.reset()
 	na.ca_Payload.reset()
+	na.ca_Signature.reset()
 }
 
 var (
 	fieldBit__Metadata_PreviousID  = 1 << 0
-	fieldBit__Metadata_Payload     = 1 << 1
-	fieldBits__Metadata_sufficient = 0 + 1<<1
+	fieldBit__Metadata_Provider    = 1 << 1
+	fieldBit__Metadata_Payload     = 1 << 2
+	fieldBit__Metadata_Signature   = 1 << 3
+	fieldBits__Metadata_sufficient = 0 + 1<<0 + 1<<1 + 1<<2 + 1<<3
 )
 
 func (na *_Metadata__Assembler) BeginMap(int64) (datamodel.MapAssembler, error) {
@@ -1528,6 +1552,9 @@ func (ma *_Metadata__Assembler) valueFinishTidy() bool {
 	switch ma.f {
 	case 0:
 		switch ma.w.PreviousID.m {
+		case schema.Maybe_Null:
+			ma.state = maState_initial
+			return true
 		case schema.Maybe_Value:
 			ma.state = maState_initial
 			return true
@@ -1537,7 +1564,27 @@ func (ma *_Metadata__Assembler) valueFinishTidy() bool {
 	case 1:
 		switch ma.cm {
 		case schema.Maybe_Value:
+			ma.ca_Provider.w = nil
+			ma.cm = schema.Maybe_Absent
+			ma.state = maState_initial
+			return true
+		default:
+			return false
+		}
+	case 2:
+		switch ma.cm {
+		case schema.Maybe_Value:
 			ma.ca_Payload.w = nil
+			ma.cm = schema.Maybe_Absent
+			ma.state = maState_initial
+			return true
+		default:
+			return false
+		}
+	case 3:
+		switch ma.cm {
+		case schema.Maybe_Value:
+			ma.ca_Signature.w = nil
 			ma.cm = schema.Maybe_Absent
 			ma.state = maState_initial
 			return true
@@ -1573,17 +1620,38 @@ func (ma *_Metadata__Assembler) AssembleEntry(k string) (datamodel.NodeAssembler
 		ma.f = 0
 		ma.ca_PreviousID.w = &ma.w.PreviousID.v
 		ma.ca_PreviousID.m = &ma.w.PreviousID.m
+		ma.w.PreviousID.m = allowNull
 		return &ma.ca_PreviousID, nil
+	case "Provider":
+		if ma.s&fieldBit__Metadata_Provider != 0 {
+			return nil, datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Provider}
+		}
+		ma.s += fieldBit__Metadata_Provider
+		ma.state = maState_midValue
+		ma.f = 1
+		ma.ca_Provider.w = &ma.w.Provider
+		ma.ca_Provider.m = &ma.cm
+		return &ma.ca_Provider, nil
 	case "Payload":
 		if ma.s&fieldBit__Metadata_Payload != 0 {
 			return nil, datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Payload}
 		}
 		ma.s += fieldBit__Metadata_Payload
 		ma.state = maState_midValue
-		ma.f = 1
+		ma.f = 2
 		ma.ca_Payload.w = &ma.w.Payload
 		ma.ca_Payload.m = &ma.cm
 		return &ma.ca_Payload, nil
+	case "Signature":
+		if ma.s&fieldBit__Metadata_Signature != 0 {
+			return nil, datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Signature}
+		}
+		ma.s += fieldBit__Metadata_Signature
+		ma.state = maState_midValue
+		ma.f = 3
+		ma.ca_Signature.w = &ma.w.Signature
+		ma.ca_Signature.m = &ma.cm
+		return &ma.ca_Signature, nil
 	}
 	return nil, schema.ErrInvalidKey{TypeName: "schema.Metadata", Key: &_String{k}}
 }
@@ -1623,11 +1691,20 @@ func (ma *_Metadata__Assembler) AssembleValue() datamodel.NodeAssembler {
 	case 0:
 		ma.ca_PreviousID.w = &ma.w.PreviousID.v
 		ma.ca_PreviousID.m = &ma.w.PreviousID.m
+		ma.w.PreviousID.m = allowNull
 		return &ma.ca_PreviousID
 	case 1:
+		ma.ca_Provider.w = &ma.w.Provider
+		ma.ca_Provider.m = &ma.cm
+		return &ma.ca_Provider
+	case 2:
 		ma.ca_Payload.w = &ma.w.Payload
 		ma.ca_Payload.m = &ma.cm
 		return &ma.ca_Payload
+	case 3:
+		ma.ca_Signature.w = &ma.w.Signature
+		ma.ca_Signature.m = &ma.cm
+		return &ma.ca_Signature
 	default:
 		panic("unreachable")
 	}
@@ -1649,8 +1726,14 @@ func (ma *_Metadata__Assembler) Finish() error {
 	}
 	if ma.s&fieldBits__Metadata_sufficient != fieldBits__Metadata_sufficient {
 		err := schema.ErrMissingRequiredField{Missing: make([]string, 0)}
+		if ma.s&fieldBit__Metadata_Provider == 0 {
+			err.Missing = append(err.Missing, "Provider")
+		}
 		if ma.s&fieldBit__Metadata_Payload == 0 {
 			err.Missing = append(err.Missing, "Payload")
+		}
+		if ma.s&fieldBit__Metadata_Signature == 0 {
+			err.Missing = append(err.Missing, "Signature")
 		}
 		return err
 	}
@@ -1698,13 +1781,29 @@ func (ka *_Metadata__KeyAssembler) AssignString(k string) error {
 		ka.state = maState_expectValue
 		ka.f = 0
 		return nil
+	case "Provider":
+		if ka.s&fieldBit__Metadata_Provider != 0 {
+			return datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Provider}
+		}
+		ka.s += fieldBit__Metadata_Provider
+		ka.state = maState_expectValue
+		ka.f = 1
+		return nil
 	case "Payload":
 		if ka.s&fieldBit__Metadata_Payload != 0 {
 			return datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Payload}
 		}
 		ka.s += fieldBit__Metadata_Payload
 		ka.state = maState_expectValue
-		ka.f = 1
+		ka.f = 2
+		return nil
+	case "Signature":
+		if ka.s&fieldBit__Metadata_Signature != 0 {
+			return datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Signature}
+		}
+		ka.s += fieldBit__Metadata_Signature
+		ka.state = maState_expectValue
+		ka.f = 3
 		return nil
 	default:
 		return schema.ErrInvalidKey{TypeName: "schema.Metadata", Key: &_String{k}}
@@ -1737,7 +1836,9 @@ type _Metadata__Repr _Metadata
 
 var (
 	fieldName__Metadata_PreviousID_serial = _String{"PreviousID"}
+	fieldName__Metadata_Provider_serial   = _String{"Provider"}
 	fieldName__Metadata_Payload_serial    = _String{"Payload"}
+	fieldName__Metadata_Signature_serial  = _String{"Signature"}
 )
 var _ datamodel.Node = &_Metadata__Repr{}
 
@@ -1747,12 +1848,16 @@ func (_Metadata__Repr) Kind() datamodel.Kind {
 func (n *_Metadata__Repr) LookupByString(key string) (datamodel.Node, error) {
 	switch key {
 	case "PreviousID":
-		if n.PreviousID.m == schema.Maybe_Absent {
-			return datamodel.Absent, datamodel.ErrNotExists{Segment: datamodel.PathSegmentOfString(key)}
+		if n.PreviousID.m == schema.Maybe_Null {
+			return datamodel.Null, nil
 		}
 		return n.PreviousID.v.Representation(), nil
+	case "Provider":
+		return n.Provider.Representation(), nil
 	case "Payload":
 		return n.Payload.Representation(), nil
+	case "Signature":
+		return n.Signature.Representation(), nil
 	default:
 		return nil, schema.ErrNoSuchField{Type: nil /*TODO*/, Field: datamodel.PathSegmentOfString(key)}
 	}
@@ -1780,21 +1885,26 @@ type _Metadata__ReprMapItr struct {
 }
 
 func (itr *_Metadata__ReprMapItr) Next() (k datamodel.Node, v datamodel.Node, _ error) {
-advance:
-	if itr.idx >= 2 {
+	if itr.idx >= 4 {
 		return nil, nil, datamodel.ErrIteratorOverread{}
 	}
 	switch itr.idx {
 	case 0:
 		k = &fieldName__Metadata_PreviousID_serial
-		if itr.n.PreviousID.m == schema.Maybe_Absent {
-			itr.idx++
-			goto advance
+		if itr.n.PreviousID.m == schema.Maybe_Null {
+			v = datamodel.Null
+			break
 		}
 		v = itr.n.PreviousID.v.Representation()
 	case 1:
+		k = &fieldName__Metadata_Provider_serial
+		v = itr.n.Provider.Representation()
+	case 2:
 		k = &fieldName__Metadata_Payload_serial
 		v = itr.n.Payload.Representation()
+	case 3:
+		k = &fieldName__Metadata_Signature_serial
+		v = itr.n.Signature.Representation()
 	default:
 		panic("unreachable")
 	}
@@ -1802,16 +1912,13 @@ advance:
 	return
 }
 func (itr *_Metadata__ReprMapItr) Done() bool {
-	return itr.idx >= 2
+	return itr.idx >= 4
 }
 func (_Metadata__Repr) ListIterator() datamodel.ListIterator {
 	return nil
 }
 func (rn *_Metadata__Repr) Length() int64 {
-	l := 2
-	if rn.PreviousID.m == schema.Maybe_Absent {
-		l--
-	}
+	l := 4
 	return int64(l)
 }
 func (_Metadata__Repr) IsAbsent() bool {
@@ -1875,14 +1982,18 @@ type _Metadata__ReprAssembler struct {
 
 	cm            schema.Maybe
 	ca_PreviousID _Link_Metadata__ReprAssembler
+	ca_Provider   _String__ReprAssembler
 	ca_Payload    _Bytes__ReprAssembler
+	ca_Signature  _Bytes__ReprAssembler
 }
 
 func (na *_Metadata__ReprAssembler) reset() {
 	na.state = maState_initial
 	na.s = 0
 	na.ca_PreviousID.reset()
+	na.ca_Provider.reset()
 	na.ca_Payload.reset()
+	na.ca_Signature.reset()
 }
 func (na *_Metadata__ReprAssembler) BeginMap(int64) (datamodel.MapAssembler, error) {
 	switch *na.m {
@@ -1977,6 +2088,9 @@ func (ma *_Metadata__ReprAssembler) valueFinishTidy() bool {
 	switch ma.f {
 	case 0:
 		switch ma.w.PreviousID.m {
+		case schema.Maybe_Null:
+			ma.state = maState_initial
+			return true
 		case schema.Maybe_Value:
 			ma.state = maState_initial
 			return true
@@ -1984,6 +2098,24 @@ func (ma *_Metadata__ReprAssembler) valueFinishTidy() bool {
 			return false
 		}
 	case 1:
+		switch ma.cm {
+		case schema.Maybe_Value:
+			ma.cm = schema.Maybe_Absent
+			ma.state = maState_initial
+			return true
+		default:
+			return false
+		}
+	case 2:
+		switch ma.cm {
+		case schema.Maybe_Value:
+			ma.cm = schema.Maybe_Absent
+			ma.state = maState_initial
+			return true
+		default:
+			return false
+		}
+	case 3:
 		switch ma.cm {
 		case schema.Maybe_Value:
 			ma.cm = schema.Maybe_Absent
@@ -2021,18 +2153,38 @@ func (ma *_Metadata__ReprAssembler) AssembleEntry(k string) (datamodel.NodeAssem
 		ma.f = 0
 		ma.ca_PreviousID.w = &ma.w.PreviousID.v
 		ma.ca_PreviousID.m = &ma.w.PreviousID.m
-
+		ma.w.PreviousID.m = allowNull
 		return &ma.ca_PreviousID, nil
+	case "Provider":
+		if ma.s&fieldBit__Metadata_Provider != 0 {
+			return nil, datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Provider_serial}
+		}
+		ma.s += fieldBit__Metadata_Provider
+		ma.state = maState_midValue
+		ma.f = 1
+		ma.ca_Provider.w = &ma.w.Provider
+		ma.ca_Provider.m = &ma.cm
+		return &ma.ca_Provider, nil
 	case "Payload":
 		if ma.s&fieldBit__Metadata_Payload != 0 {
 			return nil, datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Payload_serial}
 		}
 		ma.s += fieldBit__Metadata_Payload
 		ma.state = maState_midValue
-		ma.f = 1
+		ma.f = 2
 		ma.ca_Payload.w = &ma.w.Payload
 		ma.ca_Payload.m = &ma.cm
 		return &ma.ca_Payload, nil
+	case "Signature":
+		if ma.s&fieldBit__Metadata_Signature != 0 {
+			return nil, datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Signature_serial}
+		}
+		ma.s += fieldBit__Metadata_Signature
+		ma.state = maState_midValue
+		ma.f = 3
+		ma.ca_Signature.w = &ma.w.Signature
+		ma.ca_Signature.m = &ma.cm
+		return &ma.ca_Signature, nil
 	default:
 	}
 	return nil, schema.ErrInvalidKey{TypeName: "schema.Metadata.Repr", Key: &_String{k}}
@@ -2073,12 +2225,20 @@ func (ma *_Metadata__ReprAssembler) AssembleValue() datamodel.NodeAssembler {
 	case 0:
 		ma.ca_PreviousID.w = &ma.w.PreviousID.v
 		ma.ca_PreviousID.m = &ma.w.PreviousID.m
-
+		ma.w.PreviousID.m = allowNull
 		return &ma.ca_PreviousID
 	case 1:
+		ma.ca_Provider.w = &ma.w.Provider
+		ma.ca_Provider.m = &ma.cm
+		return &ma.ca_Provider
+	case 2:
 		ma.ca_Payload.w = &ma.w.Payload
 		ma.ca_Payload.m = &ma.cm
 		return &ma.ca_Payload
+	case 3:
+		ma.ca_Signature.w = &ma.w.Signature
+		ma.ca_Signature.m = &ma.cm
+		return &ma.ca_Signature
 	default:
 		panic("unreachable")
 	}
@@ -2100,8 +2260,14 @@ func (ma *_Metadata__ReprAssembler) Finish() error {
 	}
 	if ma.s&fieldBits__Metadata_sufficient != fieldBits__Metadata_sufficient {
 		err := schema.ErrMissingRequiredField{Missing: make([]string, 0)}
+		if ma.s&fieldBit__Metadata_Provider == 0 {
+			err.Missing = append(err.Missing, "Provider")
+		}
 		if ma.s&fieldBit__Metadata_Payload == 0 {
 			err.Missing = append(err.Missing, "Payload")
+		}
+		if ma.s&fieldBit__Metadata_Signature == 0 {
+			err.Missing = append(err.Missing, "Signature")
 		}
 		return err
 	}
@@ -2149,13 +2315,29 @@ func (ka *_Metadata__ReprKeyAssembler) AssignString(k string) error {
 		ka.state = maState_expectValue
 		ka.f = 0
 		return nil
+	case "Provider":
+		if ka.s&fieldBit__Metadata_Provider != 0 {
+			return datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Provider_serial}
+		}
+		ka.s += fieldBit__Metadata_Provider
+		ka.state = maState_expectValue
+		ka.f = 1
+		return nil
 	case "Payload":
 		if ka.s&fieldBit__Metadata_Payload != 0 {
 			return datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Payload_serial}
 		}
 		ka.s += fieldBit__Metadata_Payload
 		ka.state = maState_expectValue
-		ka.f = 1
+		ka.f = 2
+		return nil
+	case "Signature":
+		if ka.s&fieldBit__Metadata_Signature != 0 {
+			return datamodel.ErrRepeatedMapKey{Key: &fieldName__Metadata_Signature_serial}
+		}
+		ka.s += fieldBit__Metadata_Signature
+		ka.state = maState_expectValue
+		ka.f = 3
 		return nil
 	}
 	return schema.ErrInvalidKey{TypeName: "schema.Metadata.Repr", Key: &_String{k}}

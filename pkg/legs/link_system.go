@@ -9,7 +9,10 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/multicodec"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"io"
+	"pando/pkg/types/schema"
+
 	// dagjson codec registered for encoding
 
 	_ "github.com/ipld/go-ipld-prime/codec/dagcbor"
@@ -49,6 +52,11 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 			// If it is an advertisement.
 			if isMetadata(n) {
 				log.Infow("Received metadata")
+				_, _, err := verifyMetadata(n)
+				if err != nil {
+
+					return err
+				}
 				block, err := blocks.NewBlockWithCid(origBuf, c)
 				if err != nil {
 					return err
@@ -85,4 +93,60 @@ func decodeIPLDNode(codec uint64, r io.Reader) (ipld.Node, error) {
 func isMetadata(n ipld.Node) bool {
 	prev, _ := n.LookupByString("Payload")
 	return prev != nil
+}
+
+func decodeAd(n ipld.Node) (schema.Metadata, error) {
+	nb := schema.Type.Metadata.NewBuilder()
+	err := nb.AssignNode(n)
+	if err != nil {
+		return nil, err
+	}
+	return nb.Build().(schema.Metadata), nil
+}
+
+func verifyMetadata(n ipld.Node) (schema.Metadata, peer.ID, error) {
+	meta, err := decodeAd(n)
+	if err != nil {
+		log.Errorw("Cannot decode advertisement", "err", err)
+		return nil, peer.ID(""), err
+	}
+	// Verify advertisement signature
+	signerID, err := schema.VerifyMetadata(meta)
+	if err != nil {
+		// stop exchange, verification of signature failed.
+		log.Errorw("Metadata signature verification failed", "err", err)
+		return nil, peer.ID(""), err
+	}
+
+	// Get provider ID from advertisement.
+	provID, err := providerFromAd(meta)
+	if err != nil {
+		log.Errorw("Cannot get provider from advertisement", "err", err)
+		return nil, peer.ID(""), err
+	}
+
+	// Verify that the meta provider has signed, and
+	// therefore approved, the metadata regardless of who
+	// published the metadata.
+	if signerID != provID {
+		log.Errorw("Metadata not signed by provider", "provider", provID, "signer", signerID)
+		return nil, peer.ID(""), err
+	}
+
+	return meta, provID, nil
+}
+
+// providerFromAd reads the provider ID from an advertisement
+func providerFromAd(ad schema.Metadata) (peer.ID, error) {
+	provider, err := ad.FieldProvider().AsString()
+	if err != nil {
+		return peer.ID(""), fmt.Errorf("cannot read provider from advertisement: %w", err)
+	}
+
+	providerID, err := peer.Decode(provider)
+	if err != nil {
+		return peer.ID(""), fmt.Errorf("cannot decode provider peer id: %w", err)
+	}
+
+	return providerID, nil
 }

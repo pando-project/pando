@@ -37,7 +37,10 @@ func main() {
 	}
 
 	fmt.Println("pushing data to Pando...")
-	metadata1 := schema.NewMetadata([]byte("doge"))
+	metadata1, err := schema.NewMetadata([]byte("doge"), provider.Host.ID(), provider.PrivateKey)
+	if err != nil {
+		panic(err)
+	}
 	metadata1Cid, err := provider.Push(metadata1)
 	if err != nil {
 		panic(err)
