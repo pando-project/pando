@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/datamodel"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/schema"
 	"github.com/multiformats/go-multicodec"
@@ -36,6 +37,19 @@ func NewMetadata(payload []byte) Metadata {
 		},
 		Payload: _Bytes{x: payload},
 	}
+}
+
+func NewMetadataWithLink(payload []byte, link *datamodel.Link) (Metadata, error) {
+	if link == nil {
+		return nil, fmt.Errorf("nil previous meta link")
+	}
+	return &_Metadata{
+		PreviousID: _Link_Metadata__Maybe{
+			m: schema.Maybe_Value,
+			v: _Link_Metadata{x: *link},
+		},
+		Payload: _Bytes{x: payload},
+	}, nil
 }
 
 func MetadataLink(lsys ipld.LinkSystem, metadata Metadata) (Link_Metadata, error) {

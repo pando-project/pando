@@ -2,6 +2,7 @@ package mock
 
 import (
 	"context"
+	"fmt"
 	goLegs "github.com/filecoin-project/go-legs"
 	"github.com/filecoin-project/go-legs/dtsync"
 	"github.com/ipfs/go-blockservice"
@@ -12,11 +13,15 @@ import (
 	offline "github.com/ipfs/go-ipfs-exchange-offline"
 	format "github.com/ipfs/go-ipld-format"
 	"github.com/ipfs/go-merkledag"
+	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/linking"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"math/rand"
 	"pando/pkg/legs"
+	"pando/pkg/types/schema"
 	"time"
 )
 
@@ -25,6 +30,7 @@ type ProviderMock struct {
 	LegsProvider goLegs.Publisher
 	lsys         *linking.LinkSystem
 	DagService   format.DAGService
+	prevMetaLink *datamodel.Link
 }
 
 func getDagNodes() []format.Node {
@@ -55,6 +61,23 @@ func getDagNodes() []format.Node {
 	}
 
 	return []format.Node{nd3, nd2, nd1, c, b, a}
+}
+
+func getMeta(link *datamodel.Link) (schema.Metadata, error) {
+	data := make([]byte, 256)
+	rand.Read(data)
+	var meta schema.Metadata
+	var err error
+	if link == nil {
+		meta = schema.NewMetadata(data)
+	} else {
+		meta, err = schema.NewMetadataWithLink(data, link)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create meta with link: %s", err.Error())
+		}
+	}
+	return meta, nil
+
 }
 
 func NewMockProvider(p *PandoMock) (*ProviderMock, error) {
@@ -110,6 +133,23 @@ func (p *ProviderMock) SendDag() ([]cid.Cid, error) {
 	}
 
 	return cidlist, nil
+}
+
+func (p *ProviderMock) SendMeta() (cid.Cid, error) {
+	meta, err := getMeta(p.prevMetaLink)
+	if err != nil {
+		return cid.Undef, err
+	}
+	lnk, err := p.lsys.Store(ipld.LinkContext{}, schema.LinkProto, meta.Representation())
+	if err != nil {
+		return cid.Undef, err
+	}
+	err = p.LegsProvider.UpdateRoot(context.Background(), lnk.(cidlink.Link).Cid)
+	if err != nil {
+		return cid.Undef, err
+	}
+	p.prevMetaLink = &lnk
+	return lnk.(cidlink.Link).Cid, nil
 }
 
 func (p *ProviderMock) Close() error {

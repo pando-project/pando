@@ -46,14 +46,6 @@ type Core struct {
 	watchDone    chan struct{}
 }
 
-//// subscriber data structure for a account.
-//type subscriber struct {
-//	peerID  peer.ID
-//	ls      golegs.Subscriber
-//	watcher <-chan cid.Cid
-//	cncl    context.CancelFunc
-//}
-
 func NewLegsCore(ctx context.Context,
 	host host.Host,
 	ds datastore.Batching,
@@ -111,7 +103,7 @@ func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, 
 	// todo
 	//defer dtManager.Stop(ctx)
 	ls, err := golegs.NewSubscriber(h, ds, lnkSys, PubSubTopic, nil,
-		golegs.AllowPeer(reg.Authorized), golegs.DtManager(dtManager), golegs.BlockHook(c.storageHook))
+		golegs.AllowPeer(reg.Authorized), golegs.DtManager(dtManager))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -184,6 +176,10 @@ func (c *Core) SetRatelimiter(rl *policy.Limiter) {
 // for the peer that was synced.
 func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 	for syncFin := range onSyncFin {
+		if _, err := c.BS.Get(context.Background(), syncFin.Cid); err != nil {
+			// skip if data is not stored
+			continue
+		}
 		// Persist the latest sync
 		err := c.DS.Put(context.Background(), datastore.NewKey(syncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
 		if err != nil {

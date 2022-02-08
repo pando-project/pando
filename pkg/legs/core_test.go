@@ -5,6 +5,7 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	logging "github.com/ipfs/go-log/v2"
 	. "github.com/smartystreets/goconvey/convey"
+	"pando/pkg/legs"
 	"pando/test/mock"
 	"testing"
 	"time"
@@ -27,8 +28,8 @@ func TestCreate(t *testing.T) {
 
 func TestGetMetaRecord(t *testing.T) {
 	Convey("test get meta record", t, func() {
-		//_ = logging.SetLogLevel("*", "debug")
-		ctx, cncl := context.WithTimeout(context.Background(), time.Minute*5)
+		_ = logging.SetLogLevel("*", "warn")
+		ctx, cncl := context.WithTimeout(context.Background(), time.Second*10)
 		p, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
 		core := p.Core
@@ -39,15 +40,19 @@ func TestGetMetaRecord(t *testing.T) {
 		//err = core.Subscribe(context.Background(), provider.ID)
 		So(err, ShouldBeNil)
 		time.Sleep(time.Second * 2)
-		cidlist, err := provider.SendDag()
+		//cidlist, err := provider.SendDag()
+		cid, err := provider.SendMeta()
 		So(err, ShouldBeNil)
 		select {
 		case <-ctx.Done():
 			t.Error("timeout")
 		case r := <-outCh:
-			So(r.Cid, ShouldResemble, cidlist[0])
+			So(r.Cid, ShouldResemble, cid)
 			So(r.ProviderID, ShouldResemble, provider.ID)
 		}
+
+		core_, err := legs.NewLegsCore(ctx, p.Host, p.DS, p.BS, nil, nil, p.Registry)
+		So(err, ShouldBeNil)
 
 		t.Cleanup(func() {
 			cncl()
@@ -57,6 +62,10 @@ func TestGetMetaRecord(t *testing.T) {
 			if err := core.Close(); err != nil {
 				t.Error(err)
 			}
+			if err := core_.Close(); err != nil {
+				t.Error(err)
+			}
+
 		})
 	})
 }

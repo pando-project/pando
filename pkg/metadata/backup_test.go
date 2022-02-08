@@ -38,7 +38,7 @@ func TestBackUpFile(t *testing.T) {
 		cfg := &option.Backup{
 			EstuaryGateway: DefaultEstGateway,
 			ShuttleGateway: DefaultShuttleGateway,
-			APIKey:         "ESTbbbf4557-991b-4f59-89aa-f45eb7b7208aARY",
+			APIKey:         "ESTe3c31d99-5ad1-498f-89cc-bb28142f1107ARY",
 		}
 		tmpDir := t.TempDir()
 		patch2 := gomonkey.ApplyGlobalVar(&BackupTmpPath, tmpDir)
@@ -62,7 +62,7 @@ func TestCheckSuccess(t *testing.T) {
 		cfg := &option.Backup{
 			EstuaryGateway: DefaultEstGateway,
 			ShuttleGateway: DefaultShuttleGateway,
-			APIKey:         "ESTbbbf4557-991b-4f59-89aa-f45eb7b7208aARY",
+			APIKey:         "ESTe3c31d99-5ad1-498f-89cc-bb28142f1107ARY",
 		}
 		tmpDir := t.TempDir()
 		patch2 := gomonkey.ApplyGlobalVar(&BackupTmpPath, tmpDir)

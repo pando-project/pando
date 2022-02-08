@@ -212,3 +212,5 @@ Temporary Items
 .apdisk
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,intellij+all,goland,go
+/pkg/legs/ttmp/
+/pkg/metadata/ttmp/

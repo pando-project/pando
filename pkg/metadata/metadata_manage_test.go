@@ -5,6 +5,7 @@ import (
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
 	. "github.com/smartystreets/goconvey/convey"
+	"pando/pkg/legs"
 	. "pando/pkg/metadata"
 	"pando/test/mock"
 	"testing"
@@ -17,25 +18,24 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 		So(err, ShouldBeNil)
 		err = logging.SetLogLevel("meta-manager", "debug")
 		So(err, ShouldBeNil)
+		lys := legs.MkLinkSystem(pando.BS)
 
 		Convey("give records when wait for maxInterval then update and backup", func() {
 			BackupMaxInterval = time.Second * 3
-			mm, err := New(context.Background(), pando.DS, pando.BS, &pando.Opt.Backup)
+			mm, err := New(context.Background(), pando.DS, pando.BS, &lys, &pando.Opt.Backup)
 			So(err, ShouldBeNil)
 			provider, err := mock.NewMockProvider(pando)
 			So(err, ShouldBeNil)
-			//err = pando.Core.Subscribe(context.Background(), provider.ID)
-			//So(err, ShouldBeNil)
-			cidlist, err := provider.SendDag()
+			cid1, err := provider.SendMeta()
 			So(err, ShouldBeNil)
-			cidlist2, err := provider.SendDag()
+			cid2, err := provider.SendMeta()
 			So(err, ShouldBeNil)
-			cidlist3, err := provider.SendDag()
+			cid3, err := provider.SendMeta()
 			So(err, ShouldBeNil)
 			mockRecord := []*MetaRecord{
-				{cidlist[0], provider.ID, uint64(time.Now().UnixNano())},
-				{cidlist2[0], provider.ID, uint64(time.Now().UnixNano())},
-				{cidlist3[0], provider.ID, uint64(time.Now().UnixNano())},
+				{cid1, provider.ID, uint64(time.Now().UnixNano())},
+				{cid2, provider.ID, uint64(time.Now().UnixNano())},
+				{cid3, provider.ID, uint64(time.Now().UnixNano())},
 			}
 			recvCh := mm.GetMetaInCh()
 			for _, r := range mockRecord {
@@ -61,22 +61,22 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 			BackupMaxInterval = time.Second * 60
 			BackupCheckNumInterval = time.Second
 			BackupMaxDagNums = 1
-			mm, err := New(context.Background(), pando.DS, pando.BS, &pando.Opt.Backup)
+			mm, err := New(context.Background(), pando.DS, pando.BS, &lys, &pando.Opt.Backup)
 			So(err, ShouldBeNil)
 			provider, err := mock.NewMockProvider(pando)
 			So(err, ShouldBeNil)
 			//err = pando.Core.Subscribe(context.Background(), provider.ID)
 			//So(err, ShouldBeNil)
-			cidlist, err := provider.SendDag()
+			cid1, err := provider.SendMeta()
 			So(err, ShouldBeNil)
-			cidlist2, err := provider.SendDag()
+			cid2, err := provider.SendMeta()
 			So(err, ShouldBeNil)
-			cidlist3, err := provider.SendDag()
+			cid3, err := provider.SendMeta()
 			So(err, ShouldBeNil)
 			mockRecord := []*MetaRecord{
-				{cidlist[0], provider.ID, uint64(time.Now().UnixNano())},
-				{cidlist2[0], provider.ID, uint64(time.Now().UnixNano())},
-				{cidlist3[0], provider.ID, uint64(time.Now().UnixNano())},
+				{cid1, provider.ID, uint64(time.Now().UnixNano())},
+				{cid2, provider.ID, uint64(time.Now().UnixNano())},
+				{cid3, provider.ID, uint64(time.Now().UnixNano())},
 			}
 			recvCh := mm.GetMetaInCh()
 			for _, r := range mockRecord {
