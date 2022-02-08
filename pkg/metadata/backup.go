@@ -19,7 +19,7 @@ import (
 
 var (
 	checkInterval         = time.Second * 10
-	DefaultShuttleGateway = "https://shuttle-5.estuary.tech/content/add"
+	DefaultShuttleGateway = "https://shuttle-5.estuary.tech"
 	DefaultEstGateway     = "https://api.estuary.tech"
 )
 
