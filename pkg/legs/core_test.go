@@ -3,6 +3,7 @@ package legs_test
 import (
 	"context"
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
 	. "github.com/smartystreets/goconvey/convey"
 	"pando/pkg/legs"
@@ -11,7 +12,7 @@ import (
 	"time"
 )
 
-var _ = logging.SetLogLevel("core", "debug")
+var _ = logging.SetLogLevel("*", "debug")
 
 func TestCreate(t *testing.T) {
 	Convey("test create legs core", t, func() {
@@ -41,7 +42,7 @@ func TestGetMetaRecord(t *testing.T) {
 		So(err, ShouldBeNil)
 		time.Sleep(time.Second * 2)
 		//cidlist, err := provider.SendDag()
-		cid, err := provider.SendMeta()
+		cid, err := provider.SendMeta(true)
 		So(err, ShouldBeNil)
 		select {
 		case <-ctx.Done():
@@ -87,4 +88,48 @@ func TestRateLimiter(t *testing.T) {
 		time.Sleep(time.Second * 10)
 
 	})
+}
+
+func TestRecurseFetchMeta(t *testing.T) {
+	Convey("Test fetch metadata recursely by golegs", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		//ch, err := pando.GetMetaRecordCh()
+		So(err, ShouldBeNil)
+		provider, err := mock.NewMockProvider(pando)
+		So(err, ShouldBeNil)
+		var cids []cid.Cid
+		for i := 0; i < 5; i++ {
+			c, err := provider.SendMeta(false)
+			cids = append(cids, c)
+			So(err, ShouldBeNil)
+			t.Logf("send meta[cid:%s]", c.String())
+		}
+		time.Sleep(time.Second)
+		ctx, cncl := context.WithTimeout(context.Background(), time.Second*10)
+		t.Cleanup(
+			cncl,
+		)
+
+		c, err := provider.SendMeta(true)
+		So(err, ShouldBeNil)
+		cids = append(cids, c)
+
+		time.Sleep(time.Second * 5)
+		for i := 0; i < 6; i++ {
+			_, err = pando.BS.Get(ctx, cids[i])
+			So(err, ShouldBeNil)
+		}
+		//for {
+		//	select {
+		//	case rec, ok := <-ch:
+		//		if !ok {
+		//			t.Error("error closed")
+		//		}
+		//		t.Log(rec)
+		//	}
+		//}
+
+	})
+
 }

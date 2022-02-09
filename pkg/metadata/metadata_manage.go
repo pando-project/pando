@@ -30,7 +30,7 @@ var (
 	BackupMaxDagNums       = 10000
 	BackupTmpDirName       = "ttmp"
 	BackupTmpPath          string
-	BackFileName           = "backup-%d.car"
+	BackFileName           = "backup-%s-%d.car"
 	BackupCheckNumInterval = time.Second * 60
 )
 
@@ -66,7 +66,7 @@ type MetaManager struct {
 	cache             map[peer.ID][]*MetaRecord
 	mutex             sync.Mutex
 	backupMaxInterval time.Duration
-	estBackupSys      *backupSystem
+	estBackupSys      *BackupSystem
 	ls                *ipld.LinkSystem
 	ctx               context.Context
 	cncl              context.CancelFunc
@@ -151,10 +151,7 @@ func (mm *MetaManager) flushRegular() {
 			log.Debugw("send update to state tree")
 			mm.outStateTreeCh <- update
 		}
-		// todo update state...hamt....
-
 		mm.cache = make(map[peer.ID][]*MetaRecord)
-
 	}
 }
 
@@ -287,7 +284,6 @@ func ExportMetaCar(ctx context.Context, ls *ipld.LinkSystem, backInfos []backInf
 		if e != nil {
 			return e
 		}
-		//log.Debugf("[block] block value: ", vb.RawData())
 		_, err = car.TraverseV1(context.Background(), ls, c.root, c.sel, f)
 		if err != nil {
 			log.Errorf("failed to export the car for metadata, %s", err.Error())

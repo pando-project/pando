@@ -142,7 +142,7 @@ func (p *ProviderMock) SendDag() ([]cid.Cid, error) {
 	return cidlist, nil
 }
 
-func (p *ProviderMock) SendMeta() (cid.Cid, error) {
+func (p *ProviderMock) SendMeta(update bool) (cid.Cid, error) {
 	meta, err := p.getMeta(p.prevMetaLink)
 	if err != nil {
 		return cid.Undef, err
@@ -151,9 +151,11 @@ func (p *ProviderMock) SendMeta() (cid.Cid, error) {
 	if err != nil {
 		return cid.Undef, err
 	}
-	err = p.LegsProvider.UpdateRoot(context.Background(), lnk.(cidlink.Link).Cid)
-	if err != nil {
-		return cid.Undef, err
+	if update {
+		err = p.LegsProvider.UpdateRoot(context.Background(), lnk.(cidlink.Link).Cid)
+		if err != nil {
+			return cid.Undef, err
+		}
 	}
 	p.prevMetaLink = &lnk
 	return lnk.(cidlink.Link).Cid, nil

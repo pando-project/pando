@@ -1,12 +1,21 @@
-package metadata
+package metadata_test
 
 import (
+	"context"
 	"github.com/agiledragon/gomonkey/v2"
+	golegs "github.com/filecoin-project/go-legs"
+	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/ipld/go-car/v2"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/ipld/go-ipld-prime/traversal/selector"
 	. "github.com/smartystreets/goconvey/convey"
 	"math/rand"
 	"os"
+	"pando/pkg/legs"
+	"pando/pkg/metadata"
 	"pando/pkg/option"
+	"pando/test/mock"
 	"path"
 	"reflect"
 	"strconv"
@@ -33,22 +42,22 @@ func genTmpCarFiles(dir string) error {
 
 func TestBackUpFile(t *testing.T) {
 	Convey("when send right request then get 200 response", t, func() {
-		patch := gomonkey.ApplyGlobalVar(&checkInterval, time.Second*2)
+		patch := gomonkey.ApplyGlobalVar(&metadata.CheckInterval, time.Second*2)
 		defer patch.Reset()
 		err := logging.SetLogLevel("meta-manager", "debug")
 		So(err, ShouldBeNil)
 		cfg := &option.Backup{
-			EstuaryGateway: DefaultEstGateway,
-			ShuttleGateway: DefaultShuttleGateway,
+			EstuaryGateway: metadata.DefaultEstGateway,
+			ShuttleGateway: metadata.DefaultShuttleGateway,
 			APIKey:         apiKey,
 		}
 		tmpDir := t.TempDir()
-		patch2 := gomonkey.ApplyGlobalVar(&BackupTmpPath, tmpDir)
+		patch2 := gomonkey.ApplyGlobalVar(&metadata.BackupTmpPath, tmpDir)
 		defer patch2.Reset()
 		err = genTmpCarFiles(tmpDir)
 		So(err, ShouldBeNil)
 
-		_, err = NewBackupSys(cfg)
+		_, err = metadata.NewBackupSys(cfg)
 		So(err, ShouldBeNil)
 		time.Sleep(time.Second * 20)
 
@@ -57,24 +66,24 @@ func TestBackUpFile(t *testing.T) {
 
 func TestCheckSuccess(t *testing.T) {
 	Convey("test back up file successfully", t, func() {
-		patch := gomonkey.ApplyGlobalVar(&checkInterval, time.Second*2)
+		patch := gomonkey.ApplyGlobalVar(&metadata.CheckInterval, time.Second*2)
 		defer patch.Reset()
 		err := logging.SetLogLevel("meta-manager", "debug")
 		So(err, ShouldBeNil)
 		cfg := &option.Backup{
-			EstuaryGateway: DefaultEstGateway,
-			ShuttleGateway: DefaultShuttleGateway,
+			EstuaryGateway: metadata.DefaultEstGateway,
+			ShuttleGateway: metadata.DefaultShuttleGateway,
 			APIKey:         apiKey,
 		}
 		tmpDir := t.TempDir()
-		patch2 := gomonkey.ApplyGlobalVar(&BackupTmpPath, tmpDir)
+		patch2 := gomonkey.ApplyGlobalVar(&metadata.BackupTmpPath, tmpDir)
 		defer patch2.Reset()
 
-		patch3 := gomonkey.ApplyPrivateMethod(reflect.TypeOf(&backupSystem{}), "checkDealForBackup", func(_ *backupSystem, _ uint64) (bool, error) {
+		patch3 := gomonkey.ApplyPrivateMethod(reflect.TypeOf(&metadata.BackupSystem{}), "checkDealForBackup", func(_ *metadata.BackupSystem, _ uint64) (bool, error) {
 			return true, nil
 		})
 		defer patch3.Reset()
-		_, err = NewBackupSys(cfg)
+		_, err = metadata.NewBackupSys(cfg)
 		So(err, ShouldBeNil)
 
 		err = genTmpCarFiles(tmpDir)
@@ -86,5 +95,47 @@ func TestCheckSuccess(t *testing.T) {
 		err = genTmpCarFiles(tmpDir)
 		So(err, ShouldBeNil)
 		time.Sleep(time.Second * 10)
+	})
+}
+
+func TestBackUpWithStopLink(t *testing.T) {
+	Convey("when set selector and stop link then get right car file", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		ch, err := pando.GetMetaRecordCh()
+		So(err, ShouldBeNil)
+		provider, err := mock.NewMockProvider(pando)
+		So(err, ShouldBeNil)
+		var cids []cid.Cid
+		for i := 0; i < 5; i++ {
+			c, err := provider.SendMeta()
+			cids = append(cids, c)
+			So(err, ShouldBeNil)
+			t.Logf("send meta[cid:%s]", c.String())
+		}
+		time.Sleep(time.Second)
+		ctx, cncl := context.WithTimeout(context.Background(), time.Second*5)
+		t.Cleanup(
+			cncl,
+		)
+		for i := 0; i < 5; i++ {
+			select {
+			case metaRec, ok := <-ch:
+				if !ok {
+					t.Log("over!")
+				}
+				t.Log(metaRec)
+			case _ = <-ctx.Done():
+				t.Error("timeout!")
+			}
+		}
+
+		linksys := legs.MkLinkSystem(pando.BS)
+		ss := golegs.ExploreRecursiveWithStopNode(selector.RecursionLimit{}, nil, cidlink.Link{cids[4]})
+		f, err := os.OpenFile("./test1.car", os.O_WRONLY|os.O_CREATE, 0666)
+		defer f.Close()
+		_, err = car.TraverseV1(context.Background(), &linksys, cids[4], ss, f)
+		So(err, ShouldBeNil)
+
 	})
 }
