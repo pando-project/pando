@@ -27,8 +27,8 @@ import (
 var log = logging.Logger("core")
 
 const (
-	// syncPrefix used to track the latest sync in datastore.
-	syncPrefix = "/sync/"
+	// SyncPrefix used to track the latest sync in datastore.
+	SyncPrefix = "/sync/"
 	// PubSubTopic used for legs transportation
 	PubSubTopic = "PandoPubSub"
 )
@@ -128,7 +128,7 @@ func (c *Core) Close() error {
 func (c *Core) restoreLatestSync() error {
 	// Load all pins from the datastore.
 	q := query.Query{
-		Prefix: syncPrefix,
+		Prefix: SyncPrefix,
 	}
 	results, err := c.DS.Query(context.Background(), q)
 	if err != nil {
@@ -150,7 +150,7 @@ func (c *Core) restoreLatestSync() error {
 		if lastCid == cid.Undef {
 			continue
 		}
-		peerID, err := peer.Decode(strings.TrimPrefix(ent.Key, syncPrefix))
+		peerID, err := peer.Decode(strings.TrimPrefix(ent.Key, SyncPrefix))
 		if err != nil {
 			log.Errorw("Failed to decode peer ID of latest sync", "err", err)
 			continue
@@ -181,7 +181,7 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 			continue
 		}
 		// Persist the latest sync
-		err := c.DS.Put(context.Background(), datastore.NewKey(syncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
+		err := c.DS.Put(context.Background(), datastore.NewKey(SyncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
 		if err != nil {
 			log.Errorw("Error persisting latest sync", "err", err, "peer", syncFin.PeerID)
 			continue

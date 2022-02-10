@@ -143,6 +143,15 @@ func New(root *cobra.Command) *Options {
 	opt.flags.StringVar(&opt.Backup.APIKey, "backup-apikey", "",
 		"Estuary api key used to backup metadata files.")
 
+	opt.flags.StringVar(&opt.Backup.BackupGenInterval, "backup-gencar-interval", defaultBackupGenInterval.String(),
+		"Interval for Pando to generate car files for providers' meta data.")
+
+	opt.flags.StringVar(&opt.Backup.BackupEstInterval, "backup-estuary-interval", defaultBackupEstInterval.String(),
+		"Interval for Pando to back up car files to estuary.")
+
+	opt.flags.StringVar(&opt.Backup.EstCheckInterval, "backup-check-estuary-interval", defaultEstCheckInterval.String(),
+		"Interval for Pando to check backup deal status in estuary.")
+
 	_ = opt.viper.BindPFlags(opt.flags)
 
 	return opt

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ipfs/go-cid"
 	"net/http"
 	"pando/pkg/option"
 	"pando/pkg/registry/discovery"
@@ -55,14 +56,14 @@ type Registry struct {
 // is created to update its contents.  This means existing references remain
 // valid.
 type ProviderInfo struct {
-	// AddrInfo contains a account.ID and set of Multiaddr addresses.
+	// AddrInfo contains an account.ID and set of Multiaddr addresses.
 	AddrInfo peer.AddrInfo
 	// DiscoveryAddr is the address that is used for discovery of the provider.
 	DiscoveryAddr string
 	// AccountLevel is the level according to the filecoin miner account balance
 	AccountLevel int
 
-	lastContactTime time.Time
+	LastBackupMeta cid.Cid
 }
 
 func (p *ProviderInfo) dsKey() datastore.Key {
@@ -156,12 +157,6 @@ func (r *Registry) run() {
 // Register is used to directly register a provider, bypassing discovery and
 // adding discovered data directly to the registry.
 func (r *Registry) Register(ctx context.Context, info *ProviderInfo) error {
-	//if len(info.AddrInfo.Addrs) == 0 {
-	//	return syserr.New(errors.New("missing provider address"), http.StatusBadRequest)
-	//}
-
-	//if err := info.AddrInfo.ID.String()
-
 	// If provider is not allowed, then ignore request
 	if !r.policy.Allowed(info.AddrInfo.ID) {
 		return syserr.New(ErrNotAllowed, http.StatusForbidden)
@@ -203,15 +198,6 @@ func (r *Registry) Register(ctx context.Context, info *ProviderInfo) error {
 	}
 
 	log.Infow("registered provider", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
-
-	//if r.core == nil {
-	//	log.Warnf("nil legs-core for subscribing the registered provider")
-	//} else {
-	//	err = r.core.Subscribe(context.Background(), info.AddrInfo.ID)
-	//	if err != nil {
-	//		log.Warnf("failed to subscribe: %s, err: %s", info.AddrInfo.ID, err.Error())
-	//	}
-	//}
 
 	return nil
 }
@@ -385,6 +371,35 @@ func (r *Registry) Authorized(peerID peer.ID) (bool, error) {
 	return true, nil
 }
 
+// RegisterOrUpdate attempts to register an unregistered provider, or updates
+// the addresses and latest advertisement of an already registered provider.
+func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, metaCid cid.Cid) error {
+	// Check that the provider has been discovered and validated
+	info := r.ProviderInfo(providerID)
+	if info != nil {
+		info = &ProviderInfo{
+			AddrInfo: peer.AddrInfo{
+				ID:    providerID,
+				Addrs: info.AddrInfo.Addrs,
+			},
+			DiscoveryAddr:  info.DiscoveryAddr,
+			LastBackupMeta: info.LastBackupMeta,
+		}
+	} else {
+		info = &ProviderInfo{
+			AddrInfo: peer.AddrInfo{
+				ID: providerID,
+			},
+		}
+	}
+
+	if metaCid != cid.Undef {
+		info.LastBackupMeta = metaCid
+	}
+
+	return r.Register(ctx, info)
+}
+
 func (r *Registry) cleanup() {
 	r.discoWait.Add(1)
 	r.sequences.retire()
@@ -405,7 +420,3 @@ func (r *Registry) cleanup() {
 	}
 	r.discoWait.Done()
 }
-
-//func (r *Registry) SetCore(core legs_interface.PandoCore) {
-//	r.core = core
-//}

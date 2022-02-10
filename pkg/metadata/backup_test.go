@@ -47,9 +47,11 @@ func TestBackUpFile(t *testing.T) {
 		err := logging.SetLogLevel("meta-manager", "debug")
 		So(err, ShouldBeNil)
 		cfg := &option.Backup{
-			EstuaryGateway: metadata.DefaultEstGateway,
-			ShuttleGateway: metadata.DefaultShuttleGateway,
-			APIKey:         apiKey,
+			EstuaryGateway:    metadata.DefaultEstGateway,
+			ShuttleGateway:    metadata.DefaultShuttleGateway,
+			BackupGenInterval: time.Second.String(),
+			BackupEstInterval: time.Second.String(),
+			APIKey:            apiKey,
 		}
 		tmpDir := t.TempDir()
 		patch2 := gomonkey.ApplyGlobalVar(&metadata.BackupTmpPath, tmpDir)
@@ -102,32 +104,22 @@ func TestBackUpWithStopLink(t *testing.T) {
 	Convey("when set selector and stop link then get right car file", t, func() {
 		pando, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
-		ch, err := pando.GetMetaRecordCh()
-		So(err, ShouldBeNil)
+		//ch, err := pando.GetMetaRecordCh()
+		//So(err, ShouldBeNil)
 		provider, err := mock.NewMockProvider(pando)
 		So(err, ShouldBeNil)
 		var cids []cid.Cid
 		for i := 0; i < 5; i++ {
-			c, err := provider.SendMeta()
+			c, err := provider.SendMeta(true)
 			cids = append(cids, c)
 			So(err, ShouldBeNil)
 			t.Logf("send meta[cid:%s]", c.String())
 		}
-		time.Sleep(time.Second)
-		ctx, cncl := context.WithTimeout(context.Background(), time.Second*5)
-		t.Cleanup(
-			cncl,
-		)
+		time.Sleep(time.Second * 3)
+
 		for i := 0; i < 5; i++ {
-			select {
-			case metaRec, ok := <-ch:
-				if !ok {
-					t.Log("over!")
-				}
-				t.Log(metaRec)
-			case _ = <-ctx.Done():
-				t.Error("timeout!")
-			}
+			_, err = pando.BS.Get(context.Background(), cids[i])
+			So(err, ShouldBeNil)
 		}
 
 		linksys := legs.MkLinkSystem(pando.BS)

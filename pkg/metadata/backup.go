@@ -24,22 +24,17 @@ var (
 )
 
 type BackupSystem struct {
-	gateway        string
-	shuttleGateway string
-	checkInterval  time.Duration
-	apiKey         string
-	//fileDir        string
-	fileName string
-	toCheck  chan uint64
+	backupCfg *option.Backup
+	apiKey    string
+	//fileName       string
+	toCheck chan uint64
 }
 
 func NewBackupSys(backupCfg *option.Backup) (*BackupSystem, error) {
 	bs := &BackupSystem{
-		gateway:        backupCfg.EstuaryGateway,
-		shuttleGateway: backupCfg.ShuttleGateway,
-		checkInterval:  time.Second * 10,
-		apiKey:         "Bearer " + backupCfg.APIKey,
-		toCheck:        make(chan uint64, 1),
+		apiKey:    "Bearer " + backupCfg.APIKey,
+		toCheck:   make(chan uint64, 1),
+		backupCfg: backupCfg,
 	}
 	bs.run()
 
@@ -122,7 +117,7 @@ func (bs *BackupSystem) checkDeal() {
 }
 
 func (bs *BackupSystem) checkDealForBackup(estID uint64) (bool, error) {
-	req, err := http.NewRequest("GET", bs.gateway+"/content/status/"+strconv.FormatUint(estID, 10), nil)
+	req, err := http.NewRequest("GET", bs.backupCfg.EstuaryGateway+"/content/status/"+strconv.FormatUint(estID, 10), nil)
 	if err != nil {
 		log.Error("failed to create request: %s", err.Error())
 	}
@@ -187,7 +182,7 @@ func (bs *BackupSystem) backupToEstuary(filepath string) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", bs.shuttleGateway+"/content/add", fBuf)
+	req, err := http.NewRequest("POST", bs.backupCfg.ShuttleGateway+"/content/add", fBuf)
 	if err != nil {
 		return err
 	}
