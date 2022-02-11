@@ -39,8 +39,10 @@ We will develop an SDK for providers to integrate with Pando in a more efficient
 For now, providers have to initialize go-legs instance and publish your data to a topic which Pando subscribed.
 
 Integration could follow the steps below:
-1. Implement go-legs publisher, see [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
-2. Register in pando through client cli:
+1. New a provider instance with PandoSDK, then connect, initialize a metadata instance and append new metadata if you need.
+2. Push the latest metadata instance.
+3. [Here's an example](https://github.com/kenlabs/pando/tree/main/example) for more details.
+4. Register in pando through client cli:
 ```shell
 ./pando-client -a https://pando-api.kencloud.com provider register \
   --peer-id PROVIDER_PEER_ID_STR \

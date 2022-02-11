@@ -45,7 +45,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	metadata2, err := metadata1.AppendMetadata(metadata1Cid, []byte("kitty"))
+	metadata2, err := metadata1.AppendMetadata(metadata1Cid, provider.Host.ID(), []byte("kitty"), provider.PrivateKey)
 	if err != nil {
 		panic(err)
 	}
@@ -68,50 +68,3 @@ func main() {
 	}
 	fmt.Println("Bye!")
 }
-
-//func generateDAG(quantity int) dag {
-//	for i := 0; i < quantity; i++ {
-//		kittyID := merkledag.NewRawNode([]byte(randID()))
-//		dogeID := merkledag.NewRawNode([]byte(randID()))
-//		piggyID := merkledag.NewRawNode([]byte(randID()))
-//
-//		kittyNode := &merkledag.ProtoNode{}
-//		err := kittyNode.AddNodeLink("kittyID", kittyID)
-//		if err != nil {
-//			return nil
-//		}
-//
-//		dogeNode := &merkledag.ProtoNode{}
-//		err = dogeNode.AddNodeLink("kittyNode", kittyNode)
-//		if err != nil {
-//			return nil
-//		}
-//		err = dogeNode.AddNodeLink("dogeID", dogeID)
-//		if err != nil {
-//			return nil
-//		}
-//
-//		piggyNode := &merkledag.ProtoNode{}
-//		err = piggyNode.AddNodeLink("dogeNode", dogeNode)
-//		if err != nil {
-//			return nil
-//		}
-//		err = piggyNode.AddNodeLink("piggyID", piggyID)
-//		if err != nil {
-//			return nil
-//		}
-//
-//		dags = append(dags, []ipldFormat.Node{
-//			piggyNode, dogeNode, kittyNode,
-//			piggyID, dogeID, kittyID,
-//		})
-//	}
-//
-//	return dags
-//}
-
-//func randID() string {
-//	id, _ := uuid.GenerateUUID()
-//
-//	return id
-//}

@@ -91,7 +91,7 @@ func MetadataLink(lsys ipld.LinkSystem, metadata Metadata) (Link_Metadata, error
 	return &_Link_Metadata{lnk}, nil
 }
 
-func (m Metadata) AppendMetadata(previousID cid.Cid, payload []byte) (Metadata, error) {
+func (m Metadata) AppendMetadata(previousID cid.Cid, provider peer.ID, payload []byte, signKey crypto.PrivKey) (Metadata, error) {
 	if previousID == cid.Undef {
 		return nil, fmt.Errorf("cid is undefined")
 	}
@@ -103,13 +103,21 @@ func (m Metadata) AppendMetadata(previousID cid.Cid, payload []byte) (Metadata, 
 	}
 	previousLink := metadataLinkBuilder.Build().(Link_Metadata)
 
-	return &_Metadata{
+	metadata := &_Metadata{
 		PreviousID: _Link_Metadata__Maybe{
 			m: schema.Maybe_Value,
 			v: *previousLink,
 		},
-		Payload: _Bytes{x: payload},
-	}, nil
+		Provider: _String{x: provider.String()},
+		Payload:  _Bytes{x: payload},
+	}
+	signature, err := signMetadata(signKey, metadata)
+	if err != nil {
+		return nil, err
+	}
+	metadata.Signature = _Bytes{x: signature}
+
+	return metadata, nil
 }
 
 func (m Metadata) LinkContext(ctx context.Context) ipld.LinkContext {
