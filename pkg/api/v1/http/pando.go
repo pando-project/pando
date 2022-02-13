@@ -15,7 +15,6 @@ import (
 func (a *API) registerPando() {
 	pando := a.router.Group("/pando")
 	{
-		//pando.GET("/subscribe", a.pandoSubscribe)
 		pando.GET("/info", a.pandoInfo)
 		pando.GET("/metrics", adapter.Wrap(func(h http.Handler) http.Handler {
 			return metrics.Handler(coremetrics.DefaultViews)

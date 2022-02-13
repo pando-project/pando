@@ -46,7 +46,6 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core) ipld.LinkSystem {
 				log.Errorw("Error decoding IPLD node in linksystem", "err", err)
 				return errors.New("bad ipld data")
 			}
-			// If it is an advertisement.
 			if isMetadata(n) {
 				log.Infow("Received metadata")
 				_, peerid, err := verifyMetadata(n)
@@ -107,10 +106,10 @@ func decodeMeta(n ipld.Node) (schema.Metadata, error) {
 func verifyMetadata(n ipld.Node) (schema.Metadata, peer.ID, error) {
 	meta, err := decodeMeta(n)
 	if err != nil {
-		log.Errorw("Cannot decode advertisement", "err", err)
+		log.Errorw("Cannot decode metadata", "err", err)
 		return nil, peer.ID(""), err
 	}
-	// Verify meta signature
+	// Verify metadata signature
 	signerID, err := schema.VerifyMetadata(meta)
 	if err != nil {
 		// stop exchange, verification of signature failed.
@@ -118,10 +117,10 @@ func verifyMetadata(n ipld.Node) (schema.Metadata, peer.ID, error) {
 		return nil, peer.ID(""), err
 	}
 
-	// Get provider ID from meta data.
-	provID, err := providerFromMeta(meta)
+	// Get provider ID from metadata.
+	provID, err := providerFromMetadata(meta)
 	if err != nil {
-		log.Errorw("Cannot get provider from meta data", "err", err)
+		log.Errorw("Cannot get provider from metadata", "err", err)
 		return nil, peer.ID(""), err
 	}
 
@@ -136,11 +135,11 @@ func verifyMetadata(n ipld.Node) (schema.Metadata, peer.ID, error) {
 	return meta, provID, nil
 }
 
-// providerFromMeta reads the provider ID from a meta data
-func providerFromMeta(ad schema.Metadata) (peer.ID, error) {
+// providerFromMetadata reads the provider ID from an metadata
+func providerFromMetadata(ad schema.Metadata) (peer.ID, error) {
 	provider, err := ad.FieldProvider().AsString()
 	if err != nil {
-		return peer.ID(""), fmt.Errorf("cannot read provider from advertisement: %w", err)
+		return peer.ID(""), fmt.Errorf("cannot read provider from metadata: %w", err)
 	}
 
 	providerID, err := peer.Decode(provider)

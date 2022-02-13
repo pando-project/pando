@@ -10,6 +10,7 @@ import (
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/datamodel"
 	"pando/pkg/types/schema"
 
 	datastoreSync "github.com/ipfs/go-datastore/sync"
@@ -97,6 +98,22 @@ func (p *DAGProvider) Close() error {
 	return p.LegsPublisher.Close()
 }
 
+func (p *DAGProvider) NewMetadata(payload []byte) (schema.Metadata, error) {
+	return schema.NewMetadata(payload, p.Host.ID(), p.PrivateKey)
+}
+
+func (p *DAGProvider) NewMetadataWithLink(payload []byte, link *datamodel.Link) (schema.Metadata, error) {
+	return schema.NewMetadataWithLink(payload, p.Host.ID(), p.PrivateKey, link)
+}
+
+func (p *DAGProvider) AppendMetadata(metadata schema.Metadata, payload []byte) (schema.Metadata, error) {
+	previousID, err := p.PushLocal(context.Background(), metadata)
+	if err != nil {
+		return nil, err
+	}
+	return metadata.AppendMetadata(previousID, p.Host.ID(), payload, p.PrivateKey)
+}
+
 func (p *DAGProvider) Push(metadata schema.Metadata) (cid.Cid, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), p.PushTimeout)
 	defer cancel()
@@ -104,10 +121,10 @@ func (p *DAGProvider) Push(metadata schema.Metadata) (cid.Cid, error) {
 	// Store the metadata locally.
 	c, err := p.PushLocal(ctx, metadata)
 	if err != nil {
-		return cid.Undef, fmt.Errorf("failed to publish meta data locally: %s", err)
+		return cid.Undef, fmt.Errorf("failed to publish metadata locally: %s", err)
 	}
 
-	logger.Infow("Publishing meta data in pubsub channel", "cid", c)
+	logger.Infow("Publishing metadata in pubsub channel", "cid", c)
 	// Publish the metadata.
 	err = p.LegsPublisher.UpdateRoot(ctx, c)
 	if err != nil {

@@ -52,7 +52,7 @@ func (bs *BackupSystem) run() {
 				err = bs.backupToEstuary(path.Join(BackupTmpPath, file.Name()))
 				if err != nil {
 					//todo metrics
-					log.Errorf("failed back up, err : %s", err.Error())
+					log.Warnf("failed back up, err : %s", err.Error())
 					continue
 				}
 				err = os.Remove(path.Join(BackupTmpPath, file.Name()))
