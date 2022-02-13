@@ -289,9 +289,6 @@ func (st *StateTree) GetSnapShot(sscid cid.Cid) (shot *statetreeTypes.SnapShot, 
 }
 
 func (st *StateTree) GetSnapShotByHeight(height uint64) (*statetreeTypes.SnapShot, error) {
-	//if height < 0 {
-	//	return nil, fmt.Errorf("height must be positive")
-	//}
 	cidlist, err := st.GetSnapShotCidList()
 	if err != nil {
 		return nil, err

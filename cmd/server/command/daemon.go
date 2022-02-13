@@ -171,7 +171,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	var err error
 
 	c.StoreInstance = storeInstance
-	linkSystem := legs.MkLinkSystem(c.StoreInstance.BlockStore)
+	linkSystem := legs.MkLinkSystem(c.StoreInstance.BlockStore, nil)
 	c.LinkSystem = &linkSystem
 
 	var lotusDiscoverer *lotus.Discoverer

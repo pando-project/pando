@@ -16,6 +16,8 @@ import (
 	"pando/pkg/registry/discovery"
 )
 
+const topic = "/pando/v0.0.1"
+
 type PandoMock struct {
 	Opt      *option.Options
 	DS       datastore.Batching

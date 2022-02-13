@@ -10,7 +10,6 @@ import (
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/datamodel"
 	"pando/pkg/types/schema"
 
 	datastoreSync "github.com/ipfs/go-datastore/sync"
@@ -39,6 +38,8 @@ type DAGProvider struct {
 	PushTimeout    time.Duration
 }
 
+const topic = "/pando/v0.0.1"
+
 const latestMedataKey = "/sync/metadata"
 
 var dsLatestMetadataKey = datastore.NewKey(latestMedataKey)
@@ -65,8 +66,8 @@ func NewDAGProvider(privateKeyStr string, connectTimeout time.Duration, pushTime
 	storageCore.MutexDatastore = datastoreSync.MutexWrap(datastore)
 	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
 
-	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore)
-	legsPublisher, err := dtsync.NewPublisher(providerHost, datastore, storageCore.LinkSys, "PandoPubSub")
+	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore, nil)
+	legsPublisher, err := dtsync.NewPublisher(providerHost, datastore, storageCore.LinkSys, topic)
 
 	time.Sleep(2 * time.Second)
 

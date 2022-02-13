@@ -122,7 +122,7 @@ func TestBackUpWithStopLink(t *testing.T) {
 			So(err, ShouldBeNil)
 		}
 
-		linksys := legs.MkLinkSystem(pando.BS)
+		linksys := legs.MkLinkSystem(pando.BS, nil)
 		ss := golegs.ExploreRecursiveWithStopNode(selector.RecursionLimit{}, nil, cidlink.Link{cids[4]})
 		f, err := os.OpenFile("./test1.car", os.O_WRONLY|os.O_CREATE, 0666)
 		defer f.Close()

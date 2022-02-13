@@ -42,10 +42,12 @@ func Store(bs blockstore.Blockstore, n ipld.Node) (ipld.Link, error) {
 			MhLength: 16,
 		},
 	}
-	lsys := legs.MkLinkSystem(bs)
+	lsys := legs.MkLinkSystem(bs, nil)
 
 	return lsys.Store(ipld.LinkContext{}, linkproto, n)
 }
+
+const topic = "/pando/v0.0.1"
 
 // eg: CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w= 10 12D3KooWC3jxxw4TdQtoZDv3QNwmh9rtuiyVL8CADpnJYKHh9AiA /ip4/52.14.211.248/tcp/9000 30
 func main() {
@@ -87,7 +89,7 @@ func main() {
 	fmt.Println("p2pHost addr:", h.Addrs())
 	fmt.Println("p2pHost id:", h.ID())
 	bs := blockstore.NewBlockstore(srcStore)
-	srcLnkS := legs.MkLinkSystem(bs)
+	srcLnkS := legs.MkLinkSystem(bs, nil)
 	ma, err := multiaddr.NewMultiaddr(PandoAddrStr + "/ipfs/" + PandoPeerID)
 	if err != nil {
 		log.Fatal(err)
@@ -115,7 +117,7 @@ func main() {
 		fmt.Println(string(taskBytes))
 	}
 
-	lp, err := dtsync.NewPublisher(h, srcStore, srcLnkS, "PandoPubSub")
+	lp, err := dtsync.NewPublisher(h, srcStore, srcLnkS, topic)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -7,20 +7,17 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
+	_ "github.com/ipld/go-ipld-prime/codec/dagcbor"
+	_ "github.com/ipld/go-ipld-prime/codec/dagjson"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/multicodec"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"io"
 	"pando/pkg/types/schema"
-
-	// dagjson codec registered for encoding
-
-	_ "github.com/ipld/go-ipld-prime/codec/dagcbor"
-	_ "github.com/ipld/go-ipld-prime/codec/dagjson"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 )
 
-func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
+func MkLinkSystem(bs blockstore.Blockstore, core *Core) ipld.LinkSystem {
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.TrustedStorage = true
 	lsys.StorageReadOpener = func(lnkCtx ipld.LinkContext, lnk ipld.Link) (io.Reader, error) {
@@ -51,7 +48,7 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 			}
 			if isMetadata(n) {
 				log.Infow("Received metadata")
-				_, _, err := verifyMetadata(n)
+				_, peerid, err := verifyMetadata(n)
 				if err != nil {
 
 					return err
@@ -59,6 +56,9 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 				block, err := blocks.NewBlockWithCid(origBuf, c)
 				if err != nil {
 					return err
+				}
+				if core != nil {
+					go core.SendRecvMeta(c, peerid)
 				}
 				return bs.Put(lctx.Ctx, block)
 			}
@@ -87,14 +87,14 @@ func decodeIPLDNode(codec uint64, r io.Reader) (ipld.Node, error) {
 }
 
 // Checks if an IPLD node is a Metadata, by looking to see if it has a
-// "PreviousID" field.  We may need additional checks if we extend the schema
+// "Payload" field.  We may need additional checks if we extend the schema
 // with new types that are traversable.
 func isMetadata(n ipld.Node) bool {
 	prev, _ := n.LookupByString("Payload")
 	return prev != nil
 }
 
-func decodeAd(n ipld.Node) (schema.Metadata, error) {
+func decodeMeta(n ipld.Node) (schema.Metadata, error) {
 	nb := schema.Type.Metadata.NewBuilder()
 	err := nb.AssignNode(n)
 	if err != nil {
@@ -104,7 +104,7 @@ func decodeAd(n ipld.Node) (schema.Metadata, error) {
 }
 
 func verifyMetadata(n ipld.Node) (schema.Metadata, peer.ID, error) {
-	meta, err := decodeAd(n)
+	meta, err := decodeMeta(n)
 	if err != nil {
 		log.Errorw("Cannot decode metadata", "err", err)
 		return nil, peer.ID(""), err

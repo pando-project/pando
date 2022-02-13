@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var _ = logging.SetLogLevel("*", "debug")
+var _ = logging.SetLogLevel("core", "debug")
 
 func TestCreate(t *testing.T) {
 	Convey("test create legs core", t, func() {
@@ -94,7 +94,7 @@ func TestRecurseFetchMeta(t *testing.T) {
 	Convey("Test fetch metadata recursely by golegs", t, func() {
 		pando, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
-		//ch, err := pando.GetMetaRecordCh()
+		ch, err := pando.GetMetaRecordCh()
 		So(err, ShouldBeNil)
 		provider, err := mock.NewMockProvider(pando)
 		So(err, ShouldBeNil)
@@ -119,6 +119,13 @@ func TestRecurseFetchMeta(t *testing.T) {
 		for i := 0; i < 6; i++ {
 			_, err = pando.BS.Get(ctx, cids[i])
 			So(err, ShouldBeNil)
+			select {
+			case rec, ok := <-ch:
+				if !ok {
+					t.Error("error closed")
+				}
+				t.Log(rec)
+			}
 		}
 	})
 
