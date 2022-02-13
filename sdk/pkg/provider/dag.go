@@ -38,6 +38,8 @@ type DAGProvider struct {
 	PushTimeout    time.Duration
 }
 
+const topic = "/pando/v0.0.1"
+
 const latestMedataKey = "/sync/metadata"
 
 var dsLatestMetadataKey = datastore.NewKey(latestMedataKey)
@@ -65,7 +67,7 @@ func NewDAGProvider(privateKeyStr string, connectTimeout time.Duration, pushTime
 	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
 
 	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore, nil)
-	legsPublisher, err := dtsync.NewPublisher(providerHost, datastore, storageCore.LinkSys, "PandoPubSub")
+	legsPublisher, err := dtsync.NewPublisher(providerHost, datastore, storageCore.LinkSys, topic)
 
 	time.Sleep(2 * time.Second)
 
