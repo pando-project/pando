@@ -53,7 +53,7 @@ CLI uses private key only for signing registration information,
 because Pando will verify that the peerID provided by provider matches the public key to prevent
 illegal provider falsely use the peerID of other providers.
 
-3. execute updateRoot() to publish updated DAG root cid into pubsub topic: "PandoPubSub"
+3. execute updateRoot() to publish updated DAG root cid into pubsub topic: "/pando/v0.0.1"
 
 Check [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
 

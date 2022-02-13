@@ -18,7 +18,7 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 		So(err, ShouldBeNil)
 		err = logging.SetLogLevel("meta-manager", "debug")
 		So(err, ShouldBeNil)
-		lys := legs.MkLinkSystem(pando.BS)
+		lys := legs.MkLinkSystem(pando.BS, nil)
 
 		Convey("give records when wait for maxInterval then update and backup", func() {
 			//BackupMaxInterval = time.Second * 3
@@ -26,6 +26,8 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 			mm, err := New(context.Background(), pando.DS, pando.BS, &lys, pando.Registry, &pando.Opt.Backup)
 			So(err, ShouldBeNil)
 			provider, err := mock.NewMockProvider(pando)
+			So(err, ShouldBeNil)
+			err = pando.Registry.RegisterOrUpdate(context.Background(), provider.ID, cid.Undef)
 			So(err, ShouldBeNil)
 			cid1, err := provider.SendMeta(true)
 			So(err, ShouldBeNil)
@@ -48,7 +50,7 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 				cancel()
 			})
 
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 5)
 			select {
 			case <-ctx.Done():
 				t.Error("timeout!not get update rightly")

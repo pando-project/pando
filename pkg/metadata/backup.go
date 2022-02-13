@@ -26,8 +26,7 @@ var (
 type BackupSystem struct {
 	backupCfg *option.Backup
 	apiKey    string
-	//fileName       string
-	toCheck chan uint64
+	toCheck   chan uint64
 }
 
 func NewBackupSys(backupCfg *option.Backup) (*BackupSystem, error) {

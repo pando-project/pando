@@ -16,9 +16,7 @@ type Discoverer struct {
 }
 
 type ExpTipSet struct {
-	Cids []cid.Cid
-	//Blocks []*BlockHeader
-	//Height abi.ChainEpoch
+	Cids   []cid.Cid
 	Blocks []interface{}
 	Height int64
 }

@@ -30,14 +30,13 @@ const (
 	// SyncPrefix used to track the latest sync in datastore.
 	SyncPrefix = "/sync/"
 	// PubSubTopic used for legs transportation
-	PubSubTopic = "PandoPubSub"
+	PubSubTopic = "/pando/v0.0.1"
 )
 
 type Core struct {
-	Host host.Host
-	DS   datastore.Batching
-	BS   blockstore.Blockstore
-	//lms            golegs.LegMultiSubscriber
+	Host         host.Host
+	DS           datastore.Batching
+	BS           blockstore.Blockstore
 	gs           graphsync.GraphExchange
 	ls           *golegs.Subscriber
 	cancelSyncFn context.CancelFunc
@@ -86,7 +85,7 @@ func NewLegsCore(ctx context.Context,
 }
 
 func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, bs blockstore.Blockstore, reg *registry.Registry) (*golegs.Subscriber, graphsync.GraphExchange, error) {
-	lnkSys := MkLinkSystem(bs)
+	lnkSys := MkLinkSystem(bs, c)
 	gsNet := gsnet.NewFromLibp2pHost(h)
 	dtNet := dtnetwork.NewFromLibp2pHost(h)
 	gs := gsimpl.New(context.Background(), gsNet, lnkSys)
@@ -188,13 +187,11 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 		}
 		log.Debugw("Persisted latest sync", "peer", syncFin.PeerID, "cid", syncFin.Cid)
 
-		_ = c.sendRecvMeta(syncFin.Cid, syncFin.PeerID)
-
 	}
 	close(c.watchDone)
 }
 
-func (c *Core) sendRecvMeta(mcid cid.Cid, mpeer peer.ID) error {
+func (c *Core) SendRecvMeta(mcid cid.Cid, mpeer peer.ID) {
 	ctx, cncl := context.WithTimeout(context.Background(), time.Second*5)
 	defer cncl()
 	select {
@@ -204,9 +201,7 @@ func (c *Core) sendRecvMeta(mcid cid.Cid, mpeer peer.ID) error {
 		Time:       uint64(time.Now().Unix()),
 	}:
 	case _ = <-ctx.Done():
-		log.Errorf("failed to send metadata(cid: %s peerid: %s) to metamanager", mcid.String(), mpeer.String())
-		return fmt.Errorf("timeout for sending metadata")
+		log.Errorf("failed to send metadata(cid: %s peerid: %s) to metamanager, timeout", mcid.String(), mpeer.String())
 	}
 
-	return nil
 }

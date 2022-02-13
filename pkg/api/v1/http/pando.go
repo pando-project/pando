@@ -24,28 +24,6 @@ func (a *API) registerPando() {
 	}
 }
 
-//func (a *API) pandoSubscribe(ctx *gin.Context) {
-//	record := metrics.APITimer(context.Background(), metrics.GetPandoSubscribeLatency)
-//	defer record()
-//
-//	providerQuery := ctx.Query("provider")
-//	providerPeerID, err := peer.Decode(providerQuery)
-//	if err != nil {
-//		logger.Errorf("decode provider peerID failed: %v\n", err)
-//		handleError(ctx, http.StatusBadRequest, "peerID of provider is invalid")
-//		return
-//	}
-//
-//	err = a.core.LegsCore.Subscribe(context.Background(), providerPeerID)
-//	if err != nil {
-//		logger.Errorf("subscribe provider failed: %v\n", err)
-//		handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
-//		return
-//	}
-//
-//	ctx.JSON(http.StatusOK, types.NewOKResponse("subscribe success", nil))
-//}
-
 func (a *API) pandoInfo(ctx *gin.Context) {
 	record := metrics.APITimer(context.Background(), metrics.GetPandoInfoLatency)
 	defer record()

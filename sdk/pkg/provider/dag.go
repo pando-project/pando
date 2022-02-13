@@ -38,6 +38,8 @@ type DAGProvider struct {
 	PushTimeout    time.Duration
 }
 
+const topic = "/pando/v0.0.1"
+
 const latestMedataKey = "/sync/metadata"
 
 var dsLatestMetadataKey = datastore.NewKey(latestMedataKey)
@@ -64,8 +66,8 @@ func NewDAGProvider(privateKeyStr string, connectTimeout time.Duration, pushTime
 	storageCore.MutexDatastore = datastoreSync.MutexWrap(datastore)
 	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
 
-	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore)
-	legsPublisher, err := dtsync.NewPublisher(providerHost, datastore, storageCore.LinkSys, "PandoPubSub")
+	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore, nil)
+	legsPublisher, err := dtsync.NewPublisher(providerHost, datastore, storageCore.LinkSys, topic)
 
 	time.Sleep(2 * time.Second)
 
@@ -102,10 +104,10 @@ func (p *DAGProvider) Push(metadata schema.Metadata) (cid.Cid, error) {
 	// Store the metadata locally.
 	c, err := p.PushLocal(ctx, metadata)
 	if err != nil {
-		return cid.Undef, fmt.Errorf("failed to publish advertisement locally: %s", err)
+		return cid.Undef, fmt.Errorf("failed to publish meta data locally: %s", err)
 	}
 
-	logger.Infow("Publishing advertisement in pubsub channel", "cid", c)
+	logger.Infow("Publishing meta data in pubsub channel", "cid", c)
 	// Publish the metadata.
 	err = p.LegsPublisher.UpdateRoot(ctx, c)
 	if err != nil {

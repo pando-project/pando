@@ -337,14 +337,6 @@ func (r *Registry) loadPersistedProviders(ctx context.Context) (int, error) {
 
 		r.providers[peerID] = pinfo
 		count++
-		//if r.core == nil {
-		//	log.Warnf("nil legs-core for subscribing the registered provider")
-		//} else {
-		//	err = r.core.Subscribe(context.Background(), peerID)
-		//	if err != nil {
-		//		log.Warnf("failed to subscribe: %s, err: %s", peerID, err.Error())
-		//	}
-		//}
 	}
 	return count, nil
 }
@@ -372,7 +364,7 @@ func (r *Registry) Authorized(peerID peer.ID) (bool, error) {
 }
 
 // RegisterOrUpdate attempts to register an unregistered provider, or updates
-// the addresses and latest advertisement of an already registered provider.
+// the addresses and latest meta data of an already registered provider.
 func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, metaCid cid.Cid) error {
 	// Check that the provider has been discovered and validated
 	info := r.ProviderInfo(providerID)

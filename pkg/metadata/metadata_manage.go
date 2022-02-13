@@ -2,13 +2,13 @@ package metadata
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	golegs "github.com/filecoin-project/go-legs"
 	"github.com/ipld/go-car/v2"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/traversal/selector"
+	selectorparse "github.com/ipld/go-ipld-prime/traversal/selector/parse"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
@@ -29,14 +29,10 @@ var log = logging.Logger("meta-manager")
 
 var (
 	SnapShotDuration = time.Second * 5
-	//BackupMaxInterval      = time.Second * 10
-	//BackupMaxDagNums       = 10000
-	BackupTmpDirName  = "ttmp"
-	BackupTmpPath     string
-	BackFileName      = "backup-%s-%d.car"
-	BackupGenInterval = time.Minute
-	//BackupCheckNumInterval = time.Second * 60
-	syncPrefix = "/sync/"
+	BackupTmpDirName = "ttmp"
+	BackupTmpPath    string
+	BackFileName     = "backup-%s-%d.car"
+	syncPrefix       = "/sync/"
 )
 
 func init() {
@@ -59,8 +55,6 @@ func init() {
 	BackupTmpPath = BackupTmpDir
 }
 
-var NoRecordBackup = errors.New("no records need backup")
-
 type MetaManager struct {
 	flushTime         time.Duration
 	recvCh            chan *MetaRecord
@@ -78,11 +72,6 @@ type MetaManager struct {
 	ctx               context.Context
 	cncl              context.CancelFunc
 }
-
-//type backupRecord struct {
-//	cid      cid.Cid
-//	isBackup bool
-//}
 
 type MetaRecord struct {
 	Cid        cid.Cid
@@ -211,6 +200,7 @@ func (mm *MetaManager) genCarForProviders(ctx context.Context) {
 				if err != nil {
 					log.Errorf("failed to export backup car for provider:%s\nerr:%s",
 						info.AddrInfo.ID.String(), err.Error())
+					continue
 				}
 				err = mm.regstry.RegisterOrUpdate(ctx, info.AddrInfo.ID, lastSyncCid)
 				if err != nil {
@@ -239,10 +229,10 @@ func (mm *MetaManager) exportMetaCar(ctx context.Context, filename string, root 
 		_ = f.Close()
 	}(f)
 	var ss ipld.Node
-	if lastBackup != cid.Undef {
+	if !lastBackup.Equals(cid.Undef) {
 		ss = golegs.ExploreRecursiveWithStopNode(selector.RecursionLimit{}, nil, cidlink.Link{lastBackup})
 	} else {
-		ss = nil
+		ss = selectorparse.CommonSelector_ExploreAllRecursively
 	}
 
 	_, err = car.TraverseV1(ctx, mm.ls, root, ss, f)
