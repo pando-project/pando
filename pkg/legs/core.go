@@ -34,10 +34,9 @@ const (
 )
 
 type Core struct {
-	Host host.Host
-	DS   datastore.Batching
-	BS   blockstore.Blockstore
-	//lms            golegs.LegMultiSubscriber
+	Host         host.Host
+	DS           datastore.Batching
+	BS           blockstore.Blockstore
 	gs           graphsync.GraphExchange
 	ls           *golegs.Subscriber
 	cancelSyncFn context.CancelFunc
