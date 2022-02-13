@@ -17,21 +17,21 @@ type mockDiscoverer struct {
 }
 
 const (
-	exceptID   = "12D3KooWK7CTS7cyWi51PeNE3cTjS2F2kDCZaQVU4A5xBmb9J1do"
-	trustedID  = "12D3KooWSG3JuvEjRkSxt93ADTjQxqe4ExbBwSkQ9Zyk1WfBaZJF"
-	trustedID2 = "12D3KooWKSNuuq77xqnpPLnU3fq1bTQW2TwSZL2Z4QTHEYpUVzfr"
-
-	minerDiscoAddr = "stitest999999"
-	minerAddr      = "/ip4/127.0.0.1/tcp/9999"
-	minerAddr2     = "/ip4/127.0.0.2/tcp/9999"
+	exceptID = "12D3KooWK7CTS7cyWi51PeNE3cTjS2F2kDCZaQVU4A5xBmb9J1do"
+	//	trustedID  = "12D3KooWSG3JuvEjRkSxt93ADTjQxqe4ExbBwSkQ9Zyk1WfBaZJF"
+	blackID = "12D3KooWKSNuuq77xqnpPLnU3fq1bTQW2TwSZL2Z4QTHEYpUVzfr"
+	//
+	//	minerDiscoAddr = "stitest999999"
+	minerAddr = "/ip4/127.0.0.1/tcp/9999"
+	//	minerAddr2     = "/ip4/127.0.0.2/tcp/9999"
 )
 
 var MockDiscoveryCfg = option.Discovery{
 	Policy: option.Policy{
-		Allow:       false,
-		Except:      []string{exceptID, trustedID, trustedID2},
-		Trust:       false,
-		TrustExcept: []string{trustedID, trustedID2},
+		Allow:       true,
+		Except:      []string{blackID},
+		Trust:       true,
+		TrustExcept: []string{},
 	},
 	PollInterval:   option.Duration(time.Second * 2).String(),
 	RediscoverWait: option.Duration(time.Minute).String(),

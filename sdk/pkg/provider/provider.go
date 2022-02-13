@@ -1,9 +1,11 @@
 package provider
 
-import ipldFormat "github.com/ipfs/go-ipld-format"
+import (
+	"github.com/ipfs/go-cid"
+)
 
 type Provider interface {
 	ConnectPando(peerAddress string, peerID string) error
 	Close() error
-	Push(node ipldFormat.Node) error
+	Push(metadataCid cid.Cid) error
 }

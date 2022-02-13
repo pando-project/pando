@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"pando/cmd/client/command/metadata"
 	"pando/cmd/client/command/pando"
+	"pando/cmd/client/command/provider"
 
 	"pando/cmd/client/command/api"
-	"pando/cmd/client/command/provider"
 )
 
 func NewRoot() *cobra.Command {

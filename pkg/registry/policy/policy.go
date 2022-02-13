@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"pando/pkg/option"
+	"sync"
 
 	"github.com/libp2p/go-libp2p-core/peer"
 )
@@ -13,6 +14,7 @@ type Policy struct {
 	except      map[peer.ID]struct{}
 	trust       bool
 	trustExcept map[peer.ID]struct{}
+	rwmutex     sync.RWMutex
 }
 
 func New(cfg option.Policy) (*Policy, error) {
@@ -56,23 +58,53 @@ func getExceptPeerIDs(excepts []string) (map[peer.ID]struct{}, error) {
 	return exceptIDs, nil
 }
 
-// Trusted returns true if the provider is explicitly trusted.  A trusted
-// provider is allowed to register without requiring verification.
-func (p *Policy) Trusted(providerID peer.ID) bool {
-	_, ok := p.trustExcept[providerID]
+// Allowed returns true if the policy allows the peer to index content.  This
+// check does not check whether the peer is trusted. An allowed peer must still
+// be verified.
+func (p *Policy) Allowed(peerID peer.ID) bool {
+	p.rwmutex.RLock()
+	defer p.rwmutex.RUnlock()
+	return p.allowed(peerID)
+}
+
+func (p *Policy) allowed(peerID peer.ID) bool {
+	_, ok := p.except[peerID]
+	if p.allow {
+		return !ok
+	}
+	return ok
+}
+
+// Trusted returns true if the peer is explicitly trusted.  A trusted peer is
+// allowed to register without requiring verification.
+func (p *Policy) Trusted(peerID peer.ID) bool {
+	p.rwmutex.RLock()
+	defer p.rwmutex.RUnlock()
+	return p.trusted(peerID)
+}
+
+func (p *Policy) trusted(peerID peer.ID) bool {
+	_, ok := p.trustExcept[peerID]
 	if p.trust {
 		return !ok
 	}
 	return ok
 }
 
-// Allowed returns true if the policy allows the provider to index content.
-// This check does not check whether the provider is trusted. An allowed
-// provider must still be verified.
-func (p *Policy) Allowed(providerID peer.ID) bool {
-	_, ok := p.except[providerID]
-	if p.allow {
-		return !ok
+// Check returns whether the two bool values.  The fisrt is true if the peer is
+// allowed.  The second is true if the peer is allowed and is trusted (does not
+// require verification).
+func (p *Policy) Check(peerID peer.ID) (bool, bool) {
+	p.rwmutex.RLock()
+	defer p.rwmutex.RUnlock()
+
+	if !p.allowed(peerID) {
+		return false, false
 	}
-	return ok
+
+	if !p.trusted(peerID) {
+		return true, false
+	}
+
+	return true, true
 }

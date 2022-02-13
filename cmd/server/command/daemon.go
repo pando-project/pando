@@ -98,6 +98,10 @@ func setLoglevel() error {
 	if err != nil {
 		return err
 	}
+	err = logging.SetLogLevel("meta-manager", "warn")
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -147,7 +151,6 @@ func initP2PHost(privateKey crypto.PrivKey) (libp2pHost.Host, error) {
 	if !Opt.ServerAddress.DisableP2P {
 		log.Info("initializing libp2p host...")
 		p2pHost, err = libp2p.New(
-			context.Background(),
 			libp2p.ListenAddrStrings(Opt.ServerAddress.P2PAddress),
 			libp2p.Identity(privateKey),
 		)
@@ -168,9 +171,30 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	var err error
 
 	c.StoreInstance = storeInstance
+	linkSystem := legs.MkLinkSystem(c.StoreInstance.BlockStore)
+	c.LinkSystem = &linkSystem
+
+	var lotusDiscoverer *lotus.Discoverer
+	if Opt.Discovery.LotusGateway != "" {
+		log.Infow("discovery using lotus", "gateway", Opt.Discovery.LotusGateway)
+		// Create lotus client
+		c.LotusDiscover, err = lotus.NewDiscoverer(Opt.Discovery.LotusGateway)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create lotus client: %v", err)
+		}
+	}
+
+	c.Registry, err = registry.NewRegistry(context.Background(), &Opt.Discovery, &Opt.AccountLevel,
+		storeInstance.DataStore, lotusDiscoverer)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create provider registryInstance: %v", err)
+	}
+
 	c.MetaManager, err = metadata.New(context.Background(),
 		storeInstance.MutexDataStore,
 		storeInstance.BlockStore,
+		c.LinkSystem,
+		c.Registry,
 		&Opt.Backup)
 	if err != nil {
 		return nil, err
@@ -192,29 +216,14 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 		return nil, err
 	}
 
-	var lotusDiscoverer *lotus.Discoverer
-	if Opt.Discovery.LotusGateway != "" {
-		log.Infow("discovery using lotus", "gateway", Opt.Discovery.LotusGateway)
-		// Create lotus client
-		c.LotusDiscover, err = lotus.NewDiscoverer(Opt.Discovery.LotusGateway)
-		if err != nil {
-			return nil, fmt.Errorf("cannot create lotus client: %v", err)
-		}
-	}
-
 	c.LegsCore, err = legs.NewLegsCore(context.Background(),
-		&p2pHost,
+		p2pHost,
 		storeInstance.MutexDataStore,
 		storeInstance.BlockStore,
 		c.MetaManager.GetMetaInCh(),
 		nil,
+		c.Registry,
 	)
-
-	c.Registry, err = registry.NewRegistry(&Opt.Discovery, &Opt.AccountLevel,
-		storeInstance.DataStore, lotusDiscoverer, c.LegsCore)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create provider registryInstance: %v", err)
-	}
 
 	tokenRate := math.Ceil((0.8 * float64(Opt.RateLimit.Bandwidth)) / Opt.RateLimit.SingleDAGSize)
 	rateConfig := &policy.LimiterConfig{

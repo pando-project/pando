@@ -17,37 +17,32 @@ import (
 	"time"
 )
 
-const (
-	checkInterval         = time.Second * 10
-	DefaultShuttleGateway = "https://shuttle-4.estuary.tech"
+var (
+	CheckInterval         = time.Second * 10
+	DefaultShuttleGateway = "https://shuttle-5.estuary.tech"
 	DefaultEstGateway     = "https://api.estuary.tech"
 )
 
-type backupSystem struct {
-	gateway        string
-	shuttleGateway string
-	checkInterval  time.Duration
-	apiKey         string
-	//fileDir        string
-	fileName string
-	toCheck  chan uint64
+type BackupSystem struct {
+	backupCfg *option.Backup
+	apiKey    string
+	//fileName       string
+	toCheck chan uint64
 }
 
-func NewBackupSys(backupCfg *option.Backup) (*backupSystem, error) {
-	bs := &backupSystem{
-		gateway:        backupCfg.EstuaryGateway,
-		shuttleGateway: backupCfg.ShuttleGateway,
-		checkInterval:  time.Second * 10,
-		apiKey:         "Bearer " + backupCfg.APIKey,
-		toCheck:        make(chan uint64, 1),
+func NewBackupSys(backupCfg *option.Backup) (*BackupSystem, error) {
+	bs := &BackupSystem{
+		apiKey:    "Bearer " + backupCfg.APIKey,
+		toCheck:   make(chan uint64, 1),
+		backupCfg: backupCfg,
 	}
 	bs.run()
 
 	return bs, nil
 }
 
-func (bs *backupSystem) run() {
-	// if there is car file, back up it then deletes file
+func (bs *BackupSystem) run() {
+	// if there is car file, back up it then delete file
 	go func() {
 		for range time.NewTicker(time.Second).C {
 			files, err := ioutil.ReadDir(BackupTmpPath)
@@ -73,9 +68,9 @@ func (bs *backupSystem) run() {
 
 }
 
-func (bs *backupSystem) checkDeal() {
+func (bs *BackupSystem) checkDeal() {
 	waitCheckList := make([]uint64, 0)
-	mux := new(sync.Mutex)
+	mux := sync.Mutex{}
 	go func() {
 		for estId := range bs.toCheck {
 			mux.Lock()
@@ -84,8 +79,11 @@ func (bs *backupSystem) checkDeal() {
 		}
 	}()
 
-	for range time.NewTicker(checkInterval).C {
+	for range time.NewTicker(CheckInterval).C {
 		for idx, checkId := range waitCheckList {
+			if len(waitCheckList) < idx+1 {
+				continue
+			}
 			success, err := bs.checkDealForBackup(checkId)
 			if err != nil {
 				log.Errorf("failed to check deal status of content id : %d, err : %s", checkId, err.Error())
@@ -93,9 +91,14 @@ func (bs *backupSystem) checkDeal() {
 			}
 			// delete from waitCheckList
 			if success {
+				log.Debugf("est : %d is successful to back up in filecoin!", checkId)
 				mux.Lock()
 				if waitCheckList[idx] == checkId {
-					waitCheckList = append(waitCheckList[:idx], waitCheckList[idx+1:]...)
+					if len(waitCheckList) > 1 {
+						waitCheckList = append(waitCheckList[:idx], waitCheckList[idx+1:]...)
+					} else {
+						waitCheckList = make([]uint64, 0)
+					}
 				} else {
 					// maybe the waitCheckList is adding while checking status
 					for i := idx + 1; i < len(waitCheckList); i++ {
@@ -105,6 +108,7 @@ func (bs *backupSystem) checkDeal() {
 						}
 					}
 				}
+				mux.Unlock()
 			} else {
 				// todo: metrics for failure
 			}
@@ -112,8 +116,8 @@ func (bs *backupSystem) checkDeal() {
 	}
 }
 
-func (bs *backupSystem) checkDealForBackup(estID uint64) (bool, error) {
-	req, err := http.NewRequest("GET", bs.gateway+"/content/status/"+strconv.FormatUint(estID, 10), nil)
+func (bs *BackupSystem) checkDealForBackup(estID uint64) (bool, error) {
+	req, err := http.NewRequest("GET", bs.backupCfg.EstuaryGateway+"/content/status/"+strconv.FormatUint(estID, 10), nil)
 	if err != nil {
 		log.Error("failed to create request: %s", err.Error())
 	}
@@ -156,7 +160,7 @@ func (bs *backupSystem) checkDealForBackup(estID uint64) (bool, error) {
 	}
 }
 
-func (bs *backupSystem) backupToEstuary(filepath string) error {
+func (bs *BackupSystem) backupToEstuary(filepath string) error {
 	fBuf := new(bytes.Buffer)
 	mw := multipart.NewWriter(fBuf)
 	fpath := fmt.Sprintf(`%s`, filepath)
@@ -178,7 +182,7 @@ func (bs *backupSystem) backupToEstuary(filepath string) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", bs.shuttleGateway+"/content/add", fBuf)
+	req, err := http.NewRequest("POST", bs.backupCfg.ShuttleGateway+"/content/add", fBuf)
 	if err != nil {
 		return err
 	}
@@ -215,11 +219,11 @@ func (bs *backupSystem) backupToEstuary(filepath string) error {
 	return nil
 }
 
-func (bs *backupSystem) checkDealStatus(cs *est_utils.ContentStatus) (bool, error) {
+func (bs *BackupSystem) checkDealStatus(cs *est_utils.ContentStatus) (bool, error) {
 	if cs == nil {
 		return false, fmt.Errorf("nil conten status")
 	}
-	if cs.Deals == nil {
+	if len(cs.Deals) == 0 {
 		return false, nil
 	}
 

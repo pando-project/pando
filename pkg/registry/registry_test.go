@@ -1,13 +1,13 @@
 package registry_test
 
 import (
+	"context"
 	"fmt"
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
 	. "github.com/smartystreets/goconvey/convey"
 	"net/http"
-	"pando/pkg/legs"
 	"pando/pkg/lotus"
 	"pando/pkg/option"
 	"pando/pkg/registry"
@@ -32,11 +32,10 @@ func TestNewRegistryAndClose(t *testing.T) {
 	Convey("TestNewRegistryAndClose", t, func() {
 		Convey("return nil, err if config is nil when new registry", func() {
 			opt := option.New(nil)
-			reg, err := NewRegistry(nil,
+			reg, err := NewRegistry(context.Background(), nil,
 				&opt.AccountLevel,
 				&dataStoreFactory.Datastore{},
-				&lotus.Discoverer{},
-				&legs.Core{})
+				&lotus.Discoverer{})
 			So(err, ShouldResemble, fmt.Errorf("nil config"))
 			So(reg, ShouldBeNil)
 		})
@@ -61,6 +60,7 @@ func TestRegisterAndDiscovery(t *testing.T) {
 
 		peerID, err := peer.Decode(trustedID)
 		So(err, ShouldBeNil)
+		blackID, _ := peer.Decode("12D3KooWKSNuuq77xqnpPLnU3fq1bTQW2TwSZL2Z4QTHEYpUVzfr")
 		maddr, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/3002")
 		So(err, ShouldBeNil)
 
@@ -81,7 +81,7 @@ func TestRegisterAndDiscovery(t *testing.T) {
 			{
 				registerInfo: &ProviderInfo{
 					AddrInfo: peer.AddrInfo{
-						ID:    "dasdsada",
+						ID:    blackID,
 						Addrs: []multiaddr.Multiaddr{maddr},
 					},
 				},
@@ -90,8 +90,9 @@ func TestRegisterAndDiscovery(t *testing.T) {
 		}
 
 		Convey("register, get provider info and reload", func() {
+			ctx := context.Background()
 			for _, tt := range registerCases {
-				res := r.Register(tt.registerInfo)
+				res := r.Register(ctx, tt.registerInfo)
 				So(res, ShouldResemble, tt.expected)
 			}
 			infos := r.AllProviderInfo()
@@ -112,7 +113,7 @@ func TestRegisterAndDiscovery(t *testing.T) {
 			diso, err := mock.NewMockDiscoverer(peerID.String())
 			So(err, ShouldBeNil)
 			// reload the persisted info
-			r, err := registry.NewRegistry(&mock.MockDiscoveryCfg, &mock.MockAclCfg, pando.DS, diso, nil)
+			r, err := registry.NewRegistry(ctx, &mock.MockDiscoveryCfg, &mock.MockAclCfg, pando.DS, diso)
 			So(err, ShouldBeNil)
 			info = r.ProviderInfo(peerID)
 			So(info, ShouldNotBeNil)

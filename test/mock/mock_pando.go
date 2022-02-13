@@ -32,7 +32,7 @@ func NewPandoMock() (*PandoMock, error) {
 
 	ds := datastore.NewMapDatastore()
 	mds := dssync.MutexWrap(ds)
-	h, err := libp2p.New(ctx)
+	h, err := libp2p.New()
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func NewPandoMock() (*PandoMock, error) {
 		return nil, err
 	}
 
-	r, err := registry.NewRegistry(&MockDiscoveryCfg, &MockAclCfg, mds, mockDisco, nil)
+	r, err := registry.NewRegistry(ctx, &MockDiscoveryCfg, &MockAclCfg, mds, mockDisco)
 	if err != nil {
 		return nil, err
 	}
@@ -59,11 +59,11 @@ func NewPandoMock() (*PandoMock, error) {
 	}
 
 	outCh := make(chan *metadata.MetaRecord)
-	core, err := legs.NewLegsCore(ctx, &h, mds, bs, outCh, limiter)
+	core, err := legs.NewLegsCore(ctx, h, mds, bs, outCh, limiter, r)
 	if err != nil {
 		return nil, err
 	}
-	r.SetCore(core)
+	//r.SetCore(core)
 	opt := option.New(nil)
 	_, err = opt.Parse()
 	if err != nil {

@@ -68,7 +68,7 @@ func (a *API) providerRegister(ctx *gin.Context) {
 		DiscoveryAddr: registerRequest.MinerAccount,
 	}
 
-	err = a.core.Registry.Register(providerInfo)
+	err = a.core.Registry.Register(ctx, providerInfo)
 	if err != nil {
 		handleError(ctx, http.StatusInternalServerError, fmt.Sprintf("register failed: %v", err))
 		return

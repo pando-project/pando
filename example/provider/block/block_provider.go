@@ -23,7 +23,8 @@ import (
 	dssync "github.com/ipfs/go-datastore/sync"
 	"github.com/ipld/go-ipld-prime"
 
-	golegs "github.com/filecoin-project/go-legs"
+	"github.com/filecoin-project/go-legs/dtsync"
+
 	_ "github.com/ipld/go-ipld-prime/codec/dagcbor"
 	_ "github.com/ipld/go-ipld-prime/codec/dagjson"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
@@ -82,9 +83,7 @@ func main() {
 
 	//srcStore := dssync.MutexWrap(datastore.NewMapDatastore())
 	srcStore := dssync.MutexWrap(dstore)
-	h, _ := libp2p.New(context.Background(),
-		libp2p.Identity(privkey),
-	)
+	h, _ := libp2p.New(libp2p.Identity(privkey))
 	fmt.Println("p2pHost addr:", h.Addrs())
 	fmt.Println("p2pHost id:", h.ID())
 	bs := blockstore.NewBlockstore(srcStore)
@@ -116,7 +115,7 @@ func main() {
 		fmt.Println(string(taskBytes))
 	}
 
-	lp, err := golegs.NewPublisher(context.Background(), h, srcStore, srcLnkS, "PandoPubSub")
+	lp, err := dtsync.NewPublisher(h, srcStore, srcLnkS, "PandoPubSub")
 	if err != nil {
 		log.Fatal(err)
 	}

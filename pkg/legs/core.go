@@ -2,230 +2,211 @@ package legs
 
 import (
 	"context"
+	"fmt"
+	dt "github.com/filecoin-project/go-data-transfer/impl"
+	dtnetwork "github.com/filecoin-project/go-data-transfer/network"
+	gstransport "github.com/filecoin-project/go-data-transfer/transport/graphsync"
 	golegs "github.com/filecoin-project/go-legs"
-	"github.com/gammazero/keymutex"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/query"
+	"github.com/ipfs/go-graphsync"
+	gsimpl "github.com/ipfs/go-graphsync/impl"
+	gsnet "github.com/ipfs/go-graphsync/network"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
-	"pando/pkg/metadata"
-	"pando/pkg/policy"
-	"time"
-
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"pando/pkg/metadata"
+	"pando/pkg/policy"
+	"pando/pkg/registry"
+	"strings"
+	"time"
 )
 
 var log = logging.Logger("core")
 
 const (
-	// syncPrefix used to track the latest sync in datastore.
-	syncPrefix = "/sync/"
+	// SyncPrefix used to track the latest sync in datastore.
+	SyncPrefix = "/sync/"
 	// PubSubTopic used for legs transportation
 	PubSubTopic = "PandoPubSub"
 )
 
 type Core struct {
-	Host           *host.Host
-	DS             datastore.Batching
-	BS             blockstore.Blockstore
-	lms            golegs.LegMultiSubscriber
-	subs           map[peer.ID]*subscriber
-	sublk          *keymutex.KeyMutex
-	receivedMetaCh chan<- *metadata.MetaRecord
-	rateLimiter    *policy.Limiter
-}
-
-// subscriber data structure for a account.
-type subscriber struct {
-	peerID  peer.ID
-	ls      golegs.LegSubscriber
-	watcher <-chan cid.Cid
-	cncl    context.CancelFunc
+	Host host.Host
+	DS   datastore.Batching
+	BS   blockstore.Blockstore
+	//lms            golegs.LegMultiSubscriber
+	gs           graphsync.GraphExchange
+	ls           *golegs.Subscriber
+	cancelSyncFn context.CancelFunc
+	recvMetaCh   chan<- *metadata.MetaRecord
+	rateLimiter  *policy.Limiter
+	watchDone    chan struct{}
 }
 
 func NewLegsCore(ctx context.Context,
-	host *host.Host,
+	host host.Host,
 	ds datastore.Batching,
 	bs blockstore.Blockstore,
 	outMetaCh chan<- *metadata.MetaRecord,
-	rateLimiter *policy.Limiter) (*Core, error) {
+	rateLimiter *policy.Limiter, reg *registry.Registry) (*Core, error) {
 
-	lnkSys := MkLinkSystem(bs)
-	lms, err := golegs.NewMultiSubscriber(ctx, *host, ds, lnkSys, PubSubTopic, nil)
+	c := &Core{
+		Host:        host,
+		DS:          ds,
+		BS:          bs,
+		recvMetaCh:  outMetaCh,
+		rateLimiter: rateLimiter,
+		watchDone:   make(chan struct{}),
+	}
+
+	ls, gs, err := c.initSub(ctx, host, ds, bs, reg)
 	if err != nil {
+		return nil, fmt.Errorf("failed to create legs subscriber, err: %s", err.Error())
+	}
+	c.ls = ls
+	c.gs = gs
+
+	err = c.restoreLatestSync()
+	if err != nil {
+		_ = ls.Close()
 		return nil, err
 	}
 
-	lc := &Core{
-		Host:           host,
-		DS:             ds,
-		BS:             bs,
-		lms:            lms,
-		subs:           make(map[peer.ID]*subscriber),
-		sublk:          keymutex.New(0),
-		receivedMetaCh: outMetaCh,
-		rateLimiter:    rateLimiter,
-	}
+	onSyncFin, cancelSyncFn := ls.OnSyncFinished()
+	c.cancelSyncFn = cancelSyncFn
 
-	lms.GraphSync().RegisterIncomingBlockHook(lc.storageHook())
-	lms.GraphSync().RegisterOutgoingRequestHook(lc.rateLimitHook())
-	lms.DataTransfer().SubscribeToEvents(onDataTransferComplete)
+	go c.watchSyncFinished(onSyncFin)
+
 	log.Debugf("LegCore started and all hooks and linksystem registered")
 
-	return lc, nil
+	return c, nil
 }
 
-func (l *Core) Subscribe(ctx context.Context, peerID peer.ID) error {
-	log.Infow("Subscribing to advertisement pub-sub channel", "host_id", peerID)
-	sctx, cancel := context.WithCancel(ctx)
-	sub, err := l.newPeerSubscriber(sctx, peerID)
+func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, bs blockstore.Blockstore, reg *registry.Registry) (*golegs.Subscriber, graphsync.GraphExchange, error) {
+	lnkSys := MkLinkSystem(bs)
+	gsNet := gsnet.NewFromLibp2pHost(h)
+	dtNet := dtnetwork.NewFromLibp2pHost(h)
+	gs := gsimpl.New(context.Background(), gsNet, lnkSys)
+	tp := gstransport.NewTransport(h.ID(), gs)
+
+	dtManager, err := dt.NewDataTransfer(ds, dtNet, tp)
 	if err != nil {
-		log.Errorf("Error getting a subscriber instance for provider: %s", err)
-		cancel()
-		return err
+		return nil, nil, err
 	}
-
-	// If already subscribed do nothing.
-	if sub.watcher != nil {
-		log.Infow("Already subscribed to provider", "id", peerID)
-		cancel()
-		return nil
-	}
-
-	var cncl context.CancelFunc
-	sub.watcher, cncl = sub.ls.OnChange()
-	sub.cncl = cancelFunc(cncl, cancel)
-
-	// Listen updates persist latestSync when sync is done.
-	go l.listenSubUpdates(sub)
-	return nil
-}
-
-// Unsubscribe to stop listening to advertisement from a specific provider.
-func (l *Core) Unsubscribe(ctx context.Context, peerID peer.ID) error {
-	log.Debugf("Unsubscribing from provider %s", peerID)
-	l.sublk.Lock(string(peerID))
-	defer l.sublk.Unlock(string(peerID))
-	// Check if subscriber exists.
-	sub, ok := l.subs[peerID]
-	if !ok {
-		log.Infof("Not subscribed to provider %s. Nothing to do", peerID)
-		// If not we have nothing to do.
-		return nil
-	}
-	// Close subscriber
-	if err := sub.ls.Close(); err != nil {
-		return err
-	}
-	// Check if we are subscribed
-	if sub.cncl != nil {
-		// If yes, run cancel
-		sub.cncl()
-	}
-	// Delete from map
-	delete(l.subs, peerID)
-	log.Infof("Unsubscribed from provider %s successfully", peerID)
-
-	return nil
-}
-
-// Creates a new subscriber for a account according to its latest sync.
-func (l *Core) newPeerSubscriber(ctx context.Context, peerID peer.ID) (*subscriber, error) {
-	l.sublk.Lock(string(peerID))
-	defer l.sublk.Unlock(string(peerID))
-	sub, ok := l.subs[peerID]
-	// If there is already a subscriber for the account, do nothing.
-	if ok {
-		return sub, nil
-	}
-
-	// See if we already synced with this account.
-	c, err := l.getLatestSync(peerID)
+	err = dtManager.Start(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-
-	// If not synced start a brand-new subscriber
-	var ls golegs.LegSubscriber
-	if c == cid.Undef {
-		ls, err = l.lms.NewSubscriber(golegs.FilterPeerPolicy(peerID))
-	} else {
-		// If yes, start a partially synced subscriber.
-		ls, err = l.lms.NewSubscriberPartiallySynced(golegs.FilterPeerPolicy(peerID), c)
-	}
+	// todo
+	//defer dtManager.Stop(ctx)
+	ls, err := golegs.NewSubscriber(h, ds, lnkSys, PubSubTopic, nil,
+		golegs.AllowPeer(reg.Authorized), golegs.DtManager(dtManager))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	sub = &subscriber{
-		peerID: peerID,
-		ls:     ls,
-	}
-	l.subs[peerID] = sub
-	return sub, nil
+
+	gs.RegisterOutgoingRequestHook(c.rateLimitHook())
+	dtManager.SubscribeToEvents(onDataTransferComplete)
+
+	return ls, gs, nil
 }
 
-// Get the latest cid synced for the account.
-func (l *Core) getLatestSync(peerID peer.ID) (cid.Cid, error) {
-	b, err := l.DS.Get(datastore.NewKey(syncPrefix + peerID.String()))
-	if err != nil {
-		if err == datastore.ErrNotFound {
-			return cid.Undef, nil
-		}
-		return cid.Undef, err
-	}
-	_, c, err := cid.CidFromBytes(b)
-	return c, err
-}
+func (c *Core) Close() error {
+	c.cancelSyncFn()
+	<-c.watchDone
 
-// cancelFunc for subscribers. Combines context cancel and LegSubscriber
-// cancel function.
-func cancelFunc(c1, c2 context.CancelFunc) context.CancelFunc {
-	return func() {
-		c1()
-		c2()
-	}
-}
-
-func (l *Core) listenSubUpdates(sub *subscriber) {
-	for c := range sub.watcher {
-		// Persist the latest sync
-		if err := l.putLatestSync(sub.peerID, c); err != nil {
-			log.Errorf("Error persisting latest sync: %s", err)
-		}
-
-		l.receivedMetaCh <- &metadata.MetaRecord{
-			Cid:        c,
-			ProviderID: sub.peerID,
-			Time:       uint64(time.Now().Unix()),
-		}
-	}
-}
-
-// Tracks the latest sync for a specific account.
-func (l *Core) putLatestSync(peerID peer.ID, c cid.Cid) error {
-	// Do not save if empty CIDs are received. Closing the channel
-	// may lead to receiving empty CIDs.
-	if c == cid.Undef {
-		return nil
-	}
-
-	return l.DS.Put(datastore.NewKey(syncPrefix+peerID.String()), c.Bytes())
-}
-
-func (l *Core) Close(ctx context.Context) error {
-	// Unsubscribe from all peers
-	for k := range l.subs {
-		err := l.Unsubscribe(ctx, k)
-		if err != nil {
-			return err
-		}
-	}
 	// Close leg transport.
-	err := l.lms.Close(ctx)
+	err := c.ls.Close()
 	return err
 }
 
-func (l *Core) SetRatelimiter(rl *policy.Limiter) {
-	l.rateLimiter = rl
+// restoreLatestSync reads the latest sync for each previously synced provider,
+// from the datastore, and sets this in the Subscriber.
+func (c *Core) restoreLatestSync() error {
+	// Load all pins from the datastore.
+	q := query.Query{
+		Prefix: SyncPrefix,
+	}
+	results, err := c.DS.Query(context.Background(), q)
+	if err != nil {
+		return err
+	}
+	defer results.Close()
+
+	var count int
+	for r := range results.Next() {
+		if r.Error != nil {
+			return fmt.Errorf("cannot read latest syncs: %w", r.Error)
+		}
+		ent := r.Entry
+		_, lastCid, err := cid.CidFromBytes(ent.Value)
+		if err != nil {
+			log.Errorw("Failed to decode latest sync CID", "err", err)
+			continue
+		}
+		if lastCid == cid.Undef {
+			continue
+		}
+		peerID, err := peer.Decode(strings.TrimPrefix(ent.Key, SyncPrefix))
+		if err != nil {
+			log.Errorw("Failed to decode peer ID of latest sync", "err", err)
+			continue
+		}
+
+		err = c.ls.SetLatestSync(peerID, lastCid)
+		if err != nil {
+			log.Errorw("Failed to set latest sync", "err", err, "peer", peerID)
+			continue
+		}
+		log.Debugw("Set latest sync", "provider", peerID, "cid", lastCid)
+		count++
+	}
+	log.Infow("Loaded latest sync for providers", "count", count)
+	return nil
+}
+
+func (c *Core) SetRatelimiter(rl *policy.Limiter) {
+	c.rateLimiter = rl
+}
+
+// watchSyncFinished reads legs.SyncFinished events and records the latest sync
+// for the peer that was synced.
+func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
+	for syncFin := range onSyncFin {
+		if _, err := c.BS.Get(context.Background(), syncFin.Cid); err != nil {
+			// skip if data is not stored
+			continue
+		}
+		// Persist the latest sync
+		err := c.DS.Put(context.Background(), datastore.NewKey(SyncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
+		if err != nil {
+			log.Errorw("Error persisting latest sync", "err", err, "peer", syncFin.PeerID)
+			continue
+		}
+		log.Debugw("Persisted latest sync", "peer", syncFin.PeerID, "cid", syncFin.Cid)
+
+		_ = c.sendRecvMeta(syncFin.Cid, syncFin.PeerID)
+
+	}
+	close(c.watchDone)
+}
+
+func (c *Core) sendRecvMeta(mcid cid.Cid, mpeer peer.ID) error {
+	ctx, cncl := context.WithTimeout(context.Background(), time.Second*5)
+	defer cncl()
+	select {
+	case c.recvMetaCh <- &metadata.MetaRecord{
+		Cid:        mcid,
+		ProviderID: mpeer,
+		Time:       uint64(time.Now().Unix()),
+	}:
+	case _ = <-ctx.Done():
+		log.Errorf("failed to send metadata(cid: %s peerid: %s) to metamanager", mcid.String(), mpeer.String())
+		return fmt.Errorf("timeout for sending metadata")
+	}
+
+	return nil
 }

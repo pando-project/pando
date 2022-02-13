@@ -36,7 +36,7 @@ func registerCmd() *cobra.Command {
 
 			peerID, err := peer.Decode(registerInfo.peerID)
 			if err != nil {
-				return nil
+				return err
 			}
 
 			privateKeyEncoded, err := base64.StdEncoding.DecodeString(registerInfo.privateKey)

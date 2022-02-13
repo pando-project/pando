@@ -3,14 +3,18 @@ package provider
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"github.com/filecoin-project/go-legs"
-	"github.com/ipfs/go-blockservice"
+	"github.com/filecoin-project/go-legs/dtsync"
+	"github.com/ipfs/go-cid"
+	"github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-log/v2"
+	"github.com/ipld/go-ipld-prime"
+	"pando/pkg/types/schema"
+
 	datastoreSync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	offline "github.com/ipfs/go-ipfs-exchange-offline"
-	ipldFormat "github.com/ipfs/go-ipld-format"
-	"github.com/ipfs/go-merkledag"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -20,19 +24,25 @@ import (
 )
 
 type core struct {
-	mutexDatastore *datastoreSync.MutexDatastore
-	blockstore     blockstore.Blockstore
-	dagService     ipldFormat.DAGService
+	MutexDatastore *datastoreSync.MutexDatastore
+	Blockstore     blockstore.Blockstore
+	LinkSys        ipld.LinkSystem
 }
 
 type DAGProvider struct {
 	Host           host.Host
 	PrivateKey     crypto.PrivKey
-	LegsPublisher  legs.LegPublisher
+	LegsPublisher  legs.Publisher
 	Core           *core
 	ConnectTimeout time.Duration
 	PushTimeout    time.Duration
 }
+
+const latestMedataKey = "/sync/metadata"
+
+var dsLatestMetadataKey = datastore.NewKey(latestMedataKey)
+
+var logger = log.Logger("sdk-provider-DAG")
 
 func NewDAGProvider(privateKeyStr string, connectTimeout time.Duration, pushTimeout time.Duration) (*DAGProvider, error) {
 	privateKeyBytes, err := base64.StdEncoding.DecodeString(privateKeyStr)
@@ -44,21 +54,18 @@ func NewDAGProvider(privateKeyStr string, connectTimeout time.Duration, pushTime
 		return nil, err
 	}
 
-	providerHost, err := libp2p.New(context.Background(), libp2p.Identity(privateKey))
+	providerHost, err := libp2p.New(libp2p.Identity(privateKey))
 	if err != nil {
 		return nil, err
 	}
 
 	storageCore := &core{}
 	datastore, err := leveldb.NewDatastore("", nil)
-	storageCore.mutexDatastore = datastoreSync.MutexWrap(datastore)
-	storageCore.blockstore = blockstore.NewBlockstore(storageCore.mutexDatastore)
-	storageCore.dagService = merkledag.NewDAGService(blockservice.New(
-		storageCore.blockstore, offline.Exchange(storageCore.blockstore)))
+	storageCore.MutexDatastore = datastoreSync.MutexWrap(datastore)
+	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
 
-	linkSys := link.MkLinkSystem(storageCore.blockstore)
-	legsPublisher, err := legs.NewPublisher(context.Background(),
-		providerHost, datastore, linkSys, "PandoPubSub")
+	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore)
+	legsPublisher, err := dtsync.NewPublisher(providerHost, datastore, storageCore.LinkSys, "PandoPubSub")
 
 	time.Sleep(2 * time.Second)
 
@@ -88,32 +95,41 @@ func (p *DAGProvider) Close() error {
 	return p.LegsPublisher.Close()
 }
 
-func (p *DAGProvider) Push(node ipldFormat.Node) error {
+func (p *DAGProvider) Push(metadata schema.Metadata) (cid.Cid, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), p.PushTimeout)
 	defer cancel()
 
-	err := p.Core.dagService.Add(ctx, node)
+	// Store the metadata locally.
+	c, err := p.PushLocal(ctx, metadata)
 	if err != nil {
-		return err
+		return cid.Undef, fmt.Errorf("failed to publish advertisement locally: %s", err)
 	}
-	return p.LegsPublisher.UpdateRoot(ctx, node.Cid())
+
+	logger.Infow("Publishing advertisement in pubsub channel", "cid", c)
+	// Publish the metadata.
+	err = p.LegsPublisher.UpdateRoot(ctx, c)
+	if err != nil {
+		return cid.Undef, err
+	}
+	return c, nil
 }
 
-func (p *DAGProvider) PushMany(nodes []ipldFormat.Node) error {
-	ctx, cancel := context.WithTimeout(context.Background(), p.PushTimeout)
-	defer cancel()
-
-	err := p.Core.dagService.AddMany(ctx, nodes)
+func (p *DAGProvider) PushLocal(ctx context.Context, metadata schema.Metadata) (cid.Cid, error) {
+	metadataLink, err := schema.MetadataLink(p.Core.LinkSys, metadata)
 	if err != nil {
-		return err
+		return cid.Undef, fmt.Errorf("cannot generate metadata link: %s", err)
 	}
 
-	for _, node := range nodes {
-		err := p.LegsPublisher.UpdateRoot(ctx, node.Cid())
-		if err != nil {
-			return err
-		}
-	}
+	c := metadataLink.ToCid()
 
-	return nil
+	logger.Infow("Storing metadata locally", "cid", c.String())
+	err = p.putLatestMetadata(ctx, c.Bytes())
+	if err != nil {
+		return cid.Undef, fmt.Errorf("cannot store latest metadata in blockstore: %s", err)
+	}
+	return c, nil
+}
+
+func (p *DAGProvider) putLatestMetadata(ctx context.Context, metadataID []byte) error {
+	return p.Core.MutexDatastore.Put(ctx, dsLatestMetadataKey, metadataID)
 }

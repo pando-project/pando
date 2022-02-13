@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ipfs/go-cid"
 	"net/http"
-	legs_interface "pando/pkg/legs/interface"
 	"pando/pkg/option"
 	"pando/pkg/registry/discovery"
 	"pando/pkg/registry/internal/syserr"
@@ -36,7 +36,7 @@ type Registry struct {
 	providers map[peer.ID]*ProviderInfo
 	sequences *sequences
 
-	core legs_interface.PandoCore
+	//core legs_interface.PandoCore
 
 	discoverer   discovery.Discoverer
 	discoWait    sync.WaitGroup
@@ -56,14 +56,14 @@ type Registry struct {
 // is created to update its contents.  This means existing references remain
 // valid.
 type ProviderInfo struct {
-	// AddrInfo contains a account.ID and set of Multiaddr addresses.
+	// AddrInfo contains an account.ID and set of Multiaddr addresses.
 	AddrInfo peer.AddrInfo
 	// DiscoveryAddr is the address that is used for discovery of the provider.
 	DiscoveryAddr string
 	// AccountLevel is the level according to the filecoin miner account balance
 	AccountLevel int
 
-	lastContactTime time.Time
+	LastBackupMeta cid.Cid
 }
 
 func (p *ProviderInfo) dsKey() datastore.Key {
@@ -75,7 +75,7 @@ func (p *ProviderInfo) dsKey() datastore.Key {
 // interface.
 //
 // TODO: It is probably necessary to have multiple discoverer interfaces
-func NewRegistry(cfg *option.Discovery, cfglevel *option.AccountLevel, dstore datastore.Datastore, disco discovery.Discoverer, core legs_interface.PandoCore) (*Registry, error) {
+func NewRegistry(ctx context.Context, cfg *option.Discovery, cfglevel *option.AccountLevel, dstore datastore.Datastore, disco discovery.Discoverer) (*Registry, error) {
 	if cfg == nil || cfglevel == nil {
 		return nil, fmt.Errorf("nil config")
 	}
@@ -103,10 +103,10 @@ func NewRegistry(cfg *option.Discovery, cfglevel *option.AccountLevel, dstore da
 		discoTimes: map[string]time.Time{},
 
 		dstore: dstore,
-		core:   core,
+		//core:   core,
 	}
 
-	count, err := r.loadPersistedProviders()
+	count, err := r.loadPersistedProviders(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -156,11 +156,7 @@ func (r *Registry) run() {
 
 // Register is used to directly register a provider, bypassing discovery and
 // adding discovered data directly to the registry.
-func (r *Registry) Register(info *ProviderInfo) error {
-	//if len(info.AddrInfo.Addrs) == 0 {
-	//	return syserr.New(errors.New("missing provider address"), http.StatusBadRequest)
-	//}
-
+func (r *Registry) Register(ctx context.Context, info *ProviderInfo) error {
 	// If provider is not allowed, then ignore request
 	if !r.policy.Allowed(info.AddrInfo.ID) {
 		return syserr.New(ErrNotAllowed, http.StatusForbidden)
@@ -193,7 +189,7 @@ func (r *Registry) Register(info *ProviderInfo) error {
 
 	errCh := make(chan error, 1)
 	r.actions <- func() {
-		r.syncRegister(info, errCh)
+		errCh <- r.syncRegister(ctx, info)
 	}
 
 	err := <-errCh
@@ -202,15 +198,6 @@ func (r *Registry) Register(info *ProviderInfo) error {
 	}
 
 	log.Infow("registered provider", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
-
-	if r.core == nil {
-		log.Warnf("nil legs-core for subscribing the registered provider")
-	} else {
-		err = r.core.Subscribe(context.Background(), info.AddrInfo.ID)
-		if err != nil {
-			log.Warnf("failed to subscribe: %s, err: %s", info.AddrInfo.ID, err.Error())
-		}
-	}
 
 	return nil
 }
@@ -284,17 +271,17 @@ func (r *Registry) CheckSequence(peerID peer.ID, seq uint64) error {
 	return r.sequences.check(peerID, seq)
 }
 
-func (r *Registry) syncRegister(info *ProviderInfo, errCh chan<- error) {
+func (r *Registry) syncRegister(ctx context.Context, info *ProviderInfo) error {
 	r.providers[info.AddrInfo.ID] = info
-	err := r.syncPersistProvider(info)
+	err := r.syncPersistProvider(ctx, info)
 	if err != nil {
 		err = fmt.Errorf("could not persist provider: %s", err)
-		errCh <- syserr.New(err, http.StatusInternalServerError)
+		return syserr.New(err, http.StatusInternalServerError)
 	}
-	close(errCh)
+	return nil
 }
 
-func (r *Registry) syncPersistProvider(info *ProviderInfo) error {
+func (r *Registry) syncPersistProvider(ctx context.Context, info *ProviderInfo) error {
 	if r.dstore == nil {
 		// todo  why not return error?
 		//return fmt.Errorf("nil datastore")
@@ -306,16 +293,16 @@ func (r *Registry) syncPersistProvider(info *ProviderInfo) error {
 	}
 
 	dsKey := info.dsKey()
-	if err = r.dstore.Put(dsKey, value); err != nil {
+	if err = r.dstore.Put(ctx, dsKey, value); err != nil {
 		return err
 	}
-	if err = r.dstore.Sync(dsKey); err != nil {
+	if err = r.dstore.Sync(ctx, dsKey); err != nil {
 		return fmt.Errorf("cannot sync provider info: %s", err)
 	}
 	return nil
 }
 
-func (r *Registry) loadPersistedProviders() (int, error) {
+func (r *Registry) loadPersistedProviders(ctx context.Context) (int, error) {
 	if r.dstore == nil {
 		return 0, nil
 	}
@@ -324,7 +311,7 @@ func (r *Registry) loadPersistedProviders() (int, error) {
 	q := query.Query{
 		Prefix: providerKeyPath,
 	}
-	results, err := r.dstore.Query(q)
+	results, err := r.dstore.Query(ctx, q)
 	if err != nil {
 		return 0, err
 	}
@@ -350,16 +337,67 @@ func (r *Registry) loadPersistedProviders() (int, error) {
 
 		r.providers[peerID] = pinfo
 		count++
-		if r.core == nil {
-			log.Warnf("nil legs-core for subscribing the registered provider")
-		} else {
-			err = r.core.Subscribe(context.Background(), peerID)
-			if err != nil {
-				log.Warnf("failed to subscribe: %s, err: %s", peerID, err.Error())
-			}
-		}
+		//if r.core == nil {
+		//	log.Warnf("nil legs-core for subscribing the registered provider")
+		//} else {
+		//	err = r.core.Subscribe(context.Background(), peerID)
+		//	if err != nil {
+		//		log.Warnf("failed to subscribe: %s, err: %s", peerID, err.Error())
+		//	}
+		//}
 	}
 	return count, nil
+}
+
+// Check if the peer is trusted by policy, or if it has been previously
+// verified and registered as a provider.
+func (r *Registry) Authorized(peerID peer.ID) (bool, error) {
+	allowed, trusted := r.policy.Check(peerID)
+
+	if !allowed {
+		return false, nil
+	}
+
+	// Peer is allowed but not trusted, see if it is a registered provider.
+	if !trusted {
+		regOk := make(chan bool)
+		r.actions <- func() {
+			_, ok := r.providers[peerID]
+			regOk <- ok
+		}
+		return <-regOk, nil
+	}
+
+	return true, nil
+}
+
+// RegisterOrUpdate attempts to register an unregistered provider, or updates
+// the addresses and latest advertisement of an already registered provider.
+func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, metaCid cid.Cid) error {
+	// Check that the provider has been discovered and validated
+	info := r.ProviderInfo(providerID)
+	if info != nil {
+		info = &ProviderInfo{
+			AddrInfo: peer.AddrInfo{
+				ID:    providerID,
+				Addrs: info.AddrInfo.Addrs,
+			},
+			DiscoveryAddr:  info.DiscoveryAddr,
+			LastBackupMeta: info.LastBackupMeta,
+		}
+	} else {
+		info = &ProviderInfo{
+			AddrInfo: peer.AddrInfo{
+				ID: providerID,
+			},
+		}
+	}
+
+	if metaCid != cid.Undef {
+		info.LastBackupMeta = metaCid
+	}
+
+	return r.Register(ctx, info)
 }
 
 func (r *Registry) cleanup() {
@@ -381,8 +419,4 @@ func (r *Registry) cleanup() {
 		}
 	}
 	r.discoWait.Done()
-}
-
-func (r *Registry) SetCore(core legs_interface.PandoCore) {
-	r.core = core
 }
