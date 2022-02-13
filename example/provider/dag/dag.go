@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"pando/pkg/types/schema"
 	peerHelper "pando/pkg/util/peer"
 	"syscall"
 	"time"
@@ -37,7 +36,7 @@ func main() {
 	}
 
 	fmt.Println("pushing data to Pando...")
-	metadata1, err := schema.NewMetadata([]byte("doge"), provider.Host.ID(), provider.PrivateKey)
+	metadata1, err := provider.NewMetadata([]byte("doge"))
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +44,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	metadata2, err := metadata1.AppendMetadata(metadata1Cid, provider.Host.ID(), []byte("kitty"), provider.PrivateKey)
+	metadata2, err := provider.AppendMetadata(metadata1, []byte("kitty"))
 	if err != nil {
 		panic(err)
 	}

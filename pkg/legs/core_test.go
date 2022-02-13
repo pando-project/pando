@@ -120,16 +120,6 @@ func TestRecurseFetchMeta(t *testing.T) {
 			_, err = pando.BS.Get(ctx, cids[i])
 			So(err, ShouldBeNil)
 		}
-		//for {
-		//	select {
-		//	case rec, ok := <-ch:
-		//		if !ok {
-		//			t.Error("error closed")
-		//		}
-		//		t.Log(rec)
-		//	}
-		//}
-
 	})
 
 }

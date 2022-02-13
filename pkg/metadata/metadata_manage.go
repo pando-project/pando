@@ -236,7 +236,12 @@ func (mm *MetaManager) exportMetaCar(ctx context.Context, filename string, root 
 		return err
 	}
 	defer func(f *os.File) {
-		_ = f.Close()
+		if f != nil {
+			err := f.Close()
+			if err != nil {
+				log.Warnf("close car file failed, %v", err)
+			}
+		}
 	}(f)
 	var ss ipld.Node
 	if lastBackup != cid.Undef {

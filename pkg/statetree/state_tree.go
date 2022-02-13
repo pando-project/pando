@@ -13,7 +13,7 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"pando/pkg/statetree/hamt"
-	types2 "pando/pkg/statetree/types"
+	statetreeTypes "pando/pkg/statetree/types"
 	"sync"
 	"time"
 )
@@ -38,15 +38,15 @@ type StateTree struct {
 	// the height of next snapshot. eg: height is 0 after initializing
 	height       uint64
 	snapShot     cid.Cid
-	exinfo       *types2.ExtraInfo
-	recvUpdateCh <-chan map[peer.ID]*types2.ProviderState
+	exinfo       *statetreeTypes.ExtraInfo
+	recvUpdateCh <-chan map[peer.ID]*statetreeTypes.ProviderState
 	ctx          context.Context
 	cncl         func()
 	// lock while updating hamt
 	mtx sync.Mutex
 }
 
-func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, updateCh <-chan map[peer.ID]*types2.ProviderState, exinfo *types2.ExtraInfo) (*StateTree, error) {
+func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, updateCh <-chan map[peer.ID]*statetreeTypes.ProviderState, exinfo *statetreeTypes.ExtraInfo) (*StateTree, error) {
 	childCtx, cncl := context.WithCancel(ctx)
 	cs := cbor.NewCborStore(bs)
 	store := adt.WrapStore(childCtx, cs)
@@ -97,7 +97,7 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, u
 		return nil, err
 	}
 	if snapShotCidList != nil {
-		ss := new(types2.SnapShot)
+		ss := new(statetreeTypes.SnapShot)
 		newestSsCid := snapShotCidList[len(snapShotCidList)-1]
 		err = store.Get(childCtx, newestSsCid, ss)
 		if err != nil {
@@ -144,18 +144,18 @@ func (st *StateTree) Update(ctx context.Context) {
 	}
 }
 
-func (st *StateTree) UpdateRoot(ctx context.Context, update map[peer.ID]*types2.ProviderState) (cid.Cid, error) {
+func (st *StateTree) UpdateRoot(ctx context.Context, update map[peer.ID]*statetreeTypes.ProviderState) (cid.Cid, error) {
 	log.Debug("start updating the state tree")
 	st.mtx.Lock()
 	defer st.mtx.Unlock()
 	for p, cidlist := range update {
-		state := new(types2.ProviderState)
+		state := new(statetreeTypes.ProviderState)
 		found, err := st.root.Get(hamt.ProviderKey{ID: p}, state)
 		if err != nil {
 			return cid.Undef, fmt.Errorf("failed to get provider state from hamt, %s", err.Error())
 		}
 		if !found {
-			err = st.root.Put(hamt.ProviderKey{ID: p}, &types2.ProviderState{Cidlist: cidlist.Cidlist, LastCommitHeight: st.height})
+			err = st.root.Put(hamt.ProviderKey{ID: p}, &statetreeTypes.ProviderState{Cidlist: cidlist.Cidlist, LastCommitHeight: st.height})
 			if err != nil {
 				return cid.Undef, fmt.Errorf("failed to put provider state into hamt, %s", err.Error())
 			}
@@ -186,7 +186,7 @@ func (st *StateTree) UpdateRoot(ctx context.Context, update map[peer.ID]*types2.
 	return newRootCid, nil
 }
 
-func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update map[peer.ID]*types2.ProviderState) error {
+func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update map[peer.ID]*statetreeTypes.ProviderState) error {
 	var height uint64
 	var previousSs string
 	if st.snapShot == cid.Undef {
@@ -204,14 +204,14 @@ func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update
 		previousSs = st.snapShot.String()
 	}
 
-	_update := make(map[string]*types2.ProviderState)
+	_update := make(map[string]*statetreeTypes.ProviderState)
 	for p, state := range update {
 		_update[p.String()] = state
 		// there is no height info from metamanager
 		_update[p.String()].LastCommitHeight = st.height
 	}
 
-	newSs := &types2.SnapShot{
+	newSs := &statetreeTypes.SnapShot{
 		Update:       _update,
 		Height:       height,
 		CreateTime:   uint64(time.Now().UnixNano()),
@@ -277,8 +277,8 @@ func (st *StateTree) GetSnapShotCidList() ([]cid.Cid, error) {
 	return nil, nil
 }
 
-func (st *StateTree) GetSnapShot(sscid cid.Cid) (shot *types2.SnapShot, err error) {
-	ss := new(types2.SnapShot)
+func (st *StateTree) GetSnapShot(sscid cid.Cid) (shot *statetreeTypes.SnapShot, err error) {
+	ss := new(statetreeTypes.SnapShot)
 	err = st.Store.Get(st.ctx, sscid, ss)
 	if err == blockstore.ErrNotFound {
 		return nil, NotFoundErr
@@ -288,7 +288,7 @@ func (st *StateTree) GetSnapShot(sscid cid.Cid) (shot *types2.SnapShot, err erro
 	return ss, nil
 }
 
-func (st *StateTree) GetSnapShotByHeight(height uint64) (*types2.SnapShot, error) {
+func (st *StateTree) GetSnapShotByHeight(height uint64) (*statetreeTypes.SnapShot, error) {
 	//if height < 0 {
 	//	return nil, fmt.Errorf("height must be positive")
 	//}
@@ -308,10 +308,10 @@ func (st *StateTree) GetSnapShotByHeight(height uint64) (*types2.SnapShot, error
 }
 
 // GetProviderStateByPeerID for graphql
-func (st *StateTree) GetProviderStateByPeerID(id peer.ID) (*types2.ProviderStateRes, error) {
+func (st *StateTree) GetProviderStateByPeerID(id peer.ID) (*statetreeTypes.ProviderStateRes, error) {
 	st.mtx.Lock()
 	defer st.mtx.Unlock()
-	state := new(types2.ProviderState)
+	state := new(statetreeTypes.ProviderState)
 	found, err := st.root.Get(hamt.ProviderKey{ID: id}, state)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get provider state from hamt, %s", err.Error())
@@ -320,7 +320,7 @@ func (st *StateTree) GetProviderStateByPeerID(id peer.ID) (*types2.ProviderState
 	if !found {
 		return nil, NotFoundErr
 	} else {
-		res := new(types2.ProviderStateRes)
+		res := new(statetreeTypes.ProviderStateRes)
 		lastUpdateHeight := state.LastCommitHeight
 		cidlist, err := st.GetSnapShotCidList()
 		if err != nil {
@@ -349,7 +349,7 @@ func (st *StateTree) DeleteInfo(ctx context.Context) error {
 	return nil
 }
 
-func (st *StateTree) GetPandoInfo() (*types2.ExtraInfo, error) {
+func (st *StateTree) GetPandoInfo() (*statetreeTypes.ExtraInfo, error) {
 	if st.exinfo != nil {
 		return st.exinfo, nil
 	}
