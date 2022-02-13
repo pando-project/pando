@@ -30,7 +30,7 @@ const (
 	// SyncPrefix used to track the latest sync in datastore.
 	SyncPrefix = "/sync/"
 	// PubSubTopic used for legs transportation
-	PubSubTopic = "PandoPubSub"
+	PubSubTopic = "/pando/v0.0.1"
 )
 
 type Core struct {
