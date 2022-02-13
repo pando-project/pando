@@ -2,7 +2,6 @@ package metadata
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	golegs "github.com/filecoin-project/go-legs"
 	"github.com/ipld/go-car/v2"
@@ -30,14 +29,10 @@ var log = logging.Logger("meta-manager")
 
 var (
 	SnapShotDuration = time.Second * 5
-	//BackupMaxInterval      = time.Second * 10
-	//BackupMaxDagNums       = 10000
-	BackupTmpDirName  = "ttmp"
-	BackupTmpPath     string
-	BackFileName      = "backup-%s-%d.car"
-	BackupGenInterval = time.Minute
-	//BackupCheckNumInterval = time.Second * 60
-	syncPrefix = "/sync/"
+	BackupTmpDirName = "ttmp"
+	BackupTmpPath    string
+	BackFileName     = "backup-%s-%d.car"
+	syncPrefix       = "/sync/"
 )
 
 func init() {
@@ -60,8 +55,6 @@ func init() {
 	BackupTmpPath = BackupTmpDir
 }
 
-var NoRecordBackup = errors.New("no records need backup")
-
 type MetaManager struct {
 	flushTime         time.Duration
 	recvCh            chan *MetaRecord
@@ -79,11 +72,6 @@ type MetaManager struct {
 	ctx               context.Context
 	cncl              context.CancelFunc
 }
-
-//type backupRecord struct {
-//	cid      cid.Cid
-//	isBackup bool
-//}
 
 type MetaRecord struct {
 	Cid        cid.Cid
@@ -212,6 +200,7 @@ func (mm *MetaManager) genCarForProviders(ctx context.Context) {
 				if err != nil {
 					log.Errorf("failed to export backup car for provider:%s\nerr:%s",
 						info.AddrInfo.ID.String(), err.Error())
+					continue
 				}
 				err = mm.regstry.RegisterOrUpdate(ctx, info.AddrInfo.ID, lastSyncCid)
 				if err != nil {

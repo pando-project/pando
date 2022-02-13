@@ -102,10 +102,10 @@ func (p *DAGProvider) Push(metadata schema.Metadata) (cid.Cid, error) {
 	// Store the metadata locally.
 	c, err := p.PushLocal(ctx, metadata)
 	if err != nil {
-		return cid.Undef, fmt.Errorf("failed to publish advertisement locally: %s", err)
+		return cid.Undef, fmt.Errorf("failed to publish meta data locally: %s", err)
 	}
 
-	logger.Infow("Publishing advertisement in pubsub channel", "cid", c)
+	logger.Infow("Publishing meta data in pubsub channel", "cid", c)
 	// Publish the metadata.
 	err = p.LegsPublisher.UpdateRoot(ctx, c)
 	if err != nil {
