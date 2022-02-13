@@ -9,6 +9,7 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/traversal/selector"
+	selectorparse "github.com/ipld/go-ipld-prime/traversal/selector/parse"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
@@ -239,10 +240,10 @@ func (mm *MetaManager) exportMetaCar(ctx context.Context, filename string, root 
 		_ = f.Close()
 	}(f)
 	var ss ipld.Node
-	if lastBackup != cid.Undef {
+	if !lastBackup.Equals(cid.Undef) {
 		ss = golegs.ExploreRecursiveWithStopNode(selector.RecursionLimit{}, nil, cidlink.Link{lastBackup})
 	} else {
-		ss = nil
+		ss = selectorparse.CommonSelector_ExploreAllRecursively
 	}
 
 	_, err = car.TraverseV1(ctx, mm.ls, root, ss, f)

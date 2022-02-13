@@ -64,7 +64,7 @@ func NewDAGProvider(privateKeyStr string, connectTimeout time.Duration, pushTime
 	storageCore.MutexDatastore = datastoreSync.MutexWrap(datastore)
 	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
 
-	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore)
+	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore, nil)
 	legsPublisher, err := dtsync.NewPublisher(providerHost, datastore, storageCore.LinkSys, "PandoPubSub")
 
 	time.Sleep(2 * time.Second)

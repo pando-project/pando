@@ -20,7 +20,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 )
 
-func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
+func MkLinkSystem(bs blockstore.Blockstore, core *Core) ipld.LinkSystem {
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.TrustedStorage = true
 	lsys.StorageReadOpener = func(lnkCtx ipld.LinkContext, lnk ipld.Link) (io.Reader, error) {
@@ -52,7 +52,7 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 			// If it is an advertisement.
 			if isMetadata(n) {
 				log.Infow("Received metadata")
-				_, _, err := verifyMetadata(n)
+				_, peerid, err := verifyMetadata(n)
 				if err != nil {
 
 					return err
@@ -60,6 +60,9 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 				block, err := blocks.NewBlockWithCid(origBuf, c)
 				if err != nil {
 					return err
+				}
+				if core != nil {
+					go core.SendRecvMeta(c, peerid)
 				}
 				return bs.Put(lctx.Ctx, block)
 			}
