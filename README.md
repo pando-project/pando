@@ -10,16 +10,15 @@
     - [As a Provider](#as-a-provider)
     - [As a Consumer](#as-a-consumer)
   - [Getting Started](#getting-started)
-    - [How Pando persistence providers data](#how-pando-persistence-providers-data)
+    - [How Pando persists providers data](#how-pando-persists-providers-data)
     - [Build Pando server and client](#build-pando-server-and-client)
     - [Start a Pando server](#start-a-pando-server)
-  - [Pando Server configuration](#pando-server-configuration)
+  - [Pando Server Configuration](#pando-server-configuration)
   - [Access Pando APIs with client](#access-pando-apis-with-client)
 
 
 # Pando
 Ensuring access to notarized metadata
-
 
 There are several mechanisms we directly foresee being used for incentivization feedback loops based around the metadata measurements of entities in the filecoin ecosystem. For instance, reports of miner behavior can be used by reputation systems ranking miners, which then are used by clients to select higher quality miners near them. This data doesn’t make sense to directly embed within the filecoin chain for a few reasons: It is produced by independent entities, so the data itself does not need to meet the same ‘consensus’ bar as what we would expect in a global chain, and likewise aspects of reputation and measurements may have aspects of subjectivity. It is also expected that there is diversity of data and that experimentation is a good thing.
 However, there are nice properties of having this sort of metadata ecosystem more tightly linked to the chain that seem desirable to encourage, and this leads to the goals for the sidechain metadata service:
@@ -34,46 +33,55 @@ However, there are nice properties of having this sort of metadata ecosystem mor
 
 ## Integrate with Pando
 ### As a Provider
-Pando uses [go-legs](https://github.com/filecoin-project/go-legs) to synchronize data in IPLD DAG structure from providers.
+Pando uses [go-legs](https://github.com/filecoin-project/go-legs) to synchronize IPLD data from providers.
 We will develop an SDK for providers to integrate with Pando in a more efficient way in the future (maybe a week).
-For now, providers have to initialize go-legs instance and publish your data to a topic which Pando subscribed.
+For now, the providers have to initialize go-legs instance on their own and publish IPLD data to the topic `/pando/v0.0.1`
+which Pando subscribes.
 
-Integration could follow the steps below:
-1. New a provider instance with PandoSDK, then connect, initialize a metadata instance and append new metadata if you need.
-2. Push the latest metadata instance.
-3. [Here's an example](https://github.com/kenlabs/pando/tree/main/example) for more details.
-4. Register in pando through client cli:
+#### Prerequisite
+Pando accepts IPLD data from metadata providers with the following required IPLD children nodes:
+1. `Provider String` - provider's peer ID
+2. `Signature Bytes` - signature of the whole IPLD data (excluding the signature node itself)
+
+and a nullable node:
+1. `PreviousID nullable Link_Metadata` - a non null PreviousID will enable a recursive sync by Pando service. With this node, a full sync of linked IPLD data will be guaranteed.
+
+#### Integration process
+The provider integration is recommended to follow the steps below:
+1. Register the provider instance in Pando through client cli:
 ```shell
 ./pando-client -a https://pando-api.kencloud.com provider register \
   --peer-id PROVIDER_PEER_ID_STR \
   --private-key PROVIDER_PRIVATE_KEY_STR
 ```
-Note: we will not upload Provider's private key to any network.
+Note: we will not upload any provider's private key to any network.
 CLI uses private key only for signing registration information,
-because Pando will verify that the peerID provided by provider matches the public key to prevent
-illegal provider falsely use the peerID of other providers.
+as Pando will verify that the provider peer ID matches the public key to prevent
+illegal provider from falsely using the peer ID of other providers.
 
-3. execute updateRoot() to publish updated DAG root cid into pubsub topic: "/pando/v0.0.1"
+2. Create a provider instance with Pando SDK, then connect to Pando, initialize a metadata instance and append new metadata if you need.
+3. Push the latest metadata instance.
+4. execute updateRoot() to publish updated DAG root cid into pubsub topic: "/pando/v0.0.1".
 
-Check [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
+Check out [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
 
 ### As a Consumer
-To fetch metadata/snapshot status and content via graphql api, 
+To fetch metadata/snapshot status and content via GraphQL API, 
 [click here to get a try and dig more](https://pando-graphql.kencloud.com/).
 
 ## Getting Started
-### How Pando persistence providers data
+### How Pando persists providers data
 TBD
 
-### Build Pando server and client
+### Build Pando Server and Client
 run `make`, that's all. Binaries will be built at `bin`.
 
 ### Start a Pando server
-Initialize a config file first (defualt path is ~/.pando/config.yaml):
+Initialize a config file first (default path is ~/.pando/config.yaml):
 ```bash
 ./pando-server init
 ```
-Since Pando uses Estuary to upload the metadata of Provider to the Filecoin network, 
+Since Pando uses Estuary to upload the provider metadata to the Filecoin network, 
 you need to set the API Key of Estuary in the configuration file:
 ```yaml
 Backup:
@@ -94,9 +102,9 @@ or start with custom listen address (in multiaddress format):
   --graphql-listen-addr /ipv/0.0.0.0/tcp/8081
 ```
 
-## Pando Server configuration
-Pando support three types of config resource, and it will look up config value in this order:
-- cli flag
+## Pando Server Configuration
+Pando supports three types of config resource, and it will look up config value in this order:
+- CLI flag
 - environment variable
 - config file (yaml file)
 
