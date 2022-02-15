@@ -48,7 +48,8 @@ and a nullable node:
 
 #### Integration process
 The provider integration is recommended to follow the steps below:
-1. Register the provider instance in Pando through client cli:
+1. Refer to [Build Pando server and client](#build-pando-server-and-client) to build the client CLI.
+2. Go to the `bin` directory of the repo, and register the provider instance in Pando using the client CLI:
 ```shell
 ./pando-client -a https://pando-api.kencloud.com provider register \
   --peer-id PROVIDER_PEER_ID_STR \
@@ -59,9 +60,9 @@ CLI uses private key only for signing registration information,
 as Pando will verify that the provider peer ID matches the public key to prevent
 illegal provider from falsely using the peer ID of other providers.
 
-2. Create a provider instance with Pando SDK, then connect to Pando, initialize a metadata instance and append new metadata if you need.
-3. Push the latest metadata instance.
-4. execute updateRoot() to publish updated DAG root cid into pubsub topic: "/pando/v0.0.1".
+3. Create a provider instance with Pando SDK, then connect to Pando, initialize a metadata instance and append new metadata if you need.
+4. Push the latest metadata instance.
+5. execute updateRoot() to publish updated DAG root cid into pubsub topic: "/pando/v0.0.1".
 
 Check out [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
 
@@ -74,7 +75,7 @@ To fetch metadata/snapshot status and content via GraphQL API,
 TBD
 
 ### Build Pando Server and Client
-run `make`, that's all. Binaries will be built at `bin`.
+Git clone this repo, and run `make`, that's all. The binaries will be built at `bin`.
 
 ### Start a Pando server
 Initialize a config file first (default path is ~/.pando/config.yaml):
