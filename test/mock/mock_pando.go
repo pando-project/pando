@@ -90,3 +90,7 @@ func (pando *PandoMock) GetMetaRecordCh() (chan *metadata.MetaRecord, error) {
 	}
 	return nil, fmt.Errorf("nil channel")
 }
+
+func GetTopic() string {
+	return topic
+}

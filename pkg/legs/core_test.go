@@ -3,8 +3,14 @@ package legs_test
 import (
 	"context"
 	"github.com/agiledragon/gomonkey/v2"
+	golegs "github.com/filecoin-project/go-legs"
 	"github.com/ipfs/go-cid"
+	"github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/sync"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p-core/peer"
 	. "github.com/smartystreets/goconvey/convey"
 	"pando/pkg/legs"
 	"pando/test/mock"
@@ -129,4 +135,45 @@ func TestRecurseFetchMeta(t *testing.T) {
 		}
 	})
 
+}
+
+func TestSyncDataFromPando(t *testing.T) {
+	Convey("Test sync meta data from Pando by golegs", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		provider, err := mock.NewMockProvider(pando)
+		So(err, ShouldBeNil)
+		var cids []cid.Cid
+		for i := 0; i < 5; i++ {
+			c, err := provider.SendMeta(true)
+			cids = append(cids, c)
+			So(err, ShouldBeNil)
+		}
+		time.Sleep(time.Second)
+
+		h, err := libp2p.New()
+		So(err, ShouldBeNil)
+		ds := datastore.NewMapDatastore()
+		mds := sync.MutexWrap(ds)
+		bs := blockstore.NewBlockstore(mds)
+		lsys := legs.MkLinkSystem(bs, nil)
+		consumer, err := golegs.NewSubscriber(h, ds, lsys, mock.GetTopic(), nil)
+		So(err, ShouldBeNil)
+
+		multiAddress := pando.Host.Addrs()[0].String() + "/ipfs/" + pando.Host.ID().String()
+		peerInfo, err := peer.AddrInfoFromString(multiAddress)
+		So(err, ShouldBeNil)
+		err = h.Connect(context.Background(), *peerInfo)
+		So(err, ShouldBeNil)
+
+		c, err := consumer.Sync(context.Background(), pando.Host.ID(), cids[4], nil, nil)
+		So(err, ShouldBeNil)
+		So(c.Equals(cids[4]), ShouldBeTrue)
+
+		for i := 0; i < 5; i++ {
+			_, err := bs.Get(context.Background(), cids[i])
+			So(err, ShouldBeNil)
+		}
+
+	})
 }
