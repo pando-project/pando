@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -123,21 +122,17 @@ func SnapshotUpdateResolver(params graphql.ResolveParams) (interface{}, error) {
 	if ok {
 		updateInfo := strings.Builder{}
 		for peer, update := range snapshot.Update {
-			updateInfo.WriteString(fmt.Sprintf("%s : %s\n", peer, update.String()))
+			updateInfo.WriteString(fmt.Sprintf("{%s : %s},", peer, update.String()))
 		}
-		return updateInfo, nil
+		return updateInfo.String(), nil
 	} else {
 		return nil, fmt.Errorf(errUnexpectedType, params.Source, "SnapShot.Update")
 	}
 }
 func SnapshotExtraInfoResolver(params graphql.ResolveParams) (interface{}, error) {
 	snapshot, ok := params.Source.(*types.SnapShot)
-	jsonBytes, err := json.Marshal(snapshot.ExtraInfo)
-	if err != nil {
-		return nil, err
-	}
 	if ok {
-		return string(jsonBytes), nil
+		return snapshot.ExtraInfo.String(), nil
 	} else {
 		return nil, fmt.Errorf(errUnexpectedType, params.Source, "SnapShot.ExtraInfo")
 	}

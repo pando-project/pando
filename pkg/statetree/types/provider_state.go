@@ -21,10 +21,11 @@ type ProviderStateRes struct {
 
 func (t *ProviderState) String() string {
 	str := ""
-	str += fmt.Sprintf("last Commit height: %d ", t.LastCommitHeight)
-	str += "cidlist: "
+	str += fmt.Sprintf("last Commit height: %d, ", t.LastCommitHeight)
+	str += "cidlist: ["
 	for _, c := range t.Cidlist {
-		str += fmt.Sprintf("%s ", c.String())
+		str += fmt.Sprintf("%s, ", c.String())
 	}
+	str += "]"
 	return str
 }
