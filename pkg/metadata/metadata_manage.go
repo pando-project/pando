@@ -66,7 +66,7 @@ type MetaManager struct {
 	mutex             sync.Mutex
 	backupMaxInterval time.Duration
 	estBackupSys      *BackupSystem
-	regstry           *registry.Registry
+	registry          *registry.Registry
 	ls                *ipld.LinkSystem
 	backupCfg         *option.Backup
 	ctx               context.Context
@@ -97,7 +97,7 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, l
 		ls:             ls,
 		cache:          make(map[peer.ID][]*MetaRecord),
 		estBackupSys:   ebs,
-		regstry:        registry,
+		registry:       registry,
 		backupCfg:      backupCfg,
 		ctx:            cctx,
 		cncl:           cncl,
@@ -175,7 +175,7 @@ func (mm *MetaManager) genCarForProviders(ctx context.Context) {
 				return
 			default:
 			}
-			providersInfo := mm.regstry.AllProviderInfo()
+			providersInfo := mm.registry.AllProviderInfo()
 			for _, info := range providersInfo {
 				lastBackup := info.LastBackupMeta
 				lastSync, err := mm.ds.Get(ctx, datastore.NewKey(syncPrefix+info.AddrInfo.ID.String()))
@@ -202,7 +202,7 @@ func (mm *MetaManager) genCarForProviders(ctx context.Context) {
 						info.AddrInfo.ID.String(), err.Error())
 					continue
 				}
-				err = mm.regstry.RegisterOrUpdate(ctx, info.AddrInfo.ID, lastSyncCid)
+				err = mm.registry.RegisterOrUpdate(ctx, info.AddrInfo.ID, lastSyncCid)
 				if err != nil {
 					log.Errorf("failed to update provider info for backup cid, err:%s\n", err.Error())
 				}
