@@ -3,6 +3,7 @@ package mock
 import (
 	"context"
 	"fmt"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
@@ -14,6 +15,7 @@ import (
 	"pando/pkg/policy"
 	"pando/pkg/registry"
 	"pando/pkg/registry/discovery"
+	"time"
 )
 
 const topic = "/pando/v0.0.1"
@@ -21,6 +23,7 @@ const topic = "/pando/v0.0.1"
 type PandoMock struct {
 	Opt      *option.Options
 	DS       datastore.Batching
+	CS       *badger.DB
 	BS       blockstore.Blockstore
 	Host     host.Host
 	Core     *legs.Core
@@ -34,6 +37,10 @@ func NewPandoMock() (*PandoMock, error) {
 
 	ds := datastore.NewMapDatastore()
 	mds := dssync.MutexWrap(ds)
+	cs, err := badger.Open(badger.DefaultOptions("/tmp"))
+	if err != nil {
+		return nil, err
+	}
 	h, err := libp2p.New()
 	if err != nil {
 		return nil, err
@@ -61,7 +68,7 @@ func NewPandoMock() (*PandoMock, error) {
 	}
 
 	outCh := make(chan *metadata.MetaRecord)
-	core, err := legs.NewLegsCore(ctx, h, mds, bs, outCh, limiter, r)
+	core, err := legs.NewLegsCore(ctx, h, mds, cs, bs, outCh, time.Minute, limiter, r)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +82,7 @@ func NewPandoMock() (*PandoMock, error) {
 	return &PandoMock{
 		DS:       mds,
 		BS:       bs,
+		CS:       cs,
 		Host:     h,
 		Core:     core,
 		Registry: r,

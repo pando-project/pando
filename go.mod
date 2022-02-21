@@ -7,6 +7,7 @@ require (
 	github.com/agiledragon/gomonkey/v2 v2.4.0
 	github.com/briandowns/spinner v1.11.1
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
+	github.com/dgraph-io/badger/v3 v3.2103.2 // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/filecoin-project/go-address v0.0.6 // indirect
 	github.com/filecoin-project/go-bitfield v0.2.4 // indirect
@@ -25,7 +26,6 @@ require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-openapi/runtime v0.21.0
 	github.com/go-resty/resty/v2 v2.7.0
-	github.com/golang/snappy v0.0.2-0.20190904063534-ff6b7dc882cf // indirect
 	github.com/graphql-go/graphql v0.8.0
 	github.com/gwatts/gin-adapter v0.0.0-20170508204228-c44433c485ad
 	github.com/ipfs/go-block-format v0.0.3

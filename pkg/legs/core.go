@@ -3,6 +3,7 @@ package legs
 import (
 	"context"
 	"fmt"
+	"github.com/dgraph-io/badger/v3"
 	dt "github.com/filecoin-project/go-data-transfer/impl"
 	dtnetwork "github.com/filecoin-project/go-data-transfer/network"
 	gstransport "github.com/filecoin-project/go-data-transfer/transport/graphsync"
@@ -34,31 +35,37 @@ const (
 )
 
 type Core struct {
-	Host         host.Host
-	DS           datastore.Batching
-	BS           blockstore.Blockstore
-	gs           graphsync.GraphExchange
-	ls           *golegs.Subscriber
-	cancelSyncFn context.CancelFunc
-	recvMetaCh   chan<- *metadata.MetaRecord
-	rateLimiter  *policy.Limiter
-	watchDone    chan struct{}
+	Host              host.Host
+	DS                datastore.Batching
+	CS                *badger.DB
+	BS                blockstore.Blockstore
+	gs                graphsync.GraphExchange
+	ls                *golegs.Subscriber
+	cancelSyncFn      context.CancelFunc
+	recvMetaCh        chan<- *metadata.MetaRecord
+	backupGenInterval time.Duration
+	rateLimiter       *policy.Limiter
+	watchDone         chan struct{}
 }
 
 func NewLegsCore(ctx context.Context,
 	host host.Host,
 	ds datastore.Batching,
+	cs *badger.DB,
 	bs blockstore.Blockstore,
 	outMetaCh chan<- *metadata.MetaRecord,
+	backupGenInterval time.Duration,
 	rateLimiter *policy.Limiter, reg *registry.Registry) (*Core, error) {
 
 	c := &Core{
-		Host:        host,
-		DS:          ds,
-		BS:          bs,
-		recvMetaCh:  outMetaCh,
-		rateLimiter: rateLimiter,
-		watchDone:   make(chan struct{}),
+		Host:              host,
+		DS:                ds,
+		CS:                cs,
+		BS:                bs,
+		recvMetaCh:        outMetaCh,
+		backupGenInterval: backupGenInterval,
+		rateLimiter:       rateLimiter,
+		watchDone:         make(chan struct{}),
 	}
 
 	ls, gs, err := c.initSub(ctx, host, ds, bs, reg)
@@ -180,7 +187,26 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 			continue
 		}
 		// Persist the latest sync
-		err := c.DS.Put(context.Background(), datastore.NewKey(SyncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
+		err := c.CS.View(func(txn *badger.Txn) error {
+			_, err := txn.Get(syncFin.Cid.Bytes())
+			return err
+		})
+		if err == nil {
+			log.Debugf("cid %s exists, ignore", syncFin.Cid.String())
+			continue
+		} else if err != badger.ErrKeyNotFound {
+			log.Warnf("an error occured when get cid %s from the cache: %v",
+				syncFin.Cid.String(), err)
+		}
+		err = c.CS.Update(func(txn *badger.Txn) error {
+			e := badger.NewEntry(syncFin.Cid.Bytes(), []byte("")).WithTTL(c.backupGenInterval)
+			return txn.SetEntry(e)
+		})
+		if err != nil {
+			log.Warnf("cache cid %s failed, error: %v", syncFin.Cid.String(), err)
+		}
+		log.Debugf("Cached latest sync cid: %s", syncFin.Cid.String())
+		err = c.DS.Put(context.Background(), datastore.NewKey(SyncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
 		if err != nil {
 			log.Errorw("Error persisting latest sync", "err", err, "peer", syncFin.PeerID)
 			continue

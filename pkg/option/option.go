@@ -34,6 +34,7 @@ type Options struct {
 	Identity      Identity      `yaml:"Identity"`
 	ServerAddress ServerAddress `yaml:"ServerAddress"`
 	DataStore     DataStore     `yaml:"DataStore"`
+	CacheStore    CacheStore    `yaml:"CacheStore"`
 	Discovery     Discovery     `yaml:"Discovery"`
 	AccountLevel  AccountLevel  `yaml:"AccountLevel"`
 	RateLimit     RateLimit     `yaml:"RateLimit"`
@@ -106,6 +107,10 @@ func New(root *cobra.Command) *Options {
 
 	opt.flags.StringVar(&opt.DataStore.Dir, "datastore-dir", defaultDataStoreDir,
 		"Directory of datastore files.")
+
+	// options for cachestore
+	opt.flags.StringVar(&opt.CacheStore.Dir, "cachestore-dir", defaultCacheStoreDir,
+		"Directory of cachestore files.")
 
 	// options for discovery
 	opt.flags.StringVar(&opt.Discovery.LotusGateway, "discovery-lotus-gateway", defaultLotusGateway,

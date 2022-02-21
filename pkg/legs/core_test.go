@@ -58,7 +58,7 @@ func TestGetMetaRecord(t *testing.T) {
 			So(r.ProviderID, ShouldResemble, provider.ID)
 		}
 
-		core_, err := legs.NewLegsCore(ctx, p.Host, p.DS, p.BS, nil, nil, p.Registry)
+		core_, err := legs.NewLegsCore(ctx, p.Host, p.DS, p.CS, p.BS, nil, nil, p.Registry)
 		So(err, ShouldBeNil)
 
 		t.Cleanup(func() {
