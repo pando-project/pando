@@ -15,8 +15,8 @@ func Test_TestInternetSpeed(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if downloadSpeed <= 1 {
-			t.Errorf("download speed is lower than 1 Mbps, network environment sucks")
+		if downloadSpeed <= 0.5 {
+			t.Errorf("download speed is lower than 0.5 Mbps, network environment sucks")
 		}
 	})
 }
