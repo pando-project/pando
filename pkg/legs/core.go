@@ -187,8 +187,10 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 			continue
 		}
 		// Persist the latest sync
+		peerIDBin, _ := syncFin.PeerID.MarshalBinary()
+		peerWithCidTuple := append(peerIDBin, syncFin.Cid.Bytes()...)
 		err := c.CS.View(func(txn *badger.Txn) error {
-			_, err := txn.Get(syncFin.Cid.Bytes())
+			_, err := txn.Get(peerWithCidTuple)
 			return err
 		})
 		if err == nil {
@@ -199,7 +201,7 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 				syncFin.Cid.String(), err)
 		}
 		err = c.CS.Update(func(txn *badger.Txn) error {
-			e := badger.NewEntry(syncFin.Cid.Bytes(), []byte("")).WithTTL(c.backupGenInterval)
+			e := badger.NewEntry(peerWithCidTuple, []byte("")).WithTTL(c.backupGenInterval)
 			return txn.SetEntry(e)
 		})
 		if err != nil {
