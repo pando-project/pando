@@ -37,7 +37,7 @@ func NewPandoMock() (*PandoMock, error) {
 
 	ds := datastore.NewMapDatastore()
 	mds := dssync.MutexWrap(ds)
-	cs, err := badger.Open(badger.DefaultOptions("/tmp"))
+	cs, err := badger.Open(badger.DefaultOptions("").WithInMemory(true))
 	if err != nil {
 		return nil, err
 	}

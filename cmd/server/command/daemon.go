@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 	"fmt"
-	badger "github.com/dgraph-io/badger/v3"
+	"github.com/dgraph-io/badger/v3"
 	mutexDataStoreFactory "github.com/ipfs/go-datastore/sync"
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
 	blockStoreFactory "github.com/ipfs/go-ipfs-blockstore"
@@ -199,7 +199,6 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 
 	c.MetaManager, err = metadata.New(context.Background(),
 		storeInstance.MutexDataStore,
-		storeInstance.CacheStore,
 		storeInstance.BlockStore,
 		c.LinkSystem,
 		c.Registry,
