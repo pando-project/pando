@@ -107,7 +107,9 @@ func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, 
 		return nil, nil, err
 	}
 
-	gs.RegisterOutgoingRequestHook(c.rateLimitHook())
+	if c.rateLimiter.Config().Enable {
+		gs.RegisterOutgoingRequestHook(c.rateLimitHook())
+	}
 	dtManager.SubscribeToEvents(onDataTransferComplete)
 
 	return ls, gs, nil
