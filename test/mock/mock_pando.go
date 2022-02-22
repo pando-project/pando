@@ -78,12 +78,6 @@ func NewPandoMock() (*PandoMock, error) {
 	if err != nil {
 		return nil, err
 	}
-	//r.SetCore(core)
-	opt := option.New(nil)
-	_, err = opt.Parse()
-	if err != nil {
-		return nil, err
-	}
 
 	return &PandoMock{
 		DS:       mds,
