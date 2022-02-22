@@ -90,8 +90,9 @@ func decodeIPLDNode(codec uint64, r io.Reader) (ipld.Node, error) {
 // "Payload" field.  We may need additional checks if we extend the schema
 // with new types that are traversable.
 func isMetadata(n ipld.Node) bool {
-	prev, _ := n.LookupByString("Payload")
-	return prev != nil
+	signature, _ := n.LookupByString("Signature")
+	provider, _ := n.LookupByString("Provider")
+	return signature != nil && provider != nil
 }
 
 func decodeMeta(n ipld.Node) (schema.Metadata, error) {

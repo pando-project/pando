@@ -236,6 +236,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 		backupGenInterval,
 		nil,
 		c.Registry,
+		Opt,
 	)
 
 	tokenRate := math.Ceil((0.8 * float64(Opt.RateLimit.Bandwidth)) / Opt.RateLimit.SingleDAGSize)

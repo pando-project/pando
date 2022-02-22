@@ -13,6 +13,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	. "github.com/smartystreets/goconvey/convey"
 	"pando/pkg/legs"
+	"pando/pkg/option"
 	"pando/test/mock"
 	"testing"
 	"time"
@@ -58,7 +59,12 @@ func TestGetMetaRecord(t *testing.T) {
 			So(r.ProviderID, ShouldResemble, provider.ID)
 		}
 
-		core_, err := legs.NewLegsCore(ctx, p.Host, p.DS, p.CS, p.BS, nil, time.Minute, nil, p.Registry)
+		opt := option.New(nil)
+		_, err = opt.Parse()
+		if err != nil {
+			t.Error(err)
+		}
+		core_, err := legs.NewLegsCore(ctx, p.Host, p.DS, p.CS, p.BS, nil, time.Minute, nil, p.Registry, opt)
 		So(err, ShouldBeNil)
 
 		t.Cleanup(func() {

@@ -19,6 +19,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"pando/pkg/metadata"
+	"pando/pkg/option"
 	"pando/pkg/policy"
 	"pando/pkg/registry"
 	"strings"
@@ -46,6 +47,7 @@ type Core struct {
 	backupGenInterval time.Duration
 	rateLimiter       *policy.Limiter
 	watchDone         chan struct{}
+	options           *option.Options
 }
 
 func NewLegsCore(ctx context.Context,
@@ -55,7 +57,7 @@ func NewLegsCore(ctx context.Context,
 	bs blockstore.Blockstore,
 	outMetaCh chan<- *metadata.MetaRecord,
 	backupGenInterval time.Duration,
-	rateLimiter *policy.Limiter, reg *registry.Registry) (*Core, error) {
+	rateLimiter *policy.Limiter, reg *registry.Registry, options *option.Options) (*Core, error) {
 
 	c := &Core{
 		Host:              host,
@@ -66,6 +68,7 @@ func NewLegsCore(ctx context.Context,
 		backupGenInterval: backupGenInterval,
 		rateLimiter:       rateLimiter,
 		watchDone:         make(chan struct{}),
+		options:           options,
 	}
 
 	ls, gs, err := c.initSub(ctx, host, ds, bs, reg)
@@ -114,7 +117,9 @@ func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, 
 		return nil, nil, err
 	}
 
-	gs.RegisterOutgoingRequestHook(c.rateLimitHook())
+	if c.options.RateLimit.Enable {
+		gs.RegisterOutgoingRequestHook(c.rateLimitHook())
+	}
 	dtManager.SubscribeToEvents(onDataTransferComplete)
 
 	return ls, gs, nil
@@ -187,28 +192,7 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 			continue
 		}
 		// Persist the latest sync
-		peerIDBin, _ := syncFin.PeerID.MarshalBinary()
-		peerWithCidTuple := append(peerIDBin, syncFin.Cid.Bytes()...)
-		err := c.CS.View(func(txn *badger.Txn) error {
-			_, err := txn.Get(peerWithCidTuple)
-			return err
-		})
-		if err == nil {
-			log.Debugf("cid %s exists, ignore", syncFin.Cid.String())
-			continue
-		} else if err != badger.ErrKeyNotFound {
-			log.Warnf("an error occured when get cid %s from the cache: %v",
-				syncFin.Cid.String(), err)
-		}
-		err = c.CS.Update(func(txn *badger.Txn) error {
-			e := badger.NewEntry(peerWithCidTuple, []byte("")).WithTTL(c.backupGenInterval)
-			return txn.SetEntry(e)
-		})
-		if err != nil {
-			log.Warnf("cache cid %s failed, error: %v", syncFin.Cid.String(), err)
-		}
-		log.Debugf("Cached latest sync cid: %s", syncFin.Cid.String())
-		err = c.DS.Put(context.Background(), datastore.NewKey(SyncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
+		err := c.DS.Put(context.Background(), datastore.NewKey(SyncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
 		if err != nil {
 			log.Errorw("Error persisting latest sync", "err", err, "peer", syncFin.PeerID)
 			continue

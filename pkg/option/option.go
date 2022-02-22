@@ -132,6 +132,9 @@ func New(root *cobra.Command) *Options {
 	opt.flags.IntSliceVar(&opt.AccountLevel.Threshold, "account-level", defaultAccountLevel,
 		"Rank the accounts then set rate limits for them.")
 
+	opt.flags.BoolVar(&opt.RateLimit.Enable, "ratelimit-enable", defaultEnable,
+		"Enable rate limiter (default: false).")
+
 	opt.flags.Float64Var(&opt.RateLimit.Bandwidth, "ratelimit-bandwidth", defaultBandwidth,
 		"Bandwidth of this runtime.")
 
