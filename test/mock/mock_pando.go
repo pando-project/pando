@@ -61,16 +61,18 @@ func NewPandoMock() (*PandoMock, error) {
 	}
 
 	outCh := make(chan *metadata.MetaRecord)
-	core, err := legs.NewLegsCore(ctx, h, mds, bs, outCh, limiter, r)
-	if err != nil {
-		return nil, err
-	}
-	//r.SetCore(core)
+
 	opt := option.New(nil)
 	_, err = opt.Parse()
 	if err != nil {
 		return nil, err
 	}
+
+	core, err := legs.NewLegsCore(ctx, h, mds, bs, outCh, limiter, r, opt)
+	if err != nil {
+		return nil, err
+	}
+	//r.SetCore(core)
 
 	return &PandoMock{
 		DS:       mds,

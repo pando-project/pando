@@ -18,6 +18,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"pando/pkg/metadata"
+	"pando/pkg/option"
 	"pando/pkg/policy"
 	"pando/pkg/registry"
 	"strings"
@@ -43,6 +44,7 @@ type Core struct {
 	recvMetaCh   chan<- *metadata.MetaRecord
 	rateLimiter  *policy.Limiter
 	watchDone    chan struct{}
+	options      *option.Options
 }
 
 func NewLegsCore(ctx context.Context,
@@ -50,7 +52,7 @@ func NewLegsCore(ctx context.Context,
 	ds datastore.Batching,
 	bs blockstore.Blockstore,
 	outMetaCh chan<- *metadata.MetaRecord,
-	rateLimiter *policy.Limiter, reg *registry.Registry) (*Core, error) {
+	rateLimiter *policy.Limiter, reg *registry.Registry, options *option.Options) (*Core, error) {
 
 	c := &Core{
 		Host:        host,
@@ -59,6 +61,7 @@ func NewLegsCore(ctx context.Context,
 		recvMetaCh:  outMetaCh,
 		rateLimiter: rateLimiter,
 		watchDone:   make(chan struct{}),
+		options:     options,
 	}
 
 	ls, gs, err := c.initSub(ctx, host, ds, bs, reg)
@@ -107,7 +110,7 @@ func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, 
 		return nil, nil, err
 	}
 
-	if c.rateLimiter.Config().Enable {
+	if c.options.RateLimit.Enable {
 		gs.RegisterOutgoingRequestHook(c.rateLimitHook())
 	}
 	dtManager.SubscribeToEvents(onDataTransferComplete)

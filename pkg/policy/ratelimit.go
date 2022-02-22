@@ -10,8 +10,6 @@ import (
 )
 
 type LimiterConfig struct {
-	Enable bool
-
 	Registry   *registry.Registry
 	TotalRate  float64
 	TotalBurst int

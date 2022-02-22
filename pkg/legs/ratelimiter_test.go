@@ -50,8 +50,12 @@ func TestRateLimiterRank(t *testing.T) {
 		defer patch6.Reset()
 		//(peerID peer.ID, limiter *rate.Limiter) *rate.Limiter
 
-		c.addPeerLimiter(testPeer, account.RegisteredPeer, 0)
-		c.addPeerLimiter(testPeer, account.UnregisteredPeer, 0)
-		c.addPeerLimiter(testPeer, account.WhiteListPeer, 0)
+		registeredPeerLimiter := c.addPeerLimiter(testPeer, account.RegisteredPeer, 0)
+		unregisteredPeerLimiter := c.addPeerLimiter(testPeer, account.UnregisteredPeer, 0)
+		whiteListPeerLimiter := c.addPeerLimiter(testPeer, account.WhiteListPeer, 0)
+
+		So(registeredPeerLimiter, ShouldBeNil)
+		So(unregisteredPeerLimiter, ShouldBeNil)
+		So(whiteListPeerLimiter, ShouldBeNil)
 	})
 }

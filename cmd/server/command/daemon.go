@@ -223,11 +223,11 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 		c.MetaManager.GetMetaInCh(),
 		nil,
 		c.Registry,
+		Opt,
 	)
 
 	tokenRate := math.Ceil((0.8 * float64(Opt.RateLimit.Bandwidth)) / Opt.RateLimit.SingleDAGSize)
 	rateConfig := &policy.LimiterConfig{
-		Enable:        Opt.RateLimit.Enable,
 		TotalRate:     tokenRate,
 		TotalBurst:    int(math.Ceil(tokenRate)),
 		BaseTokenRate: tokenRate,
