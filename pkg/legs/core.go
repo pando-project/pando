@@ -3,6 +3,7 @@ package legs
 import (
 	"context"
 	"fmt"
+	"github.com/dgraph-io/badger/v3"
 	dt "github.com/filecoin-project/go-data-transfer/impl"
 	dtnetwork "github.com/filecoin-project/go-data-transfer/network"
 	gstransport "github.com/filecoin-project/go-data-transfer/transport/graphsync"
