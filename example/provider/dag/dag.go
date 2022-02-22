@@ -54,7 +54,11 @@ func main() {
 	}
 	fmt.Printf("pushed 2 nodes: \n\t%s\n\t%s\n", metadata1Cid.String(), metadata2Cid.String())
 
-	time.Sleep(20 * time.Second)
+	//time.Sleep(20 * time.Second)
+
+	// test for redundant push
+	_, _ = provider.Push(metadata1)
+
 	fmt.Println("press ctrl+c to exit.")
 
 	quit := make(chan os.Signal)

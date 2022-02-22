@@ -64,7 +64,7 @@ func TestGetMetaRecord(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		core_, err := legs.NewLegsCore(ctx, p.Host, p.DS, p.BS, nil, nil, p.Registry, opt)
+		core_, err := legs.NewLegsCore(ctx, p.Host, p.DS, p.CS, p.BS, nil, time.Minute, nil, p.Registry, opt)
 		So(err, ShouldBeNil)
 
 		t.Cleanup(func() {

@@ -35,33 +35,39 @@ const (
 )
 
 type Core struct {
-	Host         host.Host
-	DS           datastore.Batching
-	BS           blockstore.Blockstore
-	gs           graphsync.GraphExchange
-	ls           *golegs.Subscriber
-	cancelSyncFn context.CancelFunc
-	recvMetaCh   chan<- *metadata.MetaRecord
-	rateLimiter  *policy.Limiter
-	watchDone    chan struct{}
-	options      *option.Options
+	Host              host.Host
+	DS                datastore.Batching
+	CS                *badger.DB
+	BS                blockstore.Blockstore
+	gs                graphsync.GraphExchange
+	ls                *golegs.Subscriber
+	cancelSyncFn      context.CancelFunc
+	recvMetaCh        chan<- *metadata.MetaRecord
+	backupGenInterval time.Duration
+	rateLimiter       *policy.Limiter
+	watchDone         chan struct{}
+	options           *option.Options
 }
 
 func NewLegsCore(ctx context.Context,
 	host host.Host,
 	ds datastore.Batching,
+	cs *badger.DB,
 	bs blockstore.Blockstore,
 	outMetaCh chan<- *metadata.MetaRecord,
+	backupGenInterval time.Duration,
 	rateLimiter *policy.Limiter, reg *registry.Registry, options *option.Options) (*Core, error) {
 
 	c := &Core{
-		Host:        host,
-		DS:          ds,
-		BS:          bs,
-		recvMetaCh:  outMetaCh,
-		rateLimiter: rateLimiter,
-		watchDone:   make(chan struct{}),
-		options:     options,
+		Host:              host,
+		DS:                ds,
+		CS:                cs,
+		BS:                bs,
+		recvMetaCh:        outMetaCh,
+		backupGenInterval: backupGenInterval,
+		rateLimiter:       rateLimiter,
+		watchDone:         make(chan struct{}),
+		options:           options,
 	}
 
 	ls, gs, err := c.initSub(ctx, host, ds, bs, reg)

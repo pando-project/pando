@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"fmt"
+	"github.com/dgraph-io/badger/v3"
 	mutexDataStoreFactory "github.com/ipfs/go-datastore/sync"
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
 	blockStoreFactory "github.com/ipfs/go-ipfs-blockstore"
@@ -25,6 +26,7 @@ import (
 	"pando/pkg/statetree/types"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"pando/pkg/system"
 )
@@ -46,6 +48,7 @@ func DaemonCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf(failedError, err)
 			}
+			defer storeInstance.CacheStore.Close()
 
 			privateKey, err := Opt.Identity.DecodePrivateKey()
 			if err != nil {
@@ -138,8 +141,12 @@ func initStoreInstance() (*core.StoreInstance, error) {
 	mutexDataStore := mutexDataStoreFactory.MutexWrap(dataStore)
 	blockStore := blockStoreFactory.NewBlockstore(mutexDataStore)
 
+	cacheStoreDir := filepath.Join(Opt.PandoRoot, Opt.CacheStore.Dir)
+	cacheStore, err := badger.Open(badger.DefaultOptions(cacheStoreDir))
+
 	return &core.StoreInstance{
 		DataStore:      dataStore,
+		CacheStore:     cacheStore,
 		MutexDataStore: mutexDataStore,
 		BlockStore:     blockStore,
 	}, nil
@@ -216,11 +223,17 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 		return nil, err
 	}
 
+	backupGenInterval, err := time.ParseDuration(Opt.Backup.BackupGenInterval)
+	if err != nil {
+		return nil, err
+	}
 	c.LegsCore, err = legs.NewLegsCore(context.Background(),
 		p2pHost,
 		storeInstance.MutexDataStore,
+		storeInstance.CacheStore,
 		storeInstance.BlockStore,
 		c.MetaManager.GetMetaInCh(),
+		backupGenInterval,
 		nil,
 		c.Registry,
 		Opt,
