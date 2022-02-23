@@ -6,15 +6,14 @@ require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0
 	github.com/agiledragon/gomonkey/v2 v2.4.0
 	github.com/briandowns/spinner v1.11.1
-	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
-	github.com/dgraph-io/badger/v3 v3.2103.2 // indirect
+	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/filecoin-project/go-address v0.0.6 // indirect
 	github.com/filecoin-project/go-bitfield v0.2.4 // indirect
 	github.com/filecoin-project/go-cbor-util v0.0.1 // indirect
-	github.com/filecoin-project/go-data-transfer v1.13.0
+	github.com/filecoin-project/go-data-transfer v1.14.0
 	github.com/filecoin-project/go-indexer-core v0.2.7
-	github.com/filecoin-project/go-legs v0.2.3
+	github.com/filecoin-project/go-legs v0.3.1
 	github.com/filecoin-project/go-state-types v0.1.1-0.20210915140513-d354ccf10379
 	github.com/filecoin-project/go-statemachine v1.0.1 // indirect
 	github.com/filecoin-project/specs-actors v0.9.14 // indirect
@@ -43,8 +42,8 @@ require (
 	github.com/ipfs/go-merkledag v0.5.1
 	github.com/ipld/go-car/v2 v2.1.1
 	github.com/ipld/go-ipld-prime v0.14.4
-	github.com/libp2p/go-libp2p v0.17.0
-	github.com/libp2p/go-libp2p-core v0.13.0
+	github.com/libp2p/go-libp2p v0.18.0-rc1
+	github.com/libp2p/go-libp2p-core v0.14.0
 	github.com/libp2p/go-libp2p-record v0.1.3 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
