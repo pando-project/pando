@@ -102,7 +102,7 @@ func (p *DAGProvider) NewMetadata(payload []byte) (schema.Metadata, error) {
 	return schema.NewMetadata(payload, p.Host.ID(), p.PrivateKey)
 }
 
-func (p *DAGProvider) NewMetadataWithLink(payload []byte, link *datamodel.Link) (schema.Metadata, error) {
+func (p *DAGProvider) NewMetadataWithLink(payload []byte, link datamodel.Link) (schema.Metadata, error) {
 	return schema.NewMetadataWithLink(payload, p.Host.ID(), p.PrivateKey, link)
 }
 

@@ -1,3 +1,5 @@
+//go:generate go run gen.go .
+
 package schema
 
 import (
@@ -57,7 +59,7 @@ func NewMetadata(payload []byte, provider peer.ID, signKey crypto.PrivKey) (Meta
 	return meta, nil
 }
 
-func NewMetadataWithLink(payload []byte, provider peer.ID, signKey crypto.PrivKey, link *datamodel.Link) (Metadata, error) {
+func NewMetadataWithLink(payload []byte, provider peer.ID, signKey crypto.PrivKey, link datamodel.Link) (Metadata, error) {
 	if link == nil {
 		return nil, fmt.Errorf("nil previous meta link")
 	}
@@ -65,7 +67,7 @@ func NewMetadataWithLink(payload []byte, provider peer.ID, signKey crypto.PrivKe
 	meta := &_Metadata{
 		PreviousID: _Link_Metadata__Maybe{
 			m: schema.Maybe_Value,
-			v: _Link_Metadata{x: *link},
+			v: _Link_Metadata{x: link},
 		},
 		Provider: _String{x: provider.String()},
 		Payload:  _Bytes{x: payload},
