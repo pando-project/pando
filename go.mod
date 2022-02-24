@@ -77,5 +77,7 @@ require (
 
 replace (
 	github.com/ipld/go-ipld-prime v0.14.4 => github.com/ipld/go-ipld-prime v0.14.3
+	github.com/libp2p/go-libp2p v0.18.0-rc1 => github.com/libp2p/go-libp2p v0.17.0
+	github.com/libp2p/go-libp2p-core v0.14.0 => github.com/libp2p/go-libp2p-core v0.13.0
 	github.com/showwin/speedtest-go v1.1.4 => github.com/kenlabs/speedtest-go v1.1.5
 )
