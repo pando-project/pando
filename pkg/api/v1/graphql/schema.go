@@ -6,7 +6,7 @@ import (
 
 	"github.com/graphql-go/graphql"
 
-	"pando/pkg/statetree/types"
+	"github.com/kenlabs/pando/pkg/statetree/types"
 )
 
 type postData struct {

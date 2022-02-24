@@ -2,8 +2,8 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/kenlabs/pando/docs"
 	"net/http"
-	"pando/docs"
 )
 
 func (a *API) registerSwagger() {

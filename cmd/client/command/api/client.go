@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty/v2"
-	"pando/pkg/api/types"
+	"github.com/kenlabs/pando/pkg/api/types"
 	"path"
 	"strings"
 	"time"

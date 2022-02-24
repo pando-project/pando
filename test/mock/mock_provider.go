@@ -17,12 +17,12 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/kenlabs/pando/pkg/legs"
+	"github.com/kenlabs/pando/pkg/types/schema"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"math/rand"
-	"pando/pkg/legs"
-	"pando/pkg/types/schema"
 	"time"
 )
 

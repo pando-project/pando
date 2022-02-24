@@ -1,7 +1,7 @@
 package policy
 
 import (
-	"pando/pkg/option"
+	"github.com/kenlabs/pando/pkg/option"
 	"testing"
 
 	"github.com/libp2p/go-libp2p-core/peer"

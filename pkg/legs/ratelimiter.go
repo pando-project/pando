@@ -2,9 +2,9 @@ package legs
 
 import (
 	"github.com/ipfs/go-graphsync"
+	"github.com/kenlabs/pando/pkg/account"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"golang.org/x/time/rate"
-	"pando/pkg/account"
 	"time"
 )
 

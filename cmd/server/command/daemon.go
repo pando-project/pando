@@ -8,6 +8,15 @@ import (
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
 	blockStoreFactory "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/kenlabs/pando/pkg/api"
+	"github.com/kenlabs/pando/pkg/api/core"
+	"github.com/kenlabs/pando/pkg/legs"
+	"github.com/kenlabs/pando/pkg/lotus"
+	"github.com/kenlabs/pando/pkg/metadata"
+	"github.com/kenlabs/pando/pkg/policy"
+	"github.com/kenlabs/pando/pkg/registry"
+	"github.com/kenlabs/pando/pkg/statetree"
+	"github.com/kenlabs/pando/pkg/statetree/types"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	libp2pHost "github.com/libp2p/go-libp2p-core/host"
@@ -15,20 +24,11 @@ import (
 	"math"
 	"os"
 	"os/signal"
-	"pando/pkg/api"
-	"pando/pkg/api/core"
-	"pando/pkg/legs"
-	"pando/pkg/lotus"
-	"pando/pkg/metadata"
-	"pando/pkg/policy"
-	"pando/pkg/registry"
-	"pando/pkg/statetree"
-	"pando/pkg/statetree/types"
 	"path/filepath"
 	"syscall"
 	"time"
 
-	"pando/pkg/system"
+	"github.com/kenlabs/pando/pkg/system"
 )
 
 var log = logging.Logger("pando")
@@ -93,10 +93,10 @@ func setLoglevel() error {
 		return err
 	}
 	logging.SetAllLoggers(logLevel)
-	err = logging.SetLogLevel("addrutil", "warn")
-	if err != nil {
-		return err
-	}
+	//err = logging.SetLogLevel("addrutil", "warn")
+	//if err != nil {
+	//	return err
+	//}
 	err = logging.SetLogLevel("basichost", "warn")
 	if err != nil {
 		return err

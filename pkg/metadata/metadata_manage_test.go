@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/kenlabs/pando/pkg/legs"
+	. "github.com/kenlabs/pando/pkg/metadata"
+	"github.com/kenlabs/pando/test/mock"
 	. "github.com/smartystreets/goconvey/convey"
-	"pando/pkg/legs"
-	. "pando/pkg/metadata"
-	"pando/test/mock"
 	"testing"
 	"time"
 )
