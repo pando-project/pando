@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/kenlabs/pando/test/mock"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/record"
 	. "github.com/smartystreets/goconvey/convey"
-	"pando/test/mock"
 	"reflect"
 	"testing"
 )

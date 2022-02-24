@@ -1,9 +1,9 @@
 package command
 
 import (
+	"github.com/kenlabs/pando/pkg/option"
+	"github.com/kenlabs/pando/pkg/system"
 	"github.com/spf13/cobra"
-	"pando/pkg/option"
-	"pando/pkg/system"
 )
 
 var Opt *option.Options

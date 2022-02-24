@@ -2,10 +2,10 @@ package lotus
 
 import (
 	"context"
+	"github.com/kenlabs/pando/pkg/registry"
+	"github.com/kenlabs/pando/pkg/registry/discovery"
 	"math/big"
 	"net/url"
-	"pando/pkg/registry"
-	"pando/pkg/registry/discovery"
 
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p-core/peer"

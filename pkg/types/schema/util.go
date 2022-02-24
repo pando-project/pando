@@ -130,7 +130,7 @@ func (m Link_Metadata) ToCid() cid.Cid {
 	return m.x.(cidlink.Link).Cid
 }
 
-// Signs advertisements using libp2p envelope
+// Signs metadata using libp2p envelope
 func signMetadata(privkey crypto.PrivKey, meta Metadata) ([]byte, error) {
 	previousID := meta.FieldPreviousID().v
 

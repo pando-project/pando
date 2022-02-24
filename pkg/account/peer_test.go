@@ -2,9 +2,9 @@ package account
 
 import (
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/smartystreets/goconvey/convey"
-	"pando/pkg/registry"
 	"reflect"
 	"testing"
 )
