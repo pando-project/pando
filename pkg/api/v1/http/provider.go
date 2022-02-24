@@ -19,6 +19,7 @@ func (a *API) registerProvider() {
 	provider := a.router.Group("/provider")
 	{
 		provider.POST("/register", a.providerRegister)
+		provider.GET("/info", a.listProviderInfo)
 	}
 }
 
@@ -75,4 +76,53 @@ func (a *API) providerRegister(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, types.NewOKResponse("register success", nil))
+}
+
+type providerInfoRes map[string]struct {
+	MultiAddr []string
+	MinerAddr string
+}
+
+func writeProviderInfo(ctx *gin.Context, info []*registry.ProviderInfo) {
+	res := make(map[string]providerInfoRes)
+	res["registeredProviders"] = make(providerInfoRes)
+	provInfos := res["registeredProviders"]
+	for _, provider := range info {
+		peeridStr := provider.AddrInfo.ID.String()
+		addrs := make([]string, 0)
+		for _, addr := range provider.AddrInfo.Addrs {
+			addrs = append(addrs, addr.String())
+		}
+		provInfos[peeridStr] = struct {
+			MultiAddr []string
+			MinerAddr string
+		}{MultiAddr: addrs, MinerAddr: provider.DiscoveryAddr}
+
+	}
+	ctx.JSON(http.StatusOK, types.NewOKResponse("find registerd provider successfully", res))
+}
+
+func (a *API) listProviderInfo(ctx *gin.Context) {
+	record := metrics.APITimer(context.Background(), metrics.GetRegisteredProviderInfoLatency)
+	defer record()
+
+	var peerid peer.ID
+	var err error
+	peeridStr := ctx.Query("height")
+	if peeridStr != "" {
+		peerid, err = peer.Decode(peeridStr)
+		if err != nil {
+			handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid peerid: %s", peeridStr))
+			return
+		}
+		info := a.core.Registry.ProviderInfo(peerid)
+		if info == nil {
+			handleError(ctx, http.StatusNotFound, fmt.Sprintf("not found registerd provider: %s ", peeridStr))
+			return
+		}
+		writeProviderInfo(ctx, []*registry.ProviderInfo{info})
+	} else {
+		infos := a.core.Registry.AllProviderInfo()
+		writeProviderInfo(ctx, infos)
+	}
 }

@@ -104,8 +104,6 @@ func TestBackUpWithStopLink(t *testing.T) {
 	Convey("when set selector and stop link then get right car file", t, func() {
 		pando, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
-		//ch, err := pando.GetMetaRecordCh()
-		//So(err, ShouldBeNil)
 		provider, err := mock.NewMockProvider(pando)
 		So(err, ShouldBeNil)
 		var cids []cid.Cid
