@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/kenlabs/pando/pkg/api/types"
+	"github.com/kenlabs/pando/pkg/api/v1"
+	"github.com/kenlabs/pando/pkg/metrics"
+	"github.com/kenlabs/pando/pkg/register"
+	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"io/ioutil"
 	"net/http"
-	"pando/pkg/api/types"
-	"pando/pkg/api/v1"
-	"pando/pkg/metrics"
-	"pando/pkg/register"
-	"pando/pkg/registry"
 )
 
 func (a *API) registerProvider() {

@@ -1,8 +1,8 @@
 package account
 
 import (
+	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"pando/pkg/registry"
 )
 
 type PeerType int
