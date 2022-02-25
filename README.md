@@ -34,8 +34,8 @@ However, there are nice properties of having this sort of metadata ecosystem mor
 ## Integrate with Pando
 ### As a Provider
 Pando uses [go-legs](https://github.com/filecoin-project/go-legs) to synchronize IPLD data from providers.
-We will develop an SDK for providers to integrate with Pando in a more efficient way in the future (maybe a week).
-For now, the providers have to initialize go-legs instance on their own and publish IPLD data to the topic `/pando/v0.0.1`
+We will develop an SDK for you to integrate with Pando in a more efficient way in the future (maybe a week).
+For now, you have to initialize go-legs instance on their own and publish IPLD data to the topic `/pando/v0.0.1`
 which Pando subscribes.
 
 #### Prerequisite
@@ -45,6 +45,12 @@ Pando accepts IPLD data from metadata providers with the following required IPLD
 
 and a nullable node:
 1. `PreviousID nullable Link_Metadata` - a non null PreviousID will enable a recursive sync by Pando service. With this node, a full sync of linked IPLD data will be guaranteed.
+
+```
+Notice that, once PreviousID is absent when there is some previous metadata, Pando makes no guarantee about the state of metadata published, as the recursive sync won't happen in this case.
+
+Make sure you correctly link your chained metadata using PreviousID node.
+```
 
 #### Integration process
 The provider integration is recommended to follow the steps below:
@@ -62,7 +68,6 @@ illegal provider from falsely using the peer ID of other providers.
 
 3. Create a provider instance with Pando SDK, then connect to Pando, initialize a metadata instance and append new metadata if you need.
 4. Push the latest metadata instance.
-5. execute updateRoot() to publish updated DAG root cid into pubsub topic: "/pando/v0.0.1".
 
 Check out [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
 
