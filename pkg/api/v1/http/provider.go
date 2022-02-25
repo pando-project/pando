@@ -139,16 +139,6 @@ func (a *API) listProviderHead(ctx *gin.Context) {
 			ctx.Query("peerid"), err.Error()))
 		return
 	} else {
-		providerState, err := a.core.StateTree.GetProviderStateByPeerID(peerid)
-		if err != nil {
-			logger.Errorf("failed to get provider state from hamt: %s", err.Error())
-			handleError(ctx, http.StatusInternalServerError, fmt.Sprintf("failed to get provider state from hamt: %s", err.Error()))
-			return
-		}
-		if providerState == nil {
-			handleError(ctx, http.StatusNotFound, v1.ResourceNotFound)
-			return
-		}
 		res := struct {
 			Cid string
 		}{}
