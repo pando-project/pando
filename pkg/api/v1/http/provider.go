@@ -103,29 +103,25 @@ func writeProviderInfo(ctx *gin.Context, info []*registry.ProviderInfo) {
 		}{MultiAddr: addrs, MinerAddr: provider.DiscoveryAddr}
 
 	}
-	ctx.JSON(http.StatusOK, types.NewOKResponse("find registerd provider successfully", res))
+	ctx.JSON(http.StatusOK, types.NewOKResponse("OK", res))
 }
 
 func (a *API) listProviderInfo(ctx *gin.Context) {
 	record := metrics.APITimer(context.Background(), metrics.GetRegisteredProviderInfoLatency)
 	defer record()
 
-	peerid, err := getPeerid(ctx)
-	if err != nil && err != v1.ErrorNotFound {
-		handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid peerid: %s, err: %s",
-			ctx.Query("peerid"), err.Error()))
+	peerid, err := decodePeerid(ctx)
+
+	if err != nil {
+		handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid peerid"))
 		return
-	} else if err == v1.ErrorNotFound {
-		// list all registered providers' info
-		infos := a.core.Registry.AllProviderInfo()
-		writeProviderInfo(ctx, infos)
 	} else {
 		info := a.core.Registry.ProviderInfo(peerid)
 		if info == nil {
-			handleError(ctx, http.StatusNotFound, fmt.Sprintf("not found registerd provider: %s ", peerid.String()))
+			handleError(ctx, http.StatusNotFound, fmt.Sprintf("provider not found"))
 			return
 		}
-		writeProviderInfo(ctx, []*registry.ProviderInfo{info})
+		writeProviderInfo(ctx, info)
 	}
 }
 
@@ -133,10 +129,11 @@ func (a *API) listProviderHead(ctx *gin.Context) {
 	record := metrics.APITimer(context.Background(), metrics.GetProviderHeadLatency)
 	defer record()
 
-	peerid, err := getPeerid(ctx)
-	if err != nil {
-		handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid peerid: %s, err: %s",
-			ctx.Query("peerid"), err.Error()))
+	failError := "failed to retrieve the head of the provider, err: %v"
+
+	peerid, err := decodePeerid(ctx)
+	if err != nil || peerid == "" {
+		handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid peerid"))
 		return
 	} else {
 		res := struct {
@@ -144,30 +141,26 @@ func (a *API) listProviderHead(ctx *gin.Context) {
 		}{}
 		cidBytes, err := a.core.StoreInstance.DataStore.Get(ctx, datastore.NewKey(legs.SyncPrefix+peerid.String()))
 		if err != nil && err != datastore.ErrNotFound {
-			logger.Errorf("failed to get provider head: %s", err.Error())
-			handleError(ctx, http.StatusInternalServerError, fmt.Sprintf("failed to get provider head: %s", err.Error()))
+			logger.Errorf(failError, err)
+			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 			return
 		}
-		_, pcid, err := cid.CidFromBytes(cidBytes)
+		_, providerCid, err := cid.CidFromBytes(cidBytes)
 		if err != nil {
-			logger.Errorf("failed to get provider head: %s", err.Error())
-			handleError(ctx, http.StatusInternalServerError, fmt.Sprintf("failed to get provider head: %s", err.Error()))
+			logger.Errorf(failError, err)
+			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 			return
 		}
-		res.Cid = pcid.String()
-		ctx.JSON(http.StatusOK, types.NewOKResponse("find provider head successfully", res))
+		res.Cid = providerCid.String()
+		ctx.JSON(http.StatusOK, types.NewOKResponse("OK", res))
 	}
 }
 
-func getPeerid(ctx *gin.Context) (peer.ID, error) {
+func decodePeerid(ctx *gin.Context) (peer.ID, error) {
 	peeridStr := ctx.Query("peerid")
 	if peeridStr == "" {
-		return "", v1.ErrorNotFound
+		return "", nil
 	} else {
-		peerid, err := peer.Decode(peeridStr)
-		if err != nil {
-			return "", err
-		}
-		return peerid, nil
+		return peer.Decode(peeridStr)
 	}
 }
