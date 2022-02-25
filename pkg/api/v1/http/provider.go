@@ -20,6 +20,7 @@ func (a *API) registerProvider() {
 	{
 		provider.POST("/register", a.providerRegister)
 		provider.GET("/info", a.listProviderInfo)
+		provider.GET("/head", a.listProviderHead)
 	}
 }
 
@@ -106,23 +107,64 @@ func (a *API) listProviderInfo(ctx *gin.Context) {
 	record := metrics.APITimer(context.Background(), metrics.GetRegisteredProviderInfoLatency)
 	defer record()
 
-	var peerid peer.ID
-	var err error
-	peeridStr := ctx.Query("height")
-	if peeridStr != "" {
-		peerid, err = peer.Decode(peeridStr)
-		if err != nil {
-			handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid peerid: %s", peeridStr))
-			return
-		}
+	peerid, err := getPeerid(ctx)
+	if err != nil && err != v1.ErrorNotFound {
+		handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid peerid: %s, err: %s",
+			ctx.Query("peerid"), err.Error()))
+		return
+	} else if err == v1.ErrorNotFound {
+		// list all registered providers' info
+		infos := a.core.Registry.AllProviderInfo()
+		writeProviderInfo(ctx, infos)
+	} else {
 		info := a.core.Registry.ProviderInfo(peerid)
 		if info == nil {
-			handleError(ctx, http.StatusNotFound, fmt.Sprintf("not found registerd provider: %s ", peeridStr))
+			handleError(ctx, http.StatusNotFound, fmt.Sprintf("not found registerd provider: %s ", peerid.String()))
 			return
 		}
 		writeProviderInfo(ctx, []*registry.ProviderInfo{info})
+	}
+}
+
+func (a *API) listProviderHead(ctx *gin.Context) {
+	record := metrics.APITimer(context.Background(), metrics.GetProviderHeadLatency)
+	defer record()
+
+	peerid, err := getPeerid(ctx)
+	if err != nil {
+		handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid peerid: %s, err: %s",
+			ctx.Query("peerid"), err.Error()))
+		return
 	} else {
-		infos := a.core.Registry.AllProviderInfo()
-		writeProviderInfo(ctx, infos)
+		providerState, err := a.core.StateTree.GetProviderStateByPeerID(peerid)
+		if err != nil {
+			logger.Errorf("failed to get provider state from hamt: %s", err.Error())
+			handleError(ctx, http.StatusInternalServerError, fmt.Sprintf("failed to get provider state from hamt: %s", err.Error()))
+			return
+		}
+		if providerState == nil {
+			handleError(ctx, http.StatusNotFound, v1.ResourceNotFound)
+			return
+		}
+		res := struct {
+			Cids []string
+		}{}
+		for _, cid := range providerState.NewestUpdate {
+			res.Cids = append(res.Cids, cid.String())
+		}
+		ctx.JSON(http.StatusOK, types.NewOKResponse("find provider head successfully", res))
+	}
+}
+
+func getPeerid(ctx *gin.Context) (peer.ID, error) {
+	peeridStr := ctx.Query("peerid")
+	if peeridStr == "" {
+		return "", v1.ErrorNotFound
+	} else {
+		peerid, err := peer.Decode(peeridStr)
+		if err != nil {
+			return "", err
+		}
+		return peerid, nil
 	}
 }
