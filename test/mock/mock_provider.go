@@ -17,12 +17,12 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/kenlabs/pando/pkg/legs"
+	"github.com/kenlabs/pando/pkg/types/schema"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"math/rand"
-	"pando/pkg/legs"
-	"pando/pkg/types/schema"
 	"time"
 )
 
@@ -32,7 +32,7 @@ type ProviderMock struct {
 	LegsProvider goLegs.Publisher
 	lsys         *linking.LinkSystem
 	DagService   format.DAGService
-	prevMetaLink *datamodel.Link
+	prevMetaLink datamodel.Link
 }
 
 func getDagNodes() []format.Node {
@@ -65,7 +65,7 @@ func getDagNodes() []format.Node {
 	return []format.Node{nd3, nd2, nd1, c, b, a}
 }
 
-func (p *ProviderMock) getMeta(link *datamodel.Link) (schema.Metadata, error) {
+func (p *ProviderMock) getMeta(link datamodel.Link) (schema.Metadata, error) {
 	data := make([]byte, 256)
 	rand.Read(data)
 	var meta schema.Metadata
@@ -157,7 +157,7 @@ func (p *ProviderMock) SendMeta(update bool) (cid.Cid, error) {
 			return cid.Undef, err
 		}
 	}
-	p.prevMetaLink = &lnk
+	p.prevMetaLink = lnk
 	return lnk.(cidlink.Link).Cid, nil
 }
 

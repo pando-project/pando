@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/graphql-go/graphql"
 	logging "github.com/ipfs/go-log/v2"
-	"pando/pkg/api/core"
+	"github.com/kenlabs/pando/pkg/api/core"
 )
 
 var logger = logging.Logger("v1GraphqlAPI")

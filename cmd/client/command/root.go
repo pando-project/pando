@@ -2,13 +2,13 @@ package command
 
 import (
 	"fmt"
+	"github.com/kenlabs/pando/cmd/client/command/metadata"
+	"github.com/kenlabs/pando/cmd/client/command/pando"
+	"github.com/kenlabs/pando/cmd/client/command/provider"
 	"github.com/spf13/cobra"
 	"net/url"
-	"pando/cmd/client/command/metadata"
-	"pando/cmd/client/command/pando"
-	"pando/cmd/client/command/provider"
 
-	"pando/cmd/client/command/api"
+	"github.com/kenlabs/pando/cmd/client/command/api"
 )
 
 func NewRoot() *cobra.Command {

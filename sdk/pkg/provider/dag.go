@@ -11,16 +11,16 @@ import (
 	"github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
-	"pando/pkg/types/schema"
+	"github.com/kenlabs/pando/pkg/types/schema"
 
 	datastoreSync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	link "github.com/kenlabs/pando/pkg/legs"
+	"github.com/kenlabs/pando/sdk/pkg"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
-	link "pando/pkg/legs"
-	"pando/sdk/pkg"
 	"time"
 )
 
@@ -102,7 +102,7 @@ func (p *DAGProvider) NewMetadata(payload []byte) (schema.Metadata, error) {
 	return schema.NewMetadata(payload, p.Host.ID(), p.PrivateKey)
 }
 
-func (p *DAGProvider) NewMetadataWithLink(payload []byte, link *datamodel.Link) (schema.Metadata, error) {
+func (p *DAGProvider) NewMetadataWithLink(payload []byte, link datamodel.Link) (schema.Metadata, error) {
 	return schema.NewMetadataWithLink(payload, p.Host.ID(), p.PrivateKey, link)
 }
 

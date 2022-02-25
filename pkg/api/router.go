@@ -2,12 +2,12 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"pando/pkg/option"
+	"github.com/kenlabs/pando/pkg/option"
 
-	"pando/pkg/api/core"
-	"pando/pkg/api/middleware"
-	v1Graphql "pando/pkg/api/v1/graphql"
-	v1Http "pando/pkg/api/v1/http"
+	"github.com/kenlabs/pando/pkg/api/core"
+	"github.com/kenlabs/pando/pkg/api/middleware"
+	v1Graphql "github.com/kenlabs/pando/pkg/api/v1/graphql"
+	v1Http "github.com/kenlabs/pando/pkg/api/v1/http"
 )
 
 func NewHttpRouter(core *core.Core, opt *option.Options) *gin.Engine {

@@ -2,6 +2,7 @@ package option
 
 import (
 	"fmt"
+	"github.com/kenlabs/pando/pkg/version"
 	"github.com/mitchellh/go-homedir"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
@@ -9,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 	"os"
-	"pando/pkg/version"
 	"path/filepath"
 	"strings"
 )

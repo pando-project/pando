@@ -9,13 +9,13 @@ import (
 	"github.com/ipld/go-car/v2"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/traversal/selector"
+	"github.com/kenlabs/pando/pkg/legs"
+	"github.com/kenlabs/pando/pkg/metadata"
+	"github.com/kenlabs/pando/pkg/option"
+	"github.com/kenlabs/pando/test/mock"
 	. "github.com/smartystreets/goconvey/convey"
 	"math/rand"
 	"os"
-	"pando/pkg/legs"
-	"pando/pkg/metadata"
-	"pando/pkg/option"
-	"pando/test/mock"
 	"path"
 	"reflect"
 	"strconv"
@@ -104,8 +104,6 @@ func TestBackUpWithStopLink(t *testing.T) {
 	Convey("when set selector and stop link then get right car file", t, func() {
 		pando, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
-		//ch, err := pando.GetMetaRecordCh()
-		//So(err, ShouldBeNil)
 		provider, err := mock.NewMockProvider(pando)
 		So(err, ShouldBeNil)
 		var cids []cid.Cid

@@ -7,11 +7,11 @@ import (
 	"github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
 
-	"pando/pkg/legs"
-	"pando/pkg/lotus"
-	"pando/pkg/metadata"
-	"pando/pkg/registry"
-	"pando/pkg/statetree"
+	"github.com/kenlabs/pando/pkg/legs"
+	"github.com/kenlabs/pando/pkg/lotus"
+	"github.com/kenlabs/pando/pkg/metadata"
+	"github.com/kenlabs/pando/pkg/registry"
+	"github.com/kenlabs/pando/pkg/statetree"
 )
 
 type Core struct {

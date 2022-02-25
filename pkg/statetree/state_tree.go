@@ -11,9 +11,9 @@ import (
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	cbor "github.com/ipfs/go-ipld-cbor"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/kenlabs/pando/pkg/statetree/hamt"
+	statetreeTypes "github.com/kenlabs/pando/pkg/statetree/types"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"pando/pkg/statetree/hamt"
-	statetreeTypes "pando/pkg/statetree/types"
 	"sync"
 	"time"
 )

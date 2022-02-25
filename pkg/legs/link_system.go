@@ -12,9 +12,9 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/multicodec"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/kenlabs/pando/pkg/types/schema"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"io"
-	"pando/pkg/types/schema"
 )
 
 func MkLinkSystem(bs blockstore.Blockstore, core *Core) ipld.LinkSystem {
