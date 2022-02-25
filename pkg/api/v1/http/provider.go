@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/ipfs/go-cid"
+	"github.com/ipfs/go-datastore"
 	"github.com/kenlabs/pando/pkg/api/types"
 	"github.com/kenlabs/pando/pkg/api/v1"
+	"github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/pkg/metrics"
 	"github.com/kenlabs/pando/pkg/register"
 	"github.com/kenlabs/pando/pkg/registry"
@@ -147,11 +150,21 @@ func (a *API) listProviderHead(ctx *gin.Context) {
 			return
 		}
 		res := struct {
-			Cids []string
+			Cid string
 		}{}
-		for _, cid := range providerState.NewestUpdate {
-			res.Cids = append(res.Cids, cid.String())
+		cidBytes, err := a.core.StoreInstance.DataStore.Get(ctx, datastore.NewKey(legs.SyncPrefix+peerid.String()))
+		if err != nil && err != datastore.ErrNotFound {
+			logger.Errorf("failed to get provider head: %s", err.Error())
+			handleError(ctx, http.StatusInternalServerError, fmt.Sprintf("failed to get provider head: %s", err.Error()))
+			return
 		}
+		_, pcid, err := cid.CidFromBytes(cidBytes)
+		if err != nil {
+			logger.Errorf("failed to get provider head: %s", err.Error())
+			handleError(ctx, http.StatusInternalServerError, fmt.Sprintf("failed to get provider head: %s", err.Error()))
+			return
+		}
+		res.Cid = pcid.String()
 		ctx.JSON(http.StatusOK, types.NewOKResponse("find provider head successfully", res))
 	}
 }
