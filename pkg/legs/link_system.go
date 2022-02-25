@@ -50,7 +50,6 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core) ipld.LinkSystem {
 				log.Infow("Received metadata")
 				_, peerid, err := verifyMetadata(n)
 				if err != nil {
-
 					return err
 				}
 				block, err := blocks.NewBlockWithCid(origBuf, c)
@@ -92,7 +91,8 @@ func decodeIPLDNode(codec uint64, r io.Reader) (ipld.Node, error) {
 func isMetadata(n ipld.Node) bool {
 	signature, _ := n.LookupByString("Signature")
 	provider, _ := n.LookupByString("Provider")
-	return signature != nil && provider != nil
+	payload, _ := n.LookupByString("Payload")
+	return signature != nil && provider != nil && payload != nil
 }
 
 func decodeMeta(n ipld.Node) (schema.Metadata, error) {

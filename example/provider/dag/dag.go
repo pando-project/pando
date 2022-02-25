@@ -13,8 +13,8 @@ import (
 
 const (
 	privateKeyStr = "CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w="
-	pandoAddr     = "/ip4/127.0.0.1/tcp/8003"
-	pandoPeerID   = "12D3KooWKw5hu5QcbbFuokt3NrYe7gak5kKHzt8h1FJNqByHQ157"
+	pandoAddr     = "/ip4/127.0.0.1/tcp/9002"
+	pandoPeerID   = "12D3KooWJjPMqp1eAN6DAvDXJQGivWBq85EqFP29VkteePBKgesa"
 )
 
 func main() {
@@ -24,7 +24,6 @@ func main() {
 	}
 	fmt.Printf("provider peerID: %v\n", peerID.String())
 
-	//dags := generateDAGs(1)
 	provider, err := pandoSdk.NewDAGProvider(privateKeyStr, 10*time.Second, 10*time.Minute)
 	if err != nil {
 		panic(err)
