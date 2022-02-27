@@ -7,7 +7,6 @@ import (
 	dtnetwork "github.com/filecoin-project/go-data-transfer/network"
 	gstransport "github.com/filecoin-project/go-data-transfer/transport/graphsync"
 	"github.com/filecoin-project/go-legs"
-	legsSync "github.com/filecoin-project/go-legs/dtsync"
 	"github.com/ipfs/go-cid"
 	datastoreSync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
@@ -37,8 +36,6 @@ type DAGConsumer struct {
 	PrivateKey     crypto.PrivKey
 	Core           *core
 	Subscriber     *legs.Subscriber
-	LegsSync       *legsSync.Sync
-	LegsSyncer     *legsSync.Syncer
 	PandoPeerInfo  *peer.AddrInfo
 	ConnectTimeout time.Duration
 	SyncTimeout    time.Duration
@@ -91,14 +88,11 @@ func NewDAGConsumer(privateKeyStr string, connectTimeout time.Duration, syncTime
 		legs.DtManager(dataManager),
 	)
 
-	sync, err := legsSync.NewSyncWithDT(consumerHost, dataManager)
-
 	return &DAGConsumer{
 		Host:           consumerHost,
 		PrivateKey:     privateKey,
 		Core:           storageCore,
 		Subscriber:     subscriber,
-		LegsSync:       sync,
 		ConnectTimeout: connectTimeout,
 		SyncTimeout:    syncTimeout,
 	}, nil
@@ -113,8 +107,6 @@ func (c *DAGConsumer) ConnectPando(peerAddress string, peerID string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.ConnectTimeout)
 	defer cancel()
-
-	c.LegsSyncer = c.LegsSync.NewSyncer(pandoPeerInfo.ID, SubscribeTopic)
 
 	return c.Host.Connect(ctx, *pandoPeerInfo)
 }
@@ -132,9 +124,9 @@ func (c *DAGConsumer) GetLatestSync() cid.Cid {
 	return cidLink.Cid
 }
 
-func (c *DAGConsumer) Sync(nextCid cid.Cid, selector ipld.Node) error {
+func (c *DAGConsumer) Sync(nextCid cid.Cid, selector ipld.Node) (cid.Cid, error) {
 	ctx, syncCancel := context.WithTimeout(context.Background(), c.SyncTimeout)
 	defer syncCancel()
 
-	return c.LegsSyncer.Sync(ctx, nextCid, selector)
+	return c.Subscriber.Sync(ctx, c.PandoPeerInfo.ID, nextCid, selector, nil)
 }

@@ -31,7 +31,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = consumer.Sync(cid.Undef, nil)
+	latestSyncCid, err := consumer.Sync(cid.Undef, nil)
+	fmt.Println("cid: ", latestSyncCid)
 	if err != nil {
 		panic(err)
 	}
