@@ -162,7 +162,7 @@ func TestSyncDataFromPando(t *testing.T) {
 		ds := datastore.NewMapDatastore()
 		mds := sync.MutexWrap(ds)
 		bs := blockstore.NewBlockstore(mds)
-		lsys := legs.MkLinkSystem(bs, nil)
+		lsys := legs.MkLinkSystem(bs, nil, nil)
 		consumer, err := golegs.NewSubscriber(h, ds, lsys, mock.GetTopic(), nil)
 		So(err, ShouldBeNil)
 

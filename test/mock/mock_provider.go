@@ -95,7 +95,7 @@ func NewMockProvider(p *PandoMock) (*ProviderMock, error) {
 	pk := srcHost.Peerstore().PrivKey(srcHost.ID())
 	srcDatastore := dssync.MutexWrap(datastore.NewMapDatastore())
 	srcBlockstore := blockstore.NewBlockstore(srcDatastore)
-	srcLinkSystem := legs.MkLinkSystem(srcBlockstore, nil)
+	srcLinkSystem := legs.MkLinkSystem(srcBlockstore, nil, nil)
 	dags := merkledag.NewDAGService(blockservice.New(srcBlockstore, offline.Exchange(srcBlockstore)))
 	legsPublisher, err := dtsync.NewPublisher(srcHost, srcDatastore, srcLinkSystem, topic)
 	if err != nil {
