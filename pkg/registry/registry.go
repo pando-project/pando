@@ -242,7 +242,11 @@ func (r *Registry) ProviderInfoByAddr(discoAddr string) *ProviderInfo {
 }
 
 // ProviderInfo returns information for a registered provider
-func (r *Registry) ProviderInfo(providerID peer.ID) *ProviderInfo {
+func (r *Registry) ProviderInfo(providerID peer.ID) []*ProviderInfo {
+	if providerID == "" {
+		return r.AllProviderInfo()
+	}
+
 	infoChan := make(chan *ProviderInfo)
 	r.actions <- func() {
 		info, ok := r.providers[providerID]
@@ -252,7 +256,7 @@ func (r *Registry) ProviderInfo(providerID peer.ID) *ProviderInfo {
 		close(infoChan)
 	}
 
-	return <-infoChan
+	return []*ProviderInfo{<-infoChan}
 }
 
 // AllProviderInfo returns information for all registered providers
@@ -413,7 +417,7 @@ func (r *Registry) Authorized(peerID peer.ID) (bool, error) {
 // the addresses and latest meta data of an already registered provider.
 func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, metaCid cid.Cid) error {
 	// Check that the provider has been discovered and validated
-	info := r.ProviderInfo(providerID)
+	info := r.ProviderInfo(providerID)[0]
 	if info != nil {
 		info = &ProviderInfo{
 			AddrInfo: peer.AddrInfo{

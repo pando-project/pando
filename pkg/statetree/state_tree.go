@@ -194,12 +194,6 @@ func (st *StateTree) CreateSnapShot(ctx context.Context, newRoot cid.Cid, update
 		height = uint64(0)
 		previousSs = ""
 	} else {
-		//oldSs := new(types.SnapShot)
-		//err := st.Store.Get(ctx, st.snapShot, oldSs)
-		//if err != nil {
-		//	return fmt.Errorf("failed to load the old snapshot root from datastore")
-		//}
-		//height = oldSs.Height + 1
 		height = st.height
 		previousSs = st.snapShot.String()
 	}
@@ -318,13 +312,7 @@ func (st *StateTree) GetProviderStateByPeerID(id peer.ID) (*statetreeTypes.Provi
 		return nil, NotFoundErr
 	} else {
 		res := new(statetreeTypes.ProviderStateRes)
-		lastUpdateHeight := state.LastCommitHeight
-		cidlist, err := st.GetSnapShotCidList()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get snapshot cidlist")
-		}
-		sscid := cidlist[lastUpdateHeight]
-		ss, err := st.GetSnapShot(sscid)
+		ss, err := st.GetSnapShotByHeight(state.LastCommitHeight)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get snapshot")
 		}

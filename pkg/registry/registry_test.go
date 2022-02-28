@@ -115,7 +115,7 @@ func TestRegisterAndDiscovery(t *testing.T) {
 			// reload the persisted info
 			r, err := registry.NewRegistry(ctx, &mock.MockDiscoveryCfg, &mock.MockAclCfg, pando.DS, diso)
 			So(err, ShouldBeNil)
-			info = r.ProviderInfo(peerID)
+			info = r.ProviderInfo(peerID)[0]
 			So(info, ShouldNotBeNil)
 
 		})
