@@ -8,6 +8,7 @@ import (
 type Provider interface {
 	ConnectPando(peerAddress string, peerID string) error
 	Close() error
+	GetLatestHead() (cid.Cid, error)
 	GetLatestSync() cid.Cid
-	Sync(nextCid cid.Cid, selector ipld.Node) error
+	Sync(nextCid cid.Cid, selector ipld.Node) (cid.Cid, error)
 }

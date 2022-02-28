@@ -3,10 +3,13 @@ package consumer
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	dt "github.com/filecoin-project/go-data-transfer/impl"
 	dtnetwork "github.com/filecoin-project/go-data-transfer/network"
 	gstransport "github.com/filecoin-project/go-data-transfer/transport/graphsync"
 	"github.com/filecoin-project/go-legs"
+	"github.com/go-resty/resty/v2"
 	"github.com/ipfs/go-cid"
 	datastoreSync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
@@ -16,12 +19,14 @@ import (
 	"github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/kenlabs/pando/pkg/api/types"
 	link "github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/sdk/pkg"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"net/url"
 	"time"
 )
 
@@ -37,6 +42,7 @@ type DAGConsumer struct {
 	Core           *core
 	Subscriber     *legs.Subscriber
 	PandoPeerInfo  *peer.AddrInfo
+	HttpClient     *resty.Client
 	ConnectTimeout time.Duration
 	SyncTimeout    time.Duration
 }
@@ -45,7 +51,7 @@ const SubscribeTopic = "/pando/v0.0.1"
 
 var logger = log.Logger("sdk-consumer-DAG")
 
-func NewDAGConsumer(privateKeyStr string, connectTimeout time.Duration, syncTimeout time.Duration) (*DAGConsumer, error) {
+func NewDAGConsumer(privateKeyStr string, pandoAPI string, connectTimeout time.Duration, syncTimeout time.Duration) (*DAGConsumer, error) {
 	privateKeyBytes, err := base64.StdEncoding.DecodeString(privateKeyStr)
 	if err != nil {
 		return nil, err
@@ -88,11 +94,18 @@ func NewDAGConsumer(privateKeyStr string, connectTimeout time.Duration, syncTime
 		legs.DtManager(dataManager),
 	)
 
+	_, err = url.Parse(pandoAPI)
+	if err != nil {
+		return nil, err
+	}
+	httpClient := resty.New().SetBaseURL(pandoAPI).SetTimeout(connectTimeout).SetDebug(false)
+
 	return &DAGConsumer{
 		Host:           consumerHost,
 		PrivateKey:     privateKey,
 		Core:           storageCore,
 		Subscriber:     subscriber,
+		HttpClient:     httpClient,
 		ConnectTimeout: connectTimeout,
 		SyncTimeout:    syncTimeout,
 	}, nil
@@ -113,6 +126,33 @@ func (c *DAGConsumer) ConnectPando(peerAddress string, peerID string) error {
 
 func (c *DAGConsumer) Close() error {
 	return c.Subscriber.Close()
+}
+
+func (c *DAGConsumer) GetLatestHead(providerID string) (cid.Cid, error) {
+
+	res, err := handleResError(c.HttpClient.R().Get("/pando/info?peerid=" + providerID))
+	resJson := types.ResponseJson{}
+	err = json.Unmarshal(res.Body(), &resJson)
+	if err != nil {
+		return cid.Undef, err
+	}
+
+	return cid.Undef, nil
+}
+
+func handleResError(res *resty.Response, err error) (*resty.Response, error) {
+	errTmpl := "failed to get latest head, error: %v"
+	if err != nil {
+		return res, err
+	}
+	if res.IsError() {
+		return res, fmt.Errorf(errTmpl, res.Error())
+	}
+	if res.StatusCode() != 200 {
+		return res, fmt.Errorf(errTmpl, fmt.Sprintf("expect 200, got %d", res.StatusCode()))
+	}
+
+	return res, nil
 }
 
 func (c *DAGConsumer) GetLatestSync() cid.Cid {
