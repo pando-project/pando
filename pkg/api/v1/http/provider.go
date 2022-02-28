@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/ipfs/go-cid"
+	"github.com/ipfs/go-datastore"
 	"github.com/kenlabs/pando/pkg/api/types"
 	"github.com/kenlabs/pando/pkg/api/v1"
+	"github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/pkg/metrics"
 	"github.com/kenlabs/pando/pkg/register"
 	"github.com/kenlabs/pando/pkg/registry"
@@ -20,6 +23,7 @@ func (a *API) registerProvider() {
 	{
 		provider.POST("/register", a.providerRegister)
 		provider.GET("/info", a.listProviderInfo)
+		provider.GET("/head", a.listProviderHead)
 	}
 }
 
@@ -99,30 +103,64 @@ func writeProviderInfo(ctx *gin.Context, info []*registry.ProviderInfo) {
 		}{MultiAddr: addrs, MinerAddr: provider.DiscoveryAddr}
 
 	}
-	ctx.JSON(http.StatusOK, types.NewOKResponse("find registerd provider successfully", res))
+	ctx.JSON(http.StatusOK, types.NewOKResponse("OK", res))
 }
 
 func (a *API) listProviderInfo(ctx *gin.Context) {
 	record := metrics.APITimer(context.Background(), metrics.GetRegisteredProviderInfoLatency)
 	defer record()
 
-	var peerid peer.ID
-	var err error
-	peeridStr := ctx.Query("height")
-	if peeridStr != "" {
-		peerid, err = peer.Decode(peeridStr)
-		if err != nil {
-			handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid peerid: %s", peeridStr))
-			return
-		}
+	peerid, err := decodePeerid(ctx)
+
+	if err != nil {
+		handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid peerid"))
+		return
+	} else {
 		info := a.core.Registry.ProviderInfo(peerid)
 		if info == nil {
-			handleError(ctx, http.StatusNotFound, fmt.Sprintf("not found registerd provider: %s ", peeridStr))
+			handleError(ctx, http.StatusNotFound, fmt.Sprintf("provider not found"))
 			return
 		}
-		writeProviderInfo(ctx, []*registry.ProviderInfo{info})
+		writeProviderInfo(ctx, info)
+	}
+}
+
+func (a *API) listProviderHead(ctx *gin.Context) {
+	record := metrics.APITimer(context.Background(), metrics.GetProviderHeadLatency)
+	defer record()
+
+	failError := "failed to retrieve the head of the provider, err: %v"
+
+	peerid, err := decodePeerid(ctx)
+	if err != nil || peerid == "" {
+		handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid peerid"))
+		return
 	} else {
-		infos := a.core.Registry.AllProviderInfo()
-		writeProviderInfo(ctx, infos)
+		res := struct {
+			Cid string
+		}{}
+		cidBytes, err := a.core.StoreInstance.DataStore.Get(ctx, datastore.NewKey(legs.SyncPrefix+peerid.String()))
+		if err != nil && err != datastore.ErrNotFound {
+			logger.Errorf(failError, err)
+			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
+			return
+		}
+		_, providerCid, err := cid.CidFromBytes(cidBytes)
+		if err != nil {
+			logger.Errorf(failError, err)
+			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
+			return
+		}
+		res.Cid = providerCid.String()
+		ctx.JSON(http.StatusOK, types.NewOKResponse("OK", res))
+	}
+}
+
+func decodePeerid(ctx *gin.Context) (peer.ID, error) {
+	peeridStr := ctx.Query("peerid")
+	if peeridStr == "" {
+		return "", nil
+	} else {
+		return peer.Decode(peeridStr)
 	}
 }
