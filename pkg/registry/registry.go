@@ -202,6 +202,17 @@ func (r *Registry) Register(ctx context.Context, info *ProviderInfo) error {
 		return err
 	}
 
+	if infos := r.UnregProviderInfo(info.AddrInfo.ID); infos != nil {
+		r.actions <- func() {
+			errCh <- r.syncDeleteProvider(ctx, info, false)
+		}
+		err = <-errCh
+		if err != nil {
+			return err
+		}
+		log.Infow("delete unregister provider info", "id", info.AddrInfo.ID)
+	}
+
 	log.Infow("registered provider", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
 
 	return nil
@@ -358,6 +369,36 @@ func (r *Registry) syncPersistProvider(ctx context.Context, info *ProviderInfo, 
 	}
 	if err = r.dstore.Sync(ctx, dsKey); err != nil {
 		return fmt.Errorf("cannot sync provider info: %s", err)
+	}
+	return nil
+}
+
+func (r *Registry) syncDeleteProvider(ctx context.Context, info *ProviderInfo, isReg bool) error {
+	if r.dstore == nil {
+		return fmt.Errorf("nil datastore")
+	}
+	var key datastore.Key
+	if isReg {
+		pinfo, found := r.providers[info.AddrInfo.ID]
+		if !found {
+			return fmt.Errorf("provider: %s not exist", info.AddrInfo.ID.String())
+		}
+		key = pinfo.dsKey()
+		delete(r.providers, info.AddrInfo.ID)
+	} else {
+		pinfo, found := r.unregProviders[info.AddrInfo.ID]
+		if !found {
+			return fmt.Errorf("unregister provider: %s not exist", info.AddrInfo.ID.String())
+		}
+		key = pinfo.dsUnregKey()
+		delete(r.unregProviders, info.AddrInfo.ID)
+	}
+
+	if err := r.dstore.Delete(ctx, key); err != nil {
+		return err
+	}
+	if err := r.dstore.Sync(ctx, key); err != nil {
+		return fmt.Errorf("cannot sync to delete provider info: %s", err)
 	}
 	return nil
 }
