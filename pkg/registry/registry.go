@@ -230,6 +230,17 @@ func (r *Registry) IsRegistered(providerID peer.ID) bool {
 	return found
 }
 
+func (r *Registry) InUnregister(providerID peer.ID) bool {
+	done := make(chan struct{})
+	var found bool
+	r.actions <- func() {
+		_, found = r.unregProviders[providerID]
+		close(done)
+	}
+	<-done
+	return found
+}
+
 // IsTrusted checks if the provider is in the white list
 func (r *Registry) IsTrusted(providerID peer.ID) bool {
 	return r.policy.Trusted(providerID)

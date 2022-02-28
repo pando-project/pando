@@ -62,7 +62,7 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) 
 				}
 				if reg != nil {
 					go func(p peer.ID) {
-						if reg.IsRegistered(p) {
+						if reg.IsRegistered(p) || reg.InUnregister(p) {
 							return
 						}
 						err = reg.SaveUnregisteredProvider(lctx.Ctx, p)
