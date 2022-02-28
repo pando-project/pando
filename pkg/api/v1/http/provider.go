@@ -79,6 +79,8 @@ func (a *API) providerRegister(ctx *gin.Context) {
 		return
 	}
 
+	logger.Debugf("pando register success: %s", providerInfo.AddrInfo.ID)
+
 	ctx.JSON(http.StatusOK, types.NewOKResponse("register success", nil))
 }
 
