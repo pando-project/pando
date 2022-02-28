@@ -19,13 +19,13 @@ import (
 	"github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/kenlabs/pando/pkg/api/types"
 	link "github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/sdk/pkg"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"net/http"
 	"net/url"
 	"time"
 )
@@ -128,16 +128,32 @@ func (c *DAGConsumer) Close() error {
 	return c.Subscriber.Close()
 }
 
-func (c *DAGConsumer) GetLatestHead(providerID string) (cid.Cid, error) {
+type ResponseJson struct {
+	Code    int                  `json:"code"`
+	Message string               `json:"message"`
+	Data    struct{ Cid string } `json:"Data"`
+}
 
-	res, err := handleResError(c.HttpClient.R().Get("/pando/info?peerid=" + providerID))
-	resJson := types.ResponseJson{}
+func (c *DAGConsumer) GetLatestHead(providerPeerID string) (cid.Cid, error) {
+	res, err := handleResError(c.HttpClient.R().Get("/provider/head?peerid=" + providerPeerID))
+	if err != nil {
+		return cid.Undef, err
+	}
+	resJson := ResponseJson{}
 	err = json.Unmarshal(res.Body(), &resJson)
 	if err != nil {
 		return cid.Undef, err
 	}
+	if resJson.Code != http.StatusOK {
+		return cid.Undef, fmt.Errorf("error msg: %s", resJson.Message)
+	}
 
-	return cid.Undef, nil
+	nextCid, err := cid.Decode(resJson.Data.Cid)
+	if err != nil {
+		return cid.Undef, err
+	}
+
+	return nextCid, nil
 }
 
 func handleResError(res *resty.Response, err error) (*resty.Response, error) {
@@ -148,7 +164,7 @@ func handleResError(res *resty.Response, err error) (*resty.Response, error) {
 	if res.IsError() {
 		return res, fmt.Errorf(errTmpl, res.Error())
 	}
-	if res.StatusCode() != 200 {
+	if res.StatusCode() != http.StatusOK {
 		return res, fmt.Errorf(errTmpl, fmt.Sprintf("expect 200, got %d", res.StatusCode()))
 	}
 
