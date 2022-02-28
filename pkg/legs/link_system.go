@@ -52,6 +52,7 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core) ipld.LinkSystem {
 				if err != nil {
 					return err
 				}
+				log.Debugf("data: %s", string(origBuf))
 				block, err := blocks.NewBlockWithCid(origBuf, c)
 				if err != nil {
 					return err
