@@ -256,7 +256,48 @@ func (r *Registry) ProviderInfo(providerID peer.ID) []*ProviderInfo {
 		close(infoChan)
 	}
 
-	return []*ProviderInfo{<-infoChan}
+	info := <-infoChan
+	if info == nil {
+		return nil
+	}
+
+	return []*ProviderInfo{info}
+}
+
+func (r *Registry) UnregProviderInfo(providerID peer.ID) []*ProviderInfo {
+	if providerID == "" {
+		return r.AllUnregProviderInfo()
+	}
+	infoChan := make(chan *ProviderInfo)
+	r.actions <- func() {
+		info, ok := r.unregProviders[providerID]
+		if ok {
+			infoChan <- info
+		}
+		close(infoChan)
+	}
+	info := <-infoChan
+	if info == nil {
+		return nil
+	}
+
+	return []*ProviderInfo{info}
+}
+
+func (r *Registry) AllUnregProviderInfo() []*ProviderInfo {
+	var infos []*ProviderInfo
+	done := make(chan struct{})
+	r.actions <- func() {
+		infos = make([]*ProviderInfo, len(r.unregProviders))
+		var i int
+		for _, info := range r.unregProviders {
+			infos[i] = info
+			i++
+		}
+		close(done)
+	}
+	<-done
+	return infos
 }
 
 // AllProviderInfo returns information for all registered providers
@@ -417,15 +458,16 @@ func (r *Registry) Authorized(peerID peer.ID) (bool, error) {
 // the addresses and latest meta data of an already registered provider.
 func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, metaCid cid.Cid) error {
 	// Check that the provider has been discovered and validated
-	info := r.ProviderInfo(providerID)[0]
-	if info != nil {
+	infos := r.ProviderInfo(providerID)
+	var info *ProviderInfo
+	if infos != nil {
 		info = &ProviderInfo{
 			AddrInfo: peer.AddrInfo{
 				ID:    providerID,
-				Addrs: info.AddrInfo.Addrs,
+				Addrs: infos[0].AddrInfo.Addrs,
 			},
-			DiscoveryAddr:  info.DiscoveryAddr,
-			LastBackupMeta: info.LastBackupMeta,
+			DiscoveryAddr:  infos[0].DiscoveryAddr,
+			LastBackupMeta: infos[0].LastBackupMeta,
 		}
 	} else {
 		info = &ProviderInfo{
