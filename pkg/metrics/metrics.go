@@ -29,6 +29,9 @@ var (
 	GetRegisteredProviderInfoLatency = stats.Float64("get/provider/registered_info_latency",
 		"Time to respond to get registered provider(s) info", stats.UnitMilliseconds)
 
+	GetProviderHeadLatency = stats.Float64("get/provider/provider_head_latency",
+		"Time to respond to get provider's head", stats.UnitMilliseconds)
+
 	// metadata handlers
 	GetMetadataListLatency = stats.Float64("get/metadata/list_latency",
 		"Time to fetch metadata snapshots", stats.UnitMilliseconds)
@@ -45,6 +48,7 @@ var (
 	bounds       = []float64{0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 1000, 2000, 5000}
 	builtinViews = []*view.View{
 		{Measure: PostProviderRegisterLatency, Aggregation: view.Distribution(bounds...)},
+		{Measure: GetProviderHeadLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetRegisteredProviderInfoLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetPandoSubscribeLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetMetadataListLatency, Aggregation: view.Distribution(bounds...)},

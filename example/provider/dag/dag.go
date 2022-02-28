@@ -13,8 +13,8 @@ import (
 
 const (
 	privateKeyStr = "CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w="
-	pandoAddr     = "/ip4/127.0.0.1/tcp/8003"
-	pandoPeerID   = "12D3KooWKw5hu5QcbbFuokt3NrYe7gak5kKHzt8h1FJNqByHQ157"
+	pandoAddr     = "/ip4/127.0.0.1/tcp/9002"
+	pandoPeerID   = "12D3KooWQKBbF3UkqzmJhh14u8FzZzFJMLCd5SjYbeM8Gk8HTrjz"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 	}
 
 	fmt.Println("pushing data to Pando...")
-	metadata1, err := provider.NewMetadata([]byte("doge"))
+	metadata1, err := provider.NewMetadata([]byte("doge13234"))
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +44,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	metadata2, err := provider.AppendMetadata(metadata1, []byte("kitty"))
+	metadata2, err := provider.AppendMetadata(metadata1, []byte("kitty13234"))
 	if err != nil {
 		panic(err)
 	}
@@ -57,7 +57,7 @@ func main() {
 	//time.Sleep(20 * time.Second)
 
 	// test for redundant push
-	_, _ = provider.Push(metadata1)
+	//_, _ = provider.Push(metadata1)
 
 	fmt.Println("press ctrl+c to exit.")
 

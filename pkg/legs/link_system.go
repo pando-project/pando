@@ -50,7 +50,6 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core) ipld.LinkSystem {
 				log.Infow("Received metadata")
 				_, peerid, err := verifyMetadata(n)
 				if err != nil {
-
 					return err
 				}
 				block, err := blocks.NewBlockWithCid(origBuf, c)
