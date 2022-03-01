@@ -56,7 +56,7 @@ func main() {
 	//time.Sleep(20 * time.Second)
 
 	// test for redundant push
-	_, _ = provider.Push(metadata1)
+	//_, _ = provider.Push(metadata1)
 
 	fmt.Println("press ctrl+c to exit.")
 

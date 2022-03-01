@@ -13,7 +13,7 @@ require (
 	github.com/filecoin-project/go-cbor-util v0.0.1 // indirect
 	github.com/filecoin-project/go-data-transfer v1.14.0
 	github.com/filecoin-project/go-indexer-core v0.2.7
-	github.com/filecoin-project/go-legs v0.3.1
+	github.com/filecoin-project/go-legs v0.3.7
 	github.com/filecoin-project/go-state-types v0.1.1-0.20210915140513-d354ccf10379
 	github.com/filecoin-project/go-statemachine v1.0.1 // indirect
 	github.com/filecoin-project/specs-actors v0.9.14 // indirect
@@ -64,7 +64,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli/v2 v2.3.0 // indirect
 	github.com/warpfork/go-testmark v0.9.0 // indirect
-	github.com/whyrusleeping/cbor-gen v0.0.0-20211110122933-f57984553008
+	github.com/whyrusleeping/cbor-gen v0.0.0-20220224212727-7a699437a831
 	go.opencensus.io v0.23.0
 	go.uber.org/goleak v1.1.11 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c

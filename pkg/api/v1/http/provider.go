@@ -79,6 +79,8 @@ func (a *API) providerRegister(ctx *gin.Context) {
 		return
 	}
 
+	logger.Debugf("pando register success: %s", providerInfo.AddrInfo.ID)
+
 	ctx.JSON(http.StatusOK, types.NewOKResponse("register success", nil))
 }
 
@@ -87,10 +89,12 @@ type providerInfoRes map[string]struct {
 	MinerAddr string
 }
 
-func writeProviderInfo(ctx *gin.Context, info []*registry.ProviderInfo) {
+func writeProviderInfo(ctx *gin.Context, info []*registry.ProviderInfo, unRegInfo []*registry.ProviderInfo) {
 	res := make(map[string]providerInfoRes)
 	res["registeredProviders"] = make(providerInfoRes)
+	res["unregisteredProviders"] = make(providerInfoRes)
 	provInfos := res["registeredProviders"]
+	unprovInfos := res["unregisteredProviders"]
 	for _, provider := range info {
 		peeridStr := provider.AddrInfo.ID.String()
 		addrs := make([]string, 0)
@@ -101,7 +105,17 @@ func writeProviderInfo(ctx *gin.Context, info []*registry.ProviderInfo) {
 			MultiAddr []string
 			MinerAddr string
 		}{MultiAddr: addrs, MinerAddr: provider.DiscoveryAddr}
-
+	}
+	for _, provider := range unRegInfo {
+		peeridStr := provider.AddrInfo.ID.String()
+		addrs := make([]string, 0)
+		for _, addr := range provider.AddrInfo.Addrs {
+			addrs = append(addrs, addr.String())
+		}
+		unprovInfos[peeridStr] = struct {
+			MultiAddr []string
+			MinerAddr string
+		}{MultiAddr: addrs, MinerAddr: provider.DiscoveryAddr}
 	}
 	ctx.JSON(http.StatusOK, types.NewOKResponse("OK", res))
 }
@@ -117,11 +131,12 @@ func (a *API) listProviderInfo(ctx *gin.Context) {
 		return
 	} else {
 		info := a.core.Registry.ProviderInfo(peerid)
-		if info == nil {
+		unregInfo := a.core.Registry.UnregProviderInfo(peerid)
+		if info == nil && unregInfo == nil {
 			handleError(ctx, http.StatusNotFound, fmt.Sprintf("provider not found"))
 			return
 		}
-		writeProviderInfo(ctx, info)
+		writeProviderInfo(ctx, info, unregInfo)
 	}
 }
 

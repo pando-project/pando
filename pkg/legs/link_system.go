@@ -12,12 +12,13 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/multicodec"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/kenlabs/pando/pkg/types/schema"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"io"
 )
 
-func MkLinkSystem(bs blockstore.Blockstore, core *Core) ipld.LinkSystem {
+func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) ipld.LinkSystem {
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.TrustedStorage = true
 	lsys.StorageReadOpener = func(lnkCtx ipld.LinkContext, lnk ipld.Link) (io.Reader, error) {
@@ -52,12 +53,25 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core) ipld.LinkSystem {
 				if err != nil {
 					return err
 				}
+				log.Debugf("data: %s", string(origBuf))
 				block, err := blocks.NewBlockWithCid(origBuf, c)
 				if err != nil {
 					return err
 				}
 				if core != nil {
 					go core.SendRecvMeta(c, peerid)
+				}
+				if reg != nil {
+					go func(p peer.ID) {
+						if reg.IsRegistered(p) || reg.InUnregister(p) {
+							return
+						}
+						err = reg.SaveUnregisteredProvider(lctx.Ctx, p)
+						if err != nil {
+							log.Errorf("failed to save unregister provider: %s, err: %s",
+								p.String(), err.Error())
+						}
+					}(peerid)
 				}
 				return bs.Put(lctx.Ctx, block)
 			}
