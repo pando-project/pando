@@ -42,7 +42,7 @@ func Store(bs blockstore.Blockstore, n ipld.Node) (ipld.Link, error) {
 			MhLength: 16,
 		},
 	}
-	lsys := legs.MkLinkSystem(bs, nil)
+	lsys := legs.MkLinkSystem(bs, nil, nil)
 
 	return lsys.Store(ipld.LinkContext{}, linkproto, n)
 }
@@ -89,7 +89,7 @@ func main() {
 	fmt.Println("p2pHost addr:", h.Addrs())
 	fmt.Println("p2pHost id:", h.ID())
 	bs := blockstore.NewBlockstore(srcStore)
-	srcLnkS := legs.MkLinkSystem(bs, nil)
+	srcLnkS := legs.MkLinkSystem(bs, nil, nil)
 	ma, err := multiaddr.NewMultiaddr(PandoAddrStr + "/ipfs/" + PandoPeerID)
 	if err != nil {
 		log.Fatal(err)

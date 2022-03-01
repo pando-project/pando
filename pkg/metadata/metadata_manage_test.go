@@ -18,7 +18,7 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 		So(err, ShouldBeNil)
 		err = logging.SetLogLevel("meta-manager", "debug")
 		So(err, ShouldBeNil)
-		lys := legs.MkLinkSystem(pando.BS, nil)
+		lys := legs.MkLinkSystem(pando.BS, nil, nil)
 
 		Convey("give records when wait for maxInterval then update and backup", func() {
 			//BackupMaxInterval = time.Second * 3

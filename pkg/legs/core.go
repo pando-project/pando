@@ -95,7 +95,7 @@ func NewLegsCore(ctx context.Context,
 }
 
 func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, bs blockstore.Blockstore, reg *registry.Registry) (*golegs.Subscriber, graphsync.GraphExchange, error) {
-	lnkSys := MkLinkSystem(bs, c)
+	lnkSys := MkLinkSystem(bs, c, reg)
 	gsNet := gsnet.NewFromLibp2pHost(h)
 	dtNet := dtnetwork.NewFromLibp2pHost(h)
 	gs := gsimpl.New(context.Background(), gsNet, lnkSys)
