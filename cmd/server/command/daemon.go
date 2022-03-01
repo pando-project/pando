@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/dgraph-io/badger/v3"
+	"github.com/ipfs/go-cid"
 	mutexDataStoreFactory "github.com/ipfs/go-datastore/sync"
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
 	blockStoreFactory "github.com/ipfs/go-ipfs-blockstore"
@@ -86,7 +87,21 @@ func DaemonCmd() *cobra.Command {
 						continue
 					}
 					maddrs := p2pHost.Peerstore().Addrs(info[0].AddrInfo.ID)
-					log.Debugf("dealbot maddrs: %#v", maddrs)
+					for _, maddr := range maddrs {
+						log.Debugf("dealbot maddrs: %s", maddr.String())
+						syncedCid, err := c.LegsCore.LS.Sync(
+							context.Background(),
+							info[0].AddrInfo.ID,
+							cid.Undef,
+							nil,
+							maddr,
+						)
+						if err != nil {
+							log.Debugf("sync from dealbot failed(maddr: %s), error: %v", maddr, err)
+							continue
+						}
+						log.Debugf("sync from dealbot success, cid: %s", syncedCid.String())
+					}
 				}
 			}()
 
