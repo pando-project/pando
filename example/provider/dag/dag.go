@@ -14,7 +14,7 @@ import (
 const (
 	privateKeyStr = "CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w="
 	pandoAddr     = "/ip4/127.0.0.1/tcp/9002"
-	pandoPeerID   = "12D3KooWQKBbF3UkqzmJhh14u8FzZzFJMLCd5SjYbeM8Gk8HTrjz"
+	pandoPeerID   = "12D3KooWCu7ctsrHHQJkQkPykw3vnvJnoUtYn4NJtR8JtKmHK3K6"
 )
 
 func main() {
