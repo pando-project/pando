@@ -6,6 +6,7 @@ import (
 )
 
 func Test_TestInternetSpeed(t *testing.T) {
+	t.SkipNow()
 	Convey("Test TestInternetSpeed", t, func() {
 		downloadSpeed, err := TestInternetSpeed(true)
 		if err != nil {
