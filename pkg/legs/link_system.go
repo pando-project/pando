@@ -53,7 +53,12 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) 
 				if err != nil {
 					return err
 				}
-				log.Debugf("data: %s", string(origBuf))
+				metadataProvider, _ := n.LookupByString("Provider")
+				metadataProviderStr, _ := metadataProvider.AsString()
+				metadataPayload, _ := n.LookupByString("Payload")
+				metadataPayloadBytes, _ := metadataPayload.AsBytes()
+				log.Debugf("metadata:\n\tProvider: %v\n\tPayload: %v\n",
+					metadataProviderStr, string(metadataPayloadBytes))
 				block, err := blocks.NewBlockWithCid(origBuf, c)
 				if err != nil {
 					return err
@@ -105,7 +110,8 @@ func decodeIPLDNode(codec uint64, r io.Reader) (ipld.Node, error) {
 func isMetadata(n ipld.Node) bool {
 	signature, _ := n.LookupByString("Signature")
 	provider, _ := n.LookupByString("Provider")
-	return signature != nil && provider != nil
+	payload, _ := n.LookupByString("Payload")
+	return signature != nil && provider != nil && payload != nil
 }
 
 func decodeMeta(n ipld.Node) (schema.Metadata, error) {
