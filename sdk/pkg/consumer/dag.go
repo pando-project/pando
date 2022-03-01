@@ -17,6 +17,7 @@ import (
 	gsnet "github.com/ipfs/go-graphsync/network"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipfs/go-log/v2"
+	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	link "github.com/kenlabs/pando/pkg/legs"
@@ -188,4 +189,29 @@ func (c *DAGConsumer) Sync(nextCid cid.Cid, selector ipld.Node) (cid.Cid, error)
 	defer syncCancel()
 
 	return c.Subscriber.Sync(ctx, c.PandoPeerInfo.ID, nextCid, selector, nil)
+}
+
+func (c *DAGConsumer) Start(pandoAddr string, pandoPeerID string, providerPeerID string) error {
+	logging.SetAllLoggers(logging.LevelDebug)
+	err := logging.SetLogLevel("addrutil", "warn")
+	if err != nil {
+		return err
+	}
+
+	err = c.ConnectPando(pandoAddr, pandoPeerID)
+	if err != nil {
+		return err
+	}
+	headCid, err := c.GetLatestHead(providerPeerID)
+	if err != nil {
+		return err
+	}
+	latestSyncCid, err := c.Sync(headCid, nil)
+	fmt.Println("cid: ", latestSyncCid)
+	if err != nil {
+		return err
+	}
+	fmt.Println("sync succeed")
+
+	return nil
 }

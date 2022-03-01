@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	logging "github.com/ipfs/go-log/v2"
 	peerHelper "github.com/kenlabs/pando/pkg/util/peer"
 	consumerSdk "github.com/kenlabs/pando/sdk/pkg/consumer"
 	"time"
@@ -32,30 +30,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	logging.SetAllLoggers(logging.LevelDebug)
-	err = logging.SetLogLevel("addrutil", "warn")
-	if err != nil {
-		panic(err)
-	}
-	err = consumer.ConnectPando(pandoAddr, pandoPeerID)
-	if err != nil {
-		panic(err)
-	}
-	headCid, err := consumer.GetLatestHead(providerPeerID)
-	if err != nil {
-		panic(err)
-	}
-	latestSyncCid, err := consumer.Sync(headCid, nil)
-	fmt.Println("cid: ", latestSyncCid)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("sync succeed")
 
-	block, err := consumer.Core.Blockstore.Get(context.Background(), latestSyncCid)
+	err = consumer.Start(pandoAddr, pandoPeerID, providerPeerID)
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Printf("%v", block.RawData())
 }
