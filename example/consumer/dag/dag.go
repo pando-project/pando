@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	logging "github.com/ipfs/go-log/v2"
 	peerHelper "github.com/kenlabs/pando/pkg/util/peer"
 	consumerSdk "github.com/kenlabs/pando/sdk/pkg/consumer"
 	"time"
@@ -28,6 +29,14 @@ func main() {
 	fmt.Printf("consumer peerID: %v\n", peerID.String())
 
 	consumer, err := consumerSdk.NewDAGConsumer(privateKeyStr, "http://127.0.0.1:9000", connectTimeout, syncTimeout)
+	if err != nil {
+		panic(err)
+	}
+	logging.SetAllLoggers(logging.LevelDebug)
+	err = logging.SetLogLevel("addrutil", "warn")
+	if err != nil {
+		panic(err)
+	}
 	err = consumer.ConnectPando(pandoAddr, pandoPeerID)
 	if err != nil {
 		panic(err)

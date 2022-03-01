@@ -70,7 +70,7 @@ func NewDAGConsumer(privateKeyStr string, pandoAPI string, connectTimeout time.D
 	datastore, err := leveldb.NewDatastore("", nil)
 	storageCore.MutexDatastore = datastoreSync.MutexWrap(datastore)
 	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
-	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore, nil)
+	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore, nil, nil)
 
 	graphSyncNet := gsnet.NewFromLibp2pHost(consumerHost)
 	dataTransferNet := dtnetwork.NewFromLibp2pHost(consumerHost)
@@ -87,12 +87,15 @@ func NewDAGConsumer(privateKeyStr string, pandoAPI string, connectTimeout time.D
 	}
 
 	subscriber, err := legs.NewSubscriber(consumerHost,
-		storageCore.MutexDatastore,
+		nil,
 		storageCore.LinkSys,
 		SubscribeTopic,
 		nil,
-		legs.DtManager(dataManager),
+		legs.DtManager(dataManager, graphExchange),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	_, err = url.Parse(pandoAPI)
 	if err != nil {
