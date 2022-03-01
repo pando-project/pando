@@ -40,15 +40,12 @@ func TestGetMetaRecord(t *testing.T) {
 		ctx, cncl := context.WithTimeout(context.Background(), time.Second*10)
 		p, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
-		core := p.Core
 		outCh, err := p.GetMetaRecordCh()
 		So(err, ShouldBeNil)
 		provider, err := mock.NewMockProvider(p)
 		So(err, ShouldBeNil)
-		//err = core.Subscribe(context.Background(), provider.ID)
 		So(err, ShouldBeNil)
 		time.Sleep(time.Second * 2)
-		//cidlist, err := provider.SendDag()
 		cid, err := provider.SendMeta(true)
 		So(err, ShouldBeNil)
 		select {
@@ -64,22 +61,10 @@ func TestGetMetaRecord(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		core_, err := legs.NewLegsCore(ctx, p.Host, p.DS, p.CS, p.BS, nil, time.Minute, nil, p.Registry, opt)
+		_, err = legs.NewLegsCore(ctx, p.Host, p.DS, p.CS, p.BS, nil, time.Minute, nil, p.Registry, opt)
 		So(err, ShouldBeNil)
 
-		t.Cleanup(func() {
-			cncl()
-			if err := provider.Close(); err != nil {
-				t.Error(err)
-			}
-			if err := core.Close(); err != nil {
-				t.Error(err)
-			}
-			if err := core_.Close(); err != nil {
-				t.Error(err)
-			}
-
-		})
+		t.Cleanup(cncl)
 	})
 }
 
