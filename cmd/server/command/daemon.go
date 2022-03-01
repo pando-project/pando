@@ -73,7 +73,7 @@ func DaemonCmd() *cobra.Command {
 
 			// todo: test log for dealbot integration
 			go func() {
-				peerID, err := peer.Decode("12D3KooWMm4sgwMsbzdGnLNhQv4dgMvqyp2JAAPHJHtRWVvjG8rn")
+				peerID, err := peer.Decode("12D3KooWNnK4gnNKmh6JUzRb34RqNcBahN5B8v18DsMxQ8mCqw81")
 				if err != nil {
 					log.Errorf("wrong dealbot peerid: %s", err.Error())
 					return
