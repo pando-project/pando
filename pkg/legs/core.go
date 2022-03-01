@@ -111,8 +111,8 @@ func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, 
 	}
 	// todo
 	//defer dtManager.Stop(ctx)
-	ls, err := golegs.NewSubscriber(h, ds, lnkSys, PubSubTopic, nil,
-		golegs.AllowPeer(reg.Authorized), golegs.DtManager(dtManager))
+	ls, err := golegs.NewSubscriber(h, nil, lnkSys, PubSubTopic, nil,
+		golegs.AllowPeer(reg.Authorized), golegs.DtManager(dtManager, gs))
 	if err != nil {
 		return nil, nil, err
 	}
