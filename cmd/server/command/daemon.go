@@ -73,21 +73,20 @@ func DaemonCmd() *cobra.Command {
 
 			// todo: test log for dealbot integration
 			go func() {
-				l := log.With("test-log")
 				peerID, err := peer.Decode("12D3KooWMm4sgwMsbzdGnLNhQv4dgMvqyp2JAAPHJHtRWVvjG8rn")
 				if err != nil {
-					l.Errorf("wrong dealbot peerid: %s", err.Error())
+					log.Errorf("wrong dealbot peerid: %s", err.Error())
 					return
 				}
 				t := time.NewTicker(time.Minute)
 				for range t.C {
 					info := c.Registry.ProviderInfo(peerID)
 					if info == nil {
-						l.Debugf("dealbot not register")
+						log.Debugf("dealbot not register")
 						continue
 					}
 					maddrs := p2pHost.Peerstore().Addrs(info[0].AddrInfo.ID)
-					l.Debugf("dealbot maddrs: %#v", maddrs)
+					log.Debugf("dealbot maddrs: %#v", maddrs)
 				}
 			}()
 
