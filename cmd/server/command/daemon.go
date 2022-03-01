@@ -20,6 +20,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	libp2pHost "github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/spf13/cobra"
 	"math"
 	"os"
@@ -69,6 +70,26 @@ func DaemonCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf(failedError, err)
 			}
+
+			// todo: test log for dealbot integration
+			go func() {
+				l := log.With("test-log")
+				peerID, err := peer.Decode("12D3KooWMm4sgwMsbzdGnLNhQv4dgMvqyp2JAAPHJHtRWVvjG8rn")
+				if err != nil {
+					l.Errorf("wrong dealbot peerid: %s", err.Error())
+					return
+				}
+				t := time.NewTicker(time.Minute)
+				for range t.C {
+					info := c.Registry.ProviderInfo(peerID)
+					if info == nil {
+						l.Debugf("dealbot not register")
+						continue
+					}
+					maddrs := p2pHost.Peerstore().Addrs(info[0].AddrInfo.ID)
+					l.Debugf("dealbot maddrs: %#v", maddrs)
+				}
+			}()
 
 			server.MustStartAllServers()
 
