@@ -40,7 +40,6 @@ func TestGetMetaRecord(t *testing.T) {
 		ctx, cncl := context.WithTimeout(context.Background(), time.Second*10)
 		p, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
-		//core := p.Core
 		outCh, err := p.GetMetaRecordCh()
 		So(err, ShouldBeNil)
 		provider, err := mock.NewMockProvider(p)
@@ -66,7 +65,8 @@ func TestGetMetaRecord(t *testing.T) {
 		So(err, ShouldBeNil)
 		err = c.Close()
 		So(err, ShouldBeNil)
-
+		c, err = legs.NewLegsCore(ctx, p.Host, p.DS, p.CS, p.BS, nil, time.Minute, nil, p.Registry, opt)
+		So(err, ShouldBeNil)
 		t.Cleanup(func() {
 			cncl()
 		})
@@ -83,7 +83,7 @@ func TestRateLimiter(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		for i := 0; i < 1000; i++ {
-			_, err = provider.SendDag()
+			_, err = provider.SendMeta(true)
 			So(err, ShouldBeNil)
 		}
 

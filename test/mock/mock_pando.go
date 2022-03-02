@@ -71,6 +71,7 @@ func NewPandoMock() (*PandoMock, error) {
 
 	opt := option.New(nil)
 	_, err = opt.Parse()
+	opt.RateLimit.Enable = true
 	if err != nil {
 		return nil, err
 	}

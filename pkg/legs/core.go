@@ -40,8 +40,8 @@ type Core struct {
 	DS                datastore.Batching
 	CS                *badger.DB
 	BS                blockstore.Blockstore
-	GS                graphsync.GraphExchange
-	LS                *golegs.Subscriber
+	gs                graphsync.GraphExchange
+	ls                *golegs.Subscriber
 	cancelSyncFn      context.CancelFunc
 	recvMetaCh        chan<- *metadata.MetaRecord
 	backupGenInterval time.Duration
@@ -75,8 +75,8 @@ func NewLegsCore(ctx context.Context,
 	if err != nil {
 		return nil, fmt.Errorf("failed to create legs subscriber, err: %s", err.Error())
 	}
-	c.LS = ls
-	c.GS = gs
+	c.ls = ls
+	c.gs = gs
 
 	err = c.restoreLatestSync()
 	if err != nil {
@@ -130,7 +130,7 @@ func (c *Core) Close() error {
 	<-c.watchDone
 
 	// Close leg transport.
-	err := c.LS.Close()
+	err := c.ls.Close()
 	return err
 }
 
@@ -167,7 +167,7 @@ func (c *Core) restoreLatestSync() error {
 			continue
 		}
 
-		err = c.LS.SetLatestSync(peerID, lastCid)
+		err = c.ls.SetLatestSync(peerID, lastCid)
 		if err != nil {
 			log.Errorw("Failed to set latest sync", "err", err, "peer", peerID)
 			continue

@@ -28,10 +28,11 @@ func (r *Registry) getAccountLevel(balance *big.Int) (int, error) {
 }
 
 func (r *Registry) ProviderAccountLevel(provider peer.ID) (int, error) {
-	info := r.ProviderInfo(provider)[0]
-	if info == nil {
+	infos := r.ProviderInfo(provider)
+	if infos == nil {
 		return -1, fmt.Errorf("not register provider")
 	}
+	info := infos[0]
 	return info.AccountLevel, nil
 }
 
