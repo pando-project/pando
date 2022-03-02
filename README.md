@@ -42,7 +42,7 @@ which Pando subscribes.
 Pando accepts IPLD data from metadata providers with the following required IPLD children nodes:
 1. `Provider String` - provider's peer ID
 2. `Signature Bytes` - signature of the IPLD data: sign( bytes(PreviousID) . bytes(Payload) . bytes(Provider)) )
-3. `Payload`         - bytes of you serialized metadata 
+3. `Payload Bytes`   - bytes of your serialized metadata 
 
 and a nullable node:
 1. `PreviousID nullable Link_Metadata` - a non null PreviousID will enable a recursive sync by Pando service. With this node, a full sync of linked IPLD data will be guaranteed.
