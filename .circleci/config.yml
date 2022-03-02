@@ -21,8 +21,8 @@ jobs:
       - run:
           name: Test and Coverage
           command: |
-            TEST_TARGET=`go list ./... | grep -v pkg/statetree/types | grep -v example | grep -v test | grep -v cmd`
-            go test -gcflags=all=-l -coverpkg=./... -coverprofile=coverage.txt -covermode=atomic $TEST_TARGET
+            TEST_TARGET=`go list ./... | grep -v pkg/statetree/types | grep -v example | grep -v test`
+            go test -gcflags=all=-l -coverprofile=coverage.txt -covermode=atomic $TEST_TARGET
       - codecov/upload:
           file: coverage.txt
       - persist_to_workspace:
