@@ -14,7 +14,7 @@ import (
 const (
 	privateKeyStr = "CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w="
 	pandoAddr     = "/ip4/127.0.0.1/tcp/9002"
-	pandoPeerID   = "12D3KooWQKBbF3UkqzmJhh14u8FzZzFJMLCd5SjYbeM8Gk8HTrjz"
+	pandoPeerID   = "12D3KooWJjPMqp1eAN6DAvDXJQGivWBq85EqFP29VkteePBKgesa"
 )
 
 func main() {
@@ -24,7 +24,6 @@ func main() {
 	}
 	fmt.Printf("provider peerID: %v\n", peerID.String())
 
-	//dags := generateDAGs(1)
 	provider, err := pandoSdk.NewDAGProvider(privateKeyStr, 10*time.Second, 10*time.Minute)
 	if err != nil {
 		panic(err)
@@ -36,7 +35,7 @@ func main() {
 	}
 
 	fmt.Println("pushing data to Pando...")
-	metadata1, err := provider.NewMetadata([]byte("doge13234"))
+	metadata1, err := provider.NewMetadata([]byte("doge"))
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +43,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	metadata2, err := provider.AppendMetadata(metadata1, []byte("kitty13234"))
+	metadata2, err := provider.AppendMetadata(metadata1, []byte("kitty"))
 	if err != nil {
 		panic(err)
 	}

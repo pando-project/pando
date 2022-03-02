@@ -42,7 +42,7 @@ func (r *metaSignatureRecord) UnmarshalRecord(buf []byte) error {
 	return nil
 }
 
-// VerifyAdvertisement verifies that the advertisement has been signed and
+// VerifyMetadata verifies that the metadata has been signed and
 // generated correctly.  Returns the peer ID of the signer.
 func VerifyMetadata(meta Metadata) (peer.ID, error) {
 

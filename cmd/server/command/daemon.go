@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/dgraph-io/badger/v3"
+	"github.com/ipfs/go-cid"
 	mutexDataStoreFactory "github.com/ipfs/go-datastore/sync"
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
 	blockStoreFactory "github.com/ipfs/go-ipfs-blockstore"
@@ -20,6 +21,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	libp2pHost "github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/spf13/cobra"
 	"math"
 	"os"
@@ -69,6 +71,39 @@ func DaemonCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf(failedError, err)
 			}
+
+			// todo: test log for dealbot integration
+			go func() {
+				peerID, err := peer.Decode("12D3KooWNnK4gnNKmh6JUzRb34RqNcBahN5B8v18DsMxQ8mCqw81")
+				if err != nil {
+					log.Errorf("wrong dealbot peerid: %s", err.Error())
+					return
+				}
+				t := time.NewTicker(time.Minute)
+				for range t.C {
+					info := c.Registry.ProviderInfo(peerID)
+					if info == nil {
+						log.Debugf("dealbot not register")
+						continue
+					}
+					maddrs := p2pHost.Peerstore().Addrs(info[0].AddrInfo.ID)
+					for _, maddr := range maddrs {
+						log.Debugf("dealbot maddrs: %s", maddr.String())
+						syncedCid, err := c.LegsCore.LS.Sync(
+							context.Background(),
+							info[0].AddrInfo.ID,
+							cid.Undef,
+							nil,
+							maddr,
+						)
+						if err != nil {
+							log.Debugf("sync from dealbot failed(maddr: %s), error: %v", maddr, err)
+							continue
+						}
+						log.Debugf("sync from dealbot success, cid: %s", syncedCid.String())
+					}
+				}
+			}()
 
 			server.MustStartAllServers()
 
@@ -178,7 +213,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	var err error
 
 	c.StoreInstance = storeInstance
-	linkSystem := legs.MkLinkSystem(c.StoreInstance.BlockStore, nil)
+	linkSystem := legs.MkLinkSystem(c.StoreInstance.BlockStore, nil, nil)
 	c.LinkSystem = &linkSystem
 
 	var lotusDiscoverer *lotus.Discoverer

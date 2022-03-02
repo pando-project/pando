@@ -40,12 +40,13 @@ func TestGetMetaRecord(t *testing.T) {
 		ctx, cncl := context.WithTimeout(context.Background(), time.Second*10)
 		p, err := mock.NewPandoMock()
 		So(err, ShouldBeNil)
+		//core := p.Core
 		outCh, err := p.GetMetaRecordCh()
 		So(err, ShouldBeNil)
 		provider, err := mock.NewMockProvider(p)
 		So(err, ShouldBeNil)
 		So(err, ShouldBeNil)
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second * 5)
 		cid, err := provider.SendMeta(true)
 		So(err, ShouldBeNil)
 		select {
@@ -61,10 +62,14 @@ func TestGetMetaRecord(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		_, err = legs.NewLegsCore(ctx, p.Host, p.DS, p.CS, p.BS, nil, time.Minute, nil, p.Registry, opt)
+		c, err := legs.NewLegsCore(ctx, p.Host, p.DS, p.CS, p.BS, nil, time.Minute, nil, p.Registry, opt)
+		So(err, ShouldBeNil)
+		err = c.Close()
 		So(err, ShouldBeNil)
 
-		t.Cleanup(cncl)
+		t.Cleanup(func() {
+			cncl()
+		})
 	})
 }
 
@@ -147,7 +152,7 @@ func TestSyncDataFromPando(t *testing.T) {
 		ds := datastore.NewMapDatastore()
 		mds := sync.MutexWrap(ds)
 		bs := blockstore.NewBlockstore(mds)
-		lsys := legs.MkLinkSystem(bs, nil)
+		lsys := legs.MkLinkSystem(bs, nil, nil)
 		consumer, err := golegs.NewSubscriber(h, ds, lsys, mock.GetTopic(), nil)
 		So(err, ShouldBeNil)
 

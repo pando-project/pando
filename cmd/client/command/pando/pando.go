@@ -12,11 +12,10 @@ var joinAPIPath = api.JoinPathFuncFactory(groupPath)
 func NewPandoCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pando",
-		Short: "let Pando subscribe a topic to start synchronization, show information of Pando server",
+		Short: "show information of Pando server",
 	}
 
 	childCommands := []*cobra.Command{
-		//subscribeCmd(),
 		infoCmd(),
 		healthCmd(),
 	}
