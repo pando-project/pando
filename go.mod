@@ -65,6 +65,7 @@ require (
 	github.com/urfave/cli/v2 v2.3.0 // indirect
 	github.com/warpfork/go-testmark v0.9.0 // indirect
 	github.com/whyrusleeping/cbor-gen v0.0.0-20220224212727-7a699437a831
+	go.elastic.co/apm/module/apmhttp v1.15.0
 	go.opencensus.io v0.23.0
 	go.uber.org/goleak v1.1.11 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
