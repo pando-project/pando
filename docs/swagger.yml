@@ -155,7 +155,63 @@ paths:
             application/json:
               message: "internal server error: <error message>"
               data: {}
-  
+  /provider/info:
+    get:
+      tags:
+        - provider
+      summary: "Get Providers' PeerID, Multiaddress and Miner address"
+      description: ""
+      operationId: "getProviderInfo"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "query"
+          name: "peerid"
+          type: "string"
+          description: "get a specific provider's info with its peerid, if empty, return all providers' info"
+          required: false
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/APIResponse"
+          examples:
+            application/json:
+              message: "ok"
+              code: 200
+              data:
+                "registeredProviders":
+                  "12D3KooWMm4sgwMsbzdGnLNhQv4dgMvqyp2JAAPHJHtRWVvjG8rn":
+                    "MultiAddr": []
+                    "MinerAddr": []
+                "unregisteredProviders": {}
+  /provider/head:
+    get:
+      tags:
+        - provider
+      summary: "Get the head cid of a specific provider"
+      description: ""
+      operationId: "getProviderHead"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "query"
+          name: "peerid"
+          type: "string"
+          description: "Get the head cid of a specific provider"
+          required: true
+      responses:
+        "200":
+          description: "OK"
+          schema:
+            $ref: "#/definitions/APIResponse"
+          examples:
+            application/json:
+              message: "ok"
+              code: 200
+              data:
+                Cid: "baguqeeqqisoxg5itsdg5inuixczplgymd4"
+
   /metadata/list:
     get:
       tags:
