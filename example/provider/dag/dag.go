@@ -68,5 +68,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Bye!")
+	fmt.Println("Bye! ")
 }
