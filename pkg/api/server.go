@@ -3,13 +3,13 @@ package api
 import (
 	"context"
 	"fmt"
+	"go.elastic.co/apm/module/apmhttp"
 	"golang.org/x/sync/errgroup"
 	"net/http"
 	_ "net/http/pprof"
 	"time"
 
 	logging "github.com/ipfs/go-log/v2"
-
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/option"
 	"github.com/kenlabs/pando/pkg/util/multiaddress"
@@ -53,7 +53,7 @@ func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
 
 		HttpServer: &http.Server{
 			Addr:    httpListenAddress,
-			Handler: NewHttpRouter(core, opt),
+			Handler: apmhttp.Wrap(NewHttpRouter(core, opt)),
 		},
 		HttpListenAddr: httpListenAddress,
 

@@ -41,7 +41,8 @@ which Pando subscribes.
 #### Prerequisite
 Pando accepts IPLD data from metadata providers with the following required IPLD children nodes:
 1. `Provider String` - provider's peer ID
-2. `Signature Bytes` - signature of the whole IPLD data (excluding the signature node itself)
+2. `Signature Bytes` - signature of the IPLD data: sign( bytes(PreviousID) . bytes(Payload) . bytes(Provider)) )
+3. `Payload Bytes`   - bytes of your serialized metadata 
 
 and a nullable node:
 1. `PreviousID nullable Link_Metadata` - a non null PreviousID will enable a recursive sync by Pando service. With this node, a full sync of linked IPLD data will be guaranteed.
@@ -74,6 +75,8 @@ Check out [these examples](https://github.com/kenlabs/pando/tree/main/example) f
 ### As a Consumer
 To fetch metadata/snapshot status and content via GraphQL API, 
 [click here to get a try and dig more](https://pando-graphql.kencloud.com/).
+
+Check out [consumer examples](https://github.com/kenlabs/pando/tree/main/example/consumer/dag) on how to consume Pando data.
 
 ## Getting Started
 ### How Pando persists providers data
