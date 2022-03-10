@@ -35,15 +35,25 @@ func NewBackupSys(backupCfg *option.Backup) (*BackupSystem, error) {
 		toCheck:   make(chan uint64, 1),
 		backupCfg: backupCfg,
 	}
-	bs.run()
-
+	err := bs.run()
+	if err != nil {
+		return nil, err
+	}
 	return bs, nil
 }
 
-func (bs *BackupSystem) run() {
+func (bs *BackupSystem) run() error {
 	// if there is car file, back up it then delete file
+	backupInterval, err := time.ParseDuration(bs.backupCfg.BackupEstInterval)
+	if err != nil {
+		return err
+	}
+	checkInterval, err := time.ParseDuration(bs.backupCfg.EstCheckInterval)
+	if err != nil {
+		return err
+	}
 	go func() {
-		for range time.NewTicker(time.Second).C {
+		for range time.NewTicker(backupInterval).C {
 			files, err := ioutil.ReadDir(BackupTmpPath)
 			if err != nil {
 				log.Errorf("wrong back up dir path: %s", BackupTmpPath)
@@ -63,11 +73,12 @@ func (bs *BackupSystem) run() {
 		}
 	}()
 
-	go bs.checkDeal()
+	go bs.checkDeal(checkInterval)
 
+	return nil
 }
 
-func (bs *BackupSystem) checkDeal() {
+func (bs *BackupSystem) checkDeal(checkInterval time.Duration) {
 	waitCheckList := make([]uint64, 0)
 	mux := sync.Mutex{}
 	go func() {
@@ -78,7 +89,7 @@ func (bs *BackupSystem) checkDeal() {
 		}
 	}()
 
-	for range time.NewTicker(CheckInterval).C {
+	for range time.NewTicker(checkInterval).C {
 		for idx, checkId := range waitCheckList {
 			if len(waitCheckList) < idx+1 {
 				continue
