@@ -51,6 +51,7 @@ func TestBackUpFile(t *testing.T) {
 			ShuttleGateway:    metadata.DefaultShuttleGateway,
 			BackupGenInterval: time.Second.String(),
 			BackupEstInterval: time.Second.String(),
+			EstCheckInterval:  (time.Hour * 24).String(),
 			APIKey:            apiKey,
 		}
 		tmpDir := t.TempDir()
@@ -73,9 +74,12 @@ func TestCheckSuccess(t *testing.T) {
 		err := logging.SetLogLevel("meta-manager", "debug")
 		So(err, ShouldBeNil)
 		cfg := &option.Backup{
-			EstuaryGateway: metadata.DefaultEstGateway,
-			ShuttleGateway: metadata.DefaultShuttleGateway,
-			APIKey:         apiKey,
+			EstuaryGateway:    metadata.DefaultEstGateway,
+			ShuttleGateway:    metadata.DefaultShuttleGateway,
+			BackupGenInterval: time.Second.String(),
+			BackupEstInterval: time.Second.String(),
+			EstCheckInterval:  (time.Hour * 24).String(),
+			APIKey:            apiKey,
 		}
 		tmpDir := t.TempDir()
 		patch2 := gomonkey.ApplyGlobalVar(&metadata.BackupTmpPath, tmpDir)
