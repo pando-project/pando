@@ -3,7 +3,10 @@ package registry_test
 import (
 	"context"
 	"fmt"
+	"github.com/ipfs/go-cid"
+	"github.com/ipfs/go-datastore"
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/kenlabs/pando/pkg/lotus"
 	"github.com/kenlabs/pando/pkg/option"
 	"github.com/kenlabs/pando/pkg/registry"
@@ -121,4 +124,34 @@ func TestRegisterAndDiscovery(t *testing.T) {
 		})
 
 	})
+}
+
+func TestAutoRegister(t *testing.T) {
+	Convey("test register auto", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		//outCh, err := pando.GetMetaRecordCh()
+		provider, err := mock.NewMockProvider(pando)
+		So(err, ShouldBeNil)
+		time.Sleep(time.Millisecond * 500)
+		_, err = provider.SendDag()
+		So(err, ShouldBeNil)
+		time.Sleep(time.Millisecond * 500)
+		res := pando.Registry.ProviderInfo(provider.ID)
+		So(res, ShouldBeNil)
+		c, err := provider.SendMeta(true)
+		time.Sleep(time.Millisecond * 500)
+
+		res = pando.Registry.ProviderInfo(provider.ID)
+		So(res, ShouldNotBeNil)
+		So(res[0].AddrInfo.ID.String(), ShouldEqual, provider.ID.String())
+		lastSync, err := pando.Core.DS.Get(context.Background(), datastore.NewKey("/sync/"+res[0].AddrInfo.ID.String()))
+		So(err, ShouldBeNil)
+		_, lastSyncCid, err := cid.CidFromBytes(lastSync)
+		So(err, ShouldBeNil)
+		So(lastSyncCid.Equals(c), ShouldBeTrue)
+		lastSyncCidLs := pando.Core.LS.GetLatestSync(provider.ID).(cidlink.Link).Cid
+		So(lastSyncCidLs.Equals(c), ShouldBeTrue)
+	})
+
 }
