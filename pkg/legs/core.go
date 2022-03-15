@@ -42,6 +42,7 @@ type Core struct {
 	BS                blockstore.Blockstore
 	GS                graphsync.GraphExchange
 	LS                *golegs.Subscriber
+	reg               *registry.Registry
 	cancelSyncFn      context.CancelFunc
 	recvMetaCh        chan<- *metadata.MetaRecord
 	backupGenInterval time.Duration
@@ -64,6 +65,7 @@ func NewLegsCore(ctx context.Context,
 		DS:                ds,
 		CS:                cs,
 		BS:                bs,
+		reg:               reg,
 		recvMetaCh:        outMetaCh,
 		backupGenInterval: backupGenInterval,
 		rateLimiter:       rateLimiter,
@@ -191,6 +193,7 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 			// skip if data is not stored
 			continue
 		}
+
 		// Persist the latest sync
 		err := c.DS.Put(context.Background(), datastore.NewKey(SyncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
 		if err != nil {
