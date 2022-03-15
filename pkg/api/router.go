@@ -6,9 +6,23 @@ import (
 
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/api/middleware"
+	v1Admin "github.com/kenlabs/pando/pkg/api/v1/admin"
 	v1Graphql "github.com/kenlabs/pando/pkg/api/v1/graphql"
 	v1Http "github.com/kenlabs/pando/pkg/api/v1/http"
 )
+
+func NewAdminRouter(core *core.Core, opt *option.Options) *gin.Engine {
+	adminRouter := gin.New()
+	adminRouter.Use(middleware.WithLoggerFormatter())
+	adminRouter.Use(middleware.WithCorsAllowAllOrigin())
+	adminRouter.Use(gin.Recovery())
+	adminRouter.Use(middleware.WithAPIDoc())
+
+	v1AdminAPI := v1Admin.NewV1AdminAPI(adminRouter, core, opt)
+	v1AdminAPI.RegisterAPIs()
+
+	return adminRouter
+}
 
 func NewHttpRouter(core *core.Core, opt *option.Options) *gin.Engine {
 	httpRouter := gin.New()

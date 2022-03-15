@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"github.com/kenlabs/pando/cmd/client/command/admin"
 	"github.com/kenlabs/pando/cmd/client/command/metadata"
 	"github.com/kenlabs/pando/cmd/client/command/pando"
 	"github.com/kenlabs/pando/cmd/client/command/provider"
@@ -33,6 +34,7 @@ func NewRoot() *cobra.Command {
 		provider.NewProviderCmd(),
 		metadata.NewMetadataCmd(),
 		pando.NewPandoCmd(),
+		admin.NewAdminCmd(),
 	}
 	rootCmd.AddCommand(childCommands...)
 

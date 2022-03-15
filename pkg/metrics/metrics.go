@@ -17,6 +17,10 @@ import (
 
 // Measures
 var (
+	// admin handlers
+	GetBackupMetaLatency = stats.Float64("get/admin/backup_latency",
+		"Time to backup meta for provider", stats.UnitMilliseconds)
+
 	// pando handlers
 	GetPandoSubscribeLatency = stats.Float64("get/pando/subscribe_latency",
 		"Time to subscribe a provider", stats.UnitMilliseconds)
@@ -47,6 +51,7 @@ var (
 var (
 	bounds       = []float64{0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 1000, 2000, 5000}
 	builtinViews = []*view.View{
+		{Measure: GetBackupMetaLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: PostProviderRegisterLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetProviderHeadLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetRegisteredProviderInfoLatency, Aggregation: view.Distribution(bounds...)},
