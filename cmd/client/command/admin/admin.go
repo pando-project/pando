@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const groupPath = "/admin"
+const groupPath = "/"
 
 var joinAPIPath = api.JoinPathFuncFactory(groupPath)
 

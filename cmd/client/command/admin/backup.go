@@ -57,7 +57,7 @@ func backupCmd() *cobra.Command {
 func (bq *backupReq) setFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&bq.StartCid, "startcid", "s", "",
 		"the start cid for backup")
-	cmd.Flags().StringVarP(&bq.EndCid, "startcid", "e", "",
+	cmd.Flags().StringVarP(&bq.EndCid, "endcid", "e", "",
 		"the end cid for backup")
 	cmd.Flags().StringVarP(&bq.Provider, "backup-provider", "p", "",
 		"which provider the backup is for")

@@ -228,7 +228,7 @@ func (bs *BackupSystem) BackupToEstuary(filepath string) (uint64, error) {
 	}
 
 	bs.toCheck <- r.EstuaryId
-	log.Debugf("success back up %s to est, id : %d", filepath, r.EstuaryId)
+	log.Infof("back up %s to est successfully, estid : %d at time: %s", filepath, r.EstuaryId, time.Now().String())
 
 	return r.EstuaryId, nil
 }

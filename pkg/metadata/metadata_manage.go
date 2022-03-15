@@ -49,7 +49,19 @@ func init() {
 				log.Errorf("failed to create backup dir:%s , err:%s", backupTmpDir, err.Error())
 			}
 		} else {
-			log.Errorf("please input correct filepath, err : %s", err.Error())
+			log.Errorf("please set correct filepath, err : %s", err.Error())
+		}
+	}
+	forceBackupTmpDir := path.Join(backupTmpDir, "force")
+	_, err = os.Stat(forceBackupTmpDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.Mkdir(forceBackupTmpDir, os.ModePerm)
+			if err != nil {
+				log.Errorf("failed to create backup dir:%s , err:%s", forceBackupTmpDir, err.Error())
+			}
+		} else {
+			log.Errorf("please set correct filepath, err : %s", err.Error())
 		}
 	}
 	BackupTmpPath = backupTmpDir
@@ -202,6 +214,7 @@ func (mm *MetaManager) genCarForProviders(ctx context.Context) {
 						info.AddrInfo.ID.String(), err.Error())
 					continue
 				}
+				log.Infof("generate car file for backup successfully, filename: %s at time: %s", fname, time.Now().String())
 				err = mm.registry.RegisterOrUpdate(ctx, info.AddrInfo.ID, lastSyncCid)
 				if err != nil {
 					log.Errorf("failed to update provider info for backup cid, err:%s\n", err.Error())

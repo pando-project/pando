@@ -42,16 +42,16 @@ func (a *API) backupMeta(ctx *gin.Context) {
 		// the force dir will not be back up by Pando backupSys auto
 		if backInfo.isForce {
 			filePath = path.Join(metadata.BackupTmpPath, "force", fileName)
+			// clean tmp car file
+			defer func() {
+				err = os.Remove(filePath)
+				if err != nil {
+					logger.Errorf("failed to clean the car file, err: %v", err)
+				}
+			}()
 		} else {
 			filePath = path.Join(metadata.BackupTmpPath, fileName)
 		}
-		// clean tmp car file
-		defer func() {
-			err = os.Remove(filePath)
-			if err != nil {
-				logger.Errorf("failed to clean the car file, err: %v", err)
-			}
-		}()
 
 		err = a.core.MetaManager.ExportMetaCar(ctx, filePath, backInfo.End, backInfo.start)
 		if err != nil {
@@ -67,7 +67,7 @@ func (a *API) backupMeta(ctx *gin.Context) {
 				handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 				return
 			}
-			ctx.JSON(http.StatusOK, types.NewOKResponse("back up successfully! Estuary id: ", estId))
+			ctx.JSON(http.StatusOK, types.NewOKResponse(fmt.Sprintf("back up successfully! Estuary id: %d", estId), ""))
 			return
 		}
 
@@ -97,9 +97,13 @@ func decodeBackupInfo(ctx *gin.Context) (*backupInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	providerID, err := peer.Decode(provider)
-	if err != nil {
-		return nil, err
+
+	var providerID peer.ID
+	if provider != "" {
+		providerID, err = peer.Decode(provider)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var isForce bool
