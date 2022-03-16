@@ -56,7 +56,7 @@ func backupCmd() *cobra.Command {
 
 func (bq *backupReq) setFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&bq.StartCid, "startcid", "s", "",
-		"the start cid for backup")
+		"the start cid for backup(not included in the car file)")
 	cmd.Flags().StringVarP(&bq.EndCid, "endcid", "e", "",
 		"the end cid for backup")
 	cmd.Flags().StringVarP(&bq.Provider, "backup-provider", "p", "",
@@ -66,15 +66,20 @@ func (bq *backupReq) setFlags(cmd *cobra.Command) {
 }
 
 func (bq *backupReq) validateFlags() error {
-	if bq.StartCid == "" || bq.EndCid == "" {
-		return fmt.Errorf("start or end can not be empty")
+	if bq.EndCid == "" {
+		return fmt.Errorf("end cid can not be empty")
 	}
 
-	if _, err := cid.Decode(bq.StartCid); err != nil {
-		return fmt.Errorf("invalid cid: %v", err)
-	}
 	if _, err := cid.Decode(bq.EndCid); err != nil {
 		return fmt.Errorf("invalid cid: %v", err)
+	}
+
+	if bq.StartCid != "" {
+		if _, err := cid.Decode(bq.StartCid); err != nil {
+			return fmt.Errorf("invalid cid: %v", err)
+		}
+	} else {
+		bq.StartCid = bq.EndCid
 	}
 
 	return nil

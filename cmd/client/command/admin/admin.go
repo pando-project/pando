@@ -12,7 +12,7 @@ var joinAPIPath = api.JoinPathFuncFactory(groupPath)
 func NewAdminCmd() *cobra.Command {
 	adminCmd := &cobra.Command{
 		Use:   "admin",
-		Short: "admin the Pando",
+		Short: "Pando administration",
 	}
 
 	childCommands := []*cobra.Command{

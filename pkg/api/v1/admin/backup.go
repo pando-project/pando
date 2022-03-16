@@ -1,14 +1,12 @@
 package admin
 
 import (
-	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/ipfs/go-cid"
 	"github.com/kenlabs/pando/pkg/api/types"
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
 	"github.com/kenlabs/pando/pkg/metadata"
-	"github.com/kenlabs/pando/pkg/metrics"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"net/http"
 	"os"
@@ -24,9 +22,6 @@ func (a *API) registerBackup() {
 }
 
 func (a *API) backupMeta(ctx *gin.Context) {
-	record := metrics.APITimer(context.Background(), metrics.GetBackupMetaLatency)
-	defer record()
-
 	backInfo, err := decodeBackupInfo(ctx)
 	if err != nil || backInfo == nil {
 		handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid start/end cid for backup"))
@@ -46,7 +41,7 @@ func (a *API) backupMeta(ctx *gin.Context) {
 			defer func() {
 				err = os.Remove(filePath)
 				if err != nil {
-					logger.Errorf("failed to clean the car file, err: %v", err)
+					logger.Errorf("failed to clean the car file: %s, err: %v", filePath, err)
 				}
 			}()
 		} else {
@@ -55,7 +50,8 @@ func (a *API) backupMeta(ctx *gin.Context) {
 
 		err = a.core.MetaManager.ExportMetaCar(ctx, filePath, backInfo.End, backInfo.start)
 		if err != nil {
-			logger.Errorf("failed to generate car file, err:%v", err)
+			logger.Errorf("failed to generate car file start: %s end : %s filepath: %s\r\n, err:%v",
+				backInfo.start, backInfo.End, filePath, err)
 			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 			return
 		}
@@ -63,7 +59,7 @@ func (a *API) backupMeta(ctx *gin.Context) {
 		if backInfo.isForce {
 			estId, err := a.core.MetaManager.EstBackupSys.BackupToEstuary(filePath)
 			if err != nil {
-				logger.Errorf("failed to back up car to estuary, err:%v", err)
+				logger.Errorf("failed to back up car file(%s) to estuary, err:%v", filePath, err)
 				handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 				return
 			}
@@ -89,6 +85,10 @@ func decodeBackupInfo(ctx *gin.Context) (*backupInfo, error) {
 	end := ctx.Query("end")
 	force := ctx.Query("force")
 	provider := ctx.Query("provider")
+	if start == "" || end == "" {
+		logger.Errorf("nil start or end cid for backup")
+		return nil, fmt.Errorf("nil start or end cid for backup")
+	}
 	scid, err := cid.Decode(start)
 	if err != nil {
 		return nil, err
