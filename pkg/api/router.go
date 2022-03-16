@@ -13,10 +13,7 @@ import (
 
 func NewAdminRouter(core *core.Core, opt *option.Options) *gin.Engine {
 	adminRouter := gin.New()
-	adminRouter.Use(middleware.WithLoggerFormatter())
-	adminRouter.Use(middleware.WithCorsAllowAllOrigin())
 	adminRouter.Use(gin.Recovery())
-	adminRouter.Use(middleware.WithAPIDoc())
 
 	v1AdminAPI := v1Admin.NewV1AdminAPI(adminRouter, core, opt)
 	v1AdminAPI.RegisterAPIs()

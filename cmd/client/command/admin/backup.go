@@ -26,17 +26,12 @@ func backupCmd() *cobra.Command {
 			if err := backupRequest.validateFlags(); err != nil {
 				return err
 			}
+			forceTable := map[bool]string{true: "1", false: "0"}
 
-			req := api.Client.R()
-			req = req.SetQueryParam("start", backupRequest.StartCid)
-			req = req.SetQueryParam("end", backupRequest.EndCid)
-			var isForce string
-			if backupRequest.IsForce == true {
-				isForce = "1"
-			} else {
-				isForce = "0"
-			}
-			req = req.SetQueryParam("force", isForce)
+			req := api.Client.R().
+				SetQueryParam("start", backupRequest.StartCid).
+				SetQueryParam("end", backupRequest.EndCid).
+				SetQueryParam("force", forceTable[backupRequest.IsForce])
 			if backupRequest.Provider != "" {
 				req = req.SetQueryParam("provider", backupRequest.Provider)
 			}
