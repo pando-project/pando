@@ -47,7 +47,7 @@ var dsLatestMetadataKey = datastore.NewKey(latestMedataKey)
 
 var logger = log.Logger("sdk-provider-DAG")
 
-func NewDAGProvider(privateKeyStr string, connectTimeout time.Duration, pushTimeout time.Duration) (*DAGProvider, error) {
+func NewMetaProvider(privateKeyStr string, connectTimeout time.Duration, pushTimeout time.Duration) (*DAGProvider, error) {
 	privateKeyBytes, err := base64.StdEncoding.DecodeString(privateKeyStr)
 	if err != nil {
 		return nil, err
