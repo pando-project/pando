@@ -83,6 +83,9 @@ func New(root *cobra.Command) *Options {
 		"Log level of Pando.")
 
 	// options for server address
+	opt.flags.StringVar(&opt.ServerAddress.AdminListenAddress, "admin-listen-addr", defaultAdminListenAddress,
+		fmt.Sprintf("Admin server listen address(in multiaddress format, like %s).", defaultAdminListenAddress))
+
 	opt.flags.StringVar(&opt.ServerAddress.HttpAPIListenAddress, "http-listen-addr", defaultHttpAPIListenAddress,
 		fmt.Sprintf("Http server listen address(in multiaddress format, like %s).", defaultHttpAPIListenAddress))
 

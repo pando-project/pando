@@ -59,7 +59,11 @@ func (bs *BackupSystem) run() error {
 				log.Errorf("wrong back up dir path: %s", BackupTmpPath)
 			}
 			for _, file := range files {
-				err = bs.backupToEstuary(path.Join(BackupTmpPath, file.Name()))
+				if file.IsDir() {
+					// dir should not back up
+					continue
+				}
+				_, err = bs.BackupToEstuary(path.Join(BackupTmpPath, file.Name()))
 				if err != nil {
 					//todo metrics
 					log.Warnf("failed back up, err : %s", err.Error())
@@ -170,31 +174,31 @@ func (bs *BackupSystem) checkDealForBackup(estID uint64) (bool, error) {
 	}
 }
 
-func (bs *BackupSystem) backupToEstuary(filepath string) error {
+func (bs *BackupSystem) BackupToEstuary(filepath string) (uint64, error) {
 	fBuf := new(bytes.Buffer)
 	mw := multipart.NewWriter(fBuf)
 	fpath := fmt.Sprintf(`%s`, filepath)
 	formfile, err := mw.CreateFormFile("data", fpath)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		return fmt.Errorf("failed to read data: %s", err.Error())
+		return 0, fmt.Errorf("failed to read data: %s", err.Error())
 	}
 	_, err = io.Copy(formfile, bytes.NewReader(data))
 	if err != nil {
-		return fmt.Errorf("failed to copy data: %s", err.Error())
+		return 0, fmt.Errorf("failed to copy data: %s", err.Error())
 	}
 
 	if err := mw.Close(); err != nil {
-		return err
+		return 0, err
 	}
 
 	req, err := http.NewRequest("POST", bs.backupCfg.ShuttleGateway+"/content/add", fBuf)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	req.Header.Set("Authorization", bs.apiKey)
@@ -203,7 +207,7 @@ func (bs *BackupSystem) backupToEstuary(filepath string) error {
 
 	res, err := (&http.Client{}).Do(req)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
@@ -211,22 +215,22 @@ func (bs *BackupSystem) backupToEstuary(filepath string) error {
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	r := new(est_utils.AddResponse)
 	err = json.Unmarshal(body, r)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if res.StatusCode != 200 {
-		return fmt.Errorf("fail response: %v", string(body))
+		return 0, fmt.Errorf("fail response: %v", string(body))
 	}
 
 	bs.toCheck <- r.EstuaryId
-	log.Debugf("success back up %s to est, id : %d", filepath, r.EstuaryId)
+	log.Infof("back up %s to est successfully, estid : %d at time: %s", filepath, r.EstuaryId, time.Now().String())
 
-	return nil
+	return r.EstuaryId, nil
 }
 
 func (bs *BackupSystem) checkDealStatus(cs *est_utils.ContentStatus) (bool, error) {
