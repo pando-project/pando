@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	blocks "github.com/ipfs/go-block-format"
+	"github.com/ipfs/go-cid"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
 	_ "github.com/ipld/go-ipld-prime/codec/dagcbor"
@@ -67,14 +68,20 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) 
 					go core.SendRecvMeta(c, peerid)
 				}
 				if reg != nil {
+					//go func(p peer.ID) {
+					//	if reg.IsRegistered(p) || reg.InUnregister(p) {
+					//		return
+					//	}
+					//	err = reg.SaveUnregisteredProvider(lctx.Ctx, p)
+					//	if err != nil {
+					//		log.Errorf("failed to save unregister provider: %s, err: %s",
+					//			p.String(), err.Error())
+					//	}
+					//}(peerid)
 					go func(p peer.ID) {
-						if reg.IsRegistered(p) || reg.InUnregister(p) {
-							return
-						}
-						err = reg.SaveUnregisteredProvider(lctx.Ctx, p)
+						err = reg.RegisterOrUpdate(lctx.Ctx, p, cid.Undef)
 						if err != nil {
-							log.Errorf("failed to save unregister provider: %s, err: %s",
-								p.String(), err.Error())
+							log.Errorf("failed to register new provider, err: %v", err)
 						}
 					}(peerid)
 				}
