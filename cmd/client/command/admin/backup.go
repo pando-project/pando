@@ -21,7 +21,7 @@ var backupRequest = &backupReq{}
 func backupCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "backup",
-		Short: "backup metadata for Provider to estuary",
+		Short: "backup metadata for provider to estuary",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := backupRequest.validateFlags(); err != nil {
 				return err

@@ -27,12 +27,12 @@ func (a *API) backupMeta(ctx *gin.Context) {
 		handleError(ctx, http.StatusBadRequest, fmt.Sprintf("invalid start/end cid for backup"))
 		return
 	} else {
-		if err := backInfo.Provider.Validate(); err != nil {
+		if err := backInfo.provider.Validate(); err != nil {
 			// if not set provider id, use Pando's id
-			backInfo.Provider = a.core.LegsCore.Host.ID()
+			backInfo.provider = a.core.LegsCore.Host.ID()
 		}
 		var filePath string
-		fileName := fmt.Sprintf(metadata.BackFileName, backInfo.Provider, time.Now().UnixNano())
+		fileName := fmt.Sprintf(metadata.BackFileName, backInfo.provider, time.Now().UnixNano())
 
 		// the force dir will not be back up by Pando backupSys auto
 		if backInfo.isForce {
@@ -48,10 +48,10 @@ func (a *API) backupMeta(ctx *gin.Context) {
 			filePath = path.Join(metadata.BackupTmpPath, fileName)
 		}
 
-		err = a.core.MetaManager.ExportMetaCar(ctx, filePath, backInfo.End, backInfo.start)
+		err = a.core.MetaManager.ExportMetaCar(ctx, filePath, backInfo.end, backInfo.start)
 		if err != nil {
 			logger.Errorf("failed to generate car file start: %s end : %s filepath: %s\r\n, err:%v",
-				backInfo.start, backInfo.End, filePath, err)
+				backInfo.start, backInfo.end, filePath, err)
 			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 			return
 		}
@@ -75,8 +75,8 @@ func (a *API) backupMeta(ctx *gin.Context) {
 
 type backupInfo struct {
 	start    cid.Cid
-	End      cid.Cid
-	Provider peer.ID
+	end      cid.Cid
+	provider peer.ID
 	isForce  bool
 }
 
@@ -114,8 +114,8 @@ func decodeBackupInfo(ctx *gin.Context) (*backupInfo, error) {
 	}
 	return &backupInfo{
 		start:    scid,
-		End:      ecid,
-		Provider: providerID,
+		end:      ecid,
+		provider: providerID,
 		isForce:  isForce,
 	}, nil
 }
