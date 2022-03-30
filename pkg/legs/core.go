@@ -152,7 +152,7 @@ func (c *Core) autoSync() {
 			defer c.waitForPendingSyncs.Done()
 
 			log := log.With("publisher", pubID, "provider", provID, "addr", pubAddr)
-			log.Info("Auto-syncing the latest advertisement with publisher")
+			log.Info("Auto-syncing the latest meta-data with publisher")
 
 			_, err := c.LS.Sync(ctx, pubID, cid.Undef, nil, pubAddr)
 			if err != nil {

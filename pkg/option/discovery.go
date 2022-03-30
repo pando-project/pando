@@ -18,7 +18,7 @@ type Discovery struct {
 	LotusGateway string `yaml:"LotusGateway"`
 	//Peers          []peer.AddrInfo `yaml:"Peers"`
 	// PollInterval is the amount of time to wait without getting any updates
-	// for a provider, before sending a request for the latest advertisement.
+	// for a provider, before sending a request for the latest meta.
 	// Values are a number ending in "s", "m", "h" for seconds. minutes, hours.
 	PollInterval string `yaml:"PollInterval"`
 	// PollRetryAfter is the amount of time from one poll attempt, without a
@@ -27,7 +27,7 @@ type Discovery struct {
 	// for there to be more than one poll attempt for a provider.
 	PollRetryAfter string `yaml:"PollRetryAfter"`
 	// PollStopAfter is the amount of time, from the start of polling, to
-	// continuing polling for the latest advertisment without getting a
+	// continuing polling for the latest meta without getting a
 	// responce.
 	PollStopAfter  string `yaml:"PollStopAfter"`
 	Policy         Policy `yaml:"Policy"`

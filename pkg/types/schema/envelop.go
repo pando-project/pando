@@ -16,7 +16,7 @@ const (
 type metaSignatureRecord struct {
 	domain *string
 	codec  []byte
-	advID  []byte
+	metaID []byte
 }
 
 func (r *metaSignatureRecord) Domain() string {
@@ -34,11 +34,11 @@ func (r *metaSignatureRecord) Codec() []byte {
 }
 
 func (r *metaSignatureRecord) MarshalRecord() ([]byte, error) {
-	return r.advID, nil
+	return r.metaID, nil
 }
 
 func (r *metaSignatureRecord) UnmarshalRecord(buf []byte) error {
-	r.advID = buf
+	r.metaID = buf
 	return nil
 }
 
@@ -63,7 +63,7 @@ func VerifyMetadata(meta Metadata) (peer.ID, error) {
 		return peer.ID(""), err
 	}
 
-	if !bytes.Equal(genID, rec.advID) {
+	if !bytes.Equal(genID, rec.metaID) {
 		return peer.ID(""), errors.New("invalid signature")
 	}
 
