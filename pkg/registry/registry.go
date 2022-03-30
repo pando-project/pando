@@ -32,6 +32,7 @@ type Registry struct {
 	actions   chan func()
 	closed    chan struct{}
 	closeOnce sync.Once
+	closing   chan struct{}
 	dstore    datastore.Datastore
 	providers map[peer.ID]*ProviderInfo
 	sequences *sequences
@@ -43,9 +44,9 @@ type Registry struct {
 	accountLevel *option.AccountLevel
 
 	discoveryTimeout time.Duration
-	pollInterval     time.Duration
 	rediscoverWait   time.Duration
 
+	syncChan      chan *ProviderInfo
 	periodicTimer *time.Timer
 }
 
@@ -60,6 +61,10 @@ type ProviderInfo struct {
 	DiscoveryAddr string
 	// AccountLevel is the level according to the filecoin miner account balance
 	AccountLevel int
+	// Publisher is the ID of the peer that published the provider info.
+	Publisher peer.ID `json:",omitempty"`
+
+	lastContactTime time.Time
 
 	LastBackupMeta cid.Cid
 }
@@ -87,11 +92,11 @@ func NewRegistry(ctx context.Context, cfg *option.Discovery, cfglevel *option.Ac
 	r := &Registry{
 		actions:   make(chan func()),
 		closed:    make(chan struct{}),
+		closing:   make(chan struct{}),
 		policy:    discoPolicy,
 		providers: map[peer.ID]*ProviderInfo{},
 		sequences: newSequences(0),
 
-		pollInterval:     time.Duration(cfg.PollIntervalInDurationFormat()),
 		rediscoverWait:   time.Duration(cfg.RediscoverWaitInDurationFormat()),
 		discoveryTimeout: time.Duration(cfg.TimeoutInDurationFormat()),
 
@@ -100,7 +105,8 @@ func NewRegistry(ctx context.Context, cfg *option.Discovery, cfglevel *option.Ac
 		discoverer: disco,
 		discoTimes: map[string]time.Time{},
 
-		dstore: dstore,
+		dstore:   dstore,
+		syncChan: make(chan *ProviderInfo, 1),
 	}
 
 	count, err := r.loadPersistedProviders(ctx)
@@ -109,12 +115,12 @@ func NewRegistry(ctx context.Context, cfg *option.Discovery, cfglevel *option.Ac
 	}
 	log.Infow("loaded providers into registry", "count", count)
 
-	r.periodicTimer = time.AfterFunc(r.pollInterval/2, func() {
-		r.cleanup()
-		r.periodicTimer.Reset(r.pollInterval / 2)
-	})
-
 	go r.run()
+	go r.runPollCheck(
+		time.Duration(cfg.PollIntervalInDurationFormat()),
+		time.Duration(cfg.PollRetryAfterInDurationFormat()),
+		time.Duration(cfg.PollStopAfterInDurationFormat()),
+	)
 	return r, nil
 }
 
@@ -122,11 +128,8 @@ func NewRegistry(ctx context.Context, cfg *option.Discovery, cfglevel *option.Ac
 func (r *Registry) Close() error {
 	var err error
 	r.closeOnce.Do(func() {
-		r.periodicTimer.Stop()
-		// Wait for any pending discoveries to complete, then stop the main run
-		// goroutine
-		r.discoWait.Wait()
-		close(r.actions)
+		close(r.closing)
+		<-r.closed
 
 		if r.dstore != nil {
 			err = r.dstore.Close()
@@ -397,6 +400,88 @@ func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, met
 	}
 
 	return r.Register(ctx, info)
+}
+
+func (r *Registry) pollProviders(interval, stopAfter time.Duration) {
+	stopAfter += stopAfter
+	r.actions <- func() {
+		now := time.Now()
+		for _, info := range r.providers {
+			err := info.Publisher.Validate()
+			if err != nil {
+				// No publisher.
+				continue
+			}
+			if info.lastContactTime.IsZero() {
+				// There has been no contact since startup.  Poll during next
+				// call to this function if no updated for provider.
+				info.lastContactTime = now.Add(-interval)
+				continue
+			}
+			noContactTime := now.Sub(info.lastContactTime)
+			if noContactTime < interval {
+				// Not enough time since last contact.
+				continue
+			}
+			if noContactTime > stopAfter {
+				// Too much time since last contact.
+				log.Warnw("Lost contact with provider's publisher", "publisher", info.Publisher, "provider", info.AddrInfo.ID, "since", info.lastContactTime)
+				// Remove the non-responsive publisher.
+				info = &ProviderInfo{
+					AddrInfo:        info.AddrInfo,
+					DiscoveryAddr:   info.DiscoveryAddr,
+					LastBackupMeta:  info.LastBackupMeta,
+					AccountLevel:    info.AccountLevel,
+					lastContactTime: info.lastContactTime,
+					Publisher:       peer.ID(""),
+				}
+				if err = r.syncRegister(context.Background(), info); err != nil {
+					log.Errorw("Failed to update provider info", "err", err)
+				}
+				continue
+			}
+			select {
+			case r.syncChan <- info:
+			default:
+				log.Debugw("Sync channel blocked, skipping auto-sync", "publisher", info.Publisher)
+			}
+		}
+	}
+}
+
+func (r *Registry) runPollCheck(interval, retryAfter, stopAfter time.Duration) {
+	if retryAfter < time.Minute {
+		retryAfter = time.Minute
+	}
+	timer := time.NewTimer(retryAfter)
+running:
+	for {
+		select {
+		case <-timer.C:
+			r.cleanup()
+			r.pollProviders(interval, stopAfter)
+			timer.Reset(retryAfter)
+		case <-r.closing:
+			break running
+		}
+	}
+
+	// Check that pollProviders is finished and close sync channel.
+	done := make(chan struct{})
+	r.actions <- func() {
+		close(done)
+	}
+	<-done
+	close(r.syncChan)
+
+	// Wait for any pending discoveries to complete, then stop the main run
+	// goroutine.
+	r.discoWait.Wait()
+	close(r.actions)
+}
+
+func (r *Registry) SyncChan() <-chan *ProviderInfo {
+	return r.syncChan
 }
 
 func (r *Registry) cleanup() {

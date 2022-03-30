@@ -22,7 +22,9 @@ import (
 	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/multiformats/go-multiaddr"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -47,8 +49,10 @@ type Core struct {
 	recvMetaCh        chan<- *metadata.MetaRecord
 	backupGenInterval time.Duration
 	rateLimiter       *policy.Limiter
-	watchDone         chan struct{}
-	options           *option.Options
+
+	waitForPendingSyncs sync.WaitGroup
+	watchDone           chan struct{}
+	options             *option.Options
 }
 
 func NewLegsCore(ctx context.Context,
@@ -90,6 +94,7 @@ func NewLegsCore(ctx context.Context,
 	c.cancelSyncFn = cancelSyncFn
 
 	go c.watchSyncFinished(onSyncFin)
+	go c.autoSync()
 
 	log.Debugf("LegCore started and all hooks and linksystem registered")
 
@@ -128,12 +133,34 @@ func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, 
 }
 
 func (c *Core) Close() error {
-	c.cancelSyncFn()
-	<-c.watchDone
-
 	// Close leg transport.
 	err := c.LS.Close()
+
+	c.cancelSyncFn()
+	<-c.watchDone
+	c.waitForPendingSyncs.Wait()
+
 	return err
+}
+
+func (c *Core) autoSync() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for provInfo := range c.reg.SyncChan() {
+		c.waitForPendingSyncs.Add(1)
+		go func(pubID, provID peer.ID, pubAddr multiaddr.Multiaddr) {
+			defer c.waitForPendingSyncs.Done()
+
+			log := log.With("publisher", pubID, "provider", provID, "addr", pubAddr)
+			log.Info("Auto-syncing the latest advertisement with publisher")
+
+			_, err := c.LS.Sync(ctx, pubID, cid.Undef, nil, pubAddr)
+			if err != nil {
+				log.Errorw("Failed to auto-sync with publisher", "err", err)
+				return
+			}
+		}(provInfo.Publisher, provInfo.AddrInfo.ID, provInfo.AddrInfo.Addrs[0])
+	}
 }
 
 // restoreLatestSync reads the latest sync for each previously synced provider,
