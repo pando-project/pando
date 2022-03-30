@@ -374,34 +374,69 @@ func (r *Registry) Authorized(peerID peer.ID) (bool, error) {
 
 // RegisterOrUpdate attempts to register an unregistered provider, or updates
 // the addresses and latest meta data of an already registered provider.
-func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, metaCid cid.Cid) error {
+func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, lastBackup cid.Cid, publisherID peer.ID, contact bool) error {
+	var fullRegister bool
 	// Check that the provider has been discovered and validated
 	infos := r.ProviderInfo(providerID)
 	var info *ProviderInfo
+
 	if infos != nil {
+		info = infos[0]
+		if err := publisherID.Validate(); err != nil {
+			publisherID = info.Publisher
+		} else if publisherID != info.Publisher {
+			fullRegister = true
+		}
+
 		info = &ProviderInfo{
 			AddrInfo: peer.AddrInfo{
 				ID:    providerID,
-				Addrs: infos[0].AddrInfo.Addrs,
+				Addrs: info.AddrInfo.Addrs,
 			},
-			DiscoveryAddr:  infos[0].DiscoveryAddr,
-			LastBackupMeta: infos[0].LastBackupMeta,
+			DiscoveryAddr:   info.DiscoveryAddr,
+			LastBackupMeta:  info.LastBackupMeta,
+			lastContactTime: info.lastContactTime,
+			AccountLevel:    info.AccountLevel,
+			Publisher:       publisherID,
 		}
 	} else {
+		fullRegister = true
 		info = &ProviderInfo{
 			AddrInfo: peer.AddrInfo{
 				ID: providerID,
 			},
+			Publisher: publisherID,
 		}
 	}
 
-	if metaCid != cid.Undef {
-		info.LastBackupMeta = metaCid
+	if contact {
+		now := time.Now()
+		info.lastContactTime = now
 	}
 
-	return r.Register(ctx, info)
-}
+	if lastBackup != cid.Undef {
+		info.LastBackupMeta = lastBackup
+	}
 
+	// If there is a new providerID or publisherID then do a full Register that
+	// check the allow policy.
+	if fullRegister {
+		return r.Register(ctx, info)
+	}
+
+	// If laready registered and no new IDs, register without verification.
+	errCh := make(chan error, 1)
+	r.actions <- func() {
+		errCh <- r.syncRegister(ctx, info)
+	}
+	err := <-errCh
+	if err != nil {
+		return err
+	}
+
+	log.Debugw("Updated registered provider info", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
+	return nil
+}
 func (r *Registry) pollProviders(interval, stopAfter time.Duration) {
 	stopAfter += stopAfter
 	r.actions <- func() {

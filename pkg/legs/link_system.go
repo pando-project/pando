@@ -69,7 +69,7 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) 
 				}
 				if reg != nil {
 					go func(p peer.ID) {
-						err = reg.RegisterOrUpdate(lctx.Ctx, p, cid.Undef)
+						err = reg.RegisterOrUpdate(lctx.Ctx, p, cid.Undef, peer.ID(""), true)
 						if err != nil {
 							log.Errorf("failed to register new provider, err: %v", err)
 						}
