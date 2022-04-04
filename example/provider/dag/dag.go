@@ -24,7 +24,7 @@ func main() {
 	}
 	fmt.Printf("provider peerID: %v\n", peerID.String())
 
-	provider, err := pandoSdk.NewDAGProvider(privateKeyStr, 10*time.Second, 10*time.Minute)
+	provider, err := pandoSdk.NewMetaProvider(privateKeyStr, 10*time.Second, 10*time.Minute)
 	if err != nil {
 		panic(err)
 	}

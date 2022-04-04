@@ -21,6 +21,9 @@ type Server struct {
 	Opt  *option.Options
 	Core *core.Core
 
+	AdminServer     *http.Server
+	AdminListenAddr string
+
 	HttpServer     *http.Server
 	HttpListenAddr string
 
@@ -32,6 +35,11 @@ type Server struct {
 }
 
 func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
+	adminListenAddress, err := multiaddress.MultiaddressToNetAddress(opt.ServerAddress.AdminListenAddress)
+	if err != nil {
+		return nil, err
+	}
+
 	httpListenAddress, err := multiaddress.MultiaddressToNetAddress(opt.ServerAddress.HttpAPIListenAddress)
 	if err != nil {
 		return nil, err
@@ -51,6 +59,12 @@ func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
 		Opt:  opt,
 		Core: core,
 
+		AdminServer: &http.Server{
+			Addr:    adminListenAddress,
+			Handler: apmhttp.Wrap(NewAdminRouter(core, opt)),
+		},
+		AdminListenAddr: adminListenAddress,
+
 		HttpServer: &http.Server{
 			Addr:    httpListenAddress,
 			Handler: apmhttp.Wrap(NewHttpRouter(core, opt)),
@@ -68,6 +82,19 @@ func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
 		},
 		ProfileListenAddr: profileListenAddress,
 	}, nil
+}
+
+func (s *Server) StartAdminServer() error {
+	logger.Infof("admin server listening at: %s", s.AdminListenAddr)
+	return s.AdminServer.ListenAndServe()
+}
+
+func (s *Server) StopAdminServer() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	fmt.Println("stop admin server...")
+	return s.AdminServer.Shutdown(ctx)
 }
 
 func (s *Server) StartHttpServer() error {
@@ -111,6 +138,13 @@ func (s *Server) StopProfileServer() error {
 
 func (s *Server) MustStartAllServers() {
 	go func() {
+		err := s.StartAdminServer()
+		if err != nil && err != http.ErrServerClosed {
+			panic(fmt.Sprintf("admin server cannot start: %v", err))
+		}
+	}()
+
+	go func() {
 		err := s.StartHttpServer()
 		if err != nil && err != http.ErrServerClosed {
 			panic(fmt.Sprintf("http server cannot start: %v", err))
@@ -134,6 +168,9 @@ func (s *Server) MustStartAllServers() {
 
 func (s *Server) StopAllServers() error {
 	g := errgroup.Group{}
+	g.Go(func() error {
+		return s.StopAdminServer()
+	})
 	g.Go(func() error {
 		return s.StopHttpServer()
 	})

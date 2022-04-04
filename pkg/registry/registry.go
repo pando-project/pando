@@ -22,21 +22,19 @@ import (
 
 const (
 	// providerKeyPath is where provider info is stored in to indexer repo
-	providerKeyPath      = "/registry/pinfo"
-	unregProviderKeyPath = "/registry/unregpinfo"
+	providerKeyPath = "/registry/pinfo"
 )
 
 var log = logging.Logger("registry")
 
 // Registry stores information about discovered providers
 type Registry struct {
-	actions        chan func()
-	closed         chan struct{}
-	closeOnce      sync.Once
-	dstore         datastore.Datastore
-	providers      map[peer.ID]*ProviderInfo
-	unregProviders map[peer.ID]*ProviderInfo
-	sequences      *sequences
+	actions   chan func()
+	closed    chan struct{}
+	closeOnce sync.Once
+	dstore    datastore.Datastore
+	providers map[peer.ID]*ProviderInfo
+	sequences *sequences
 
 	discoverer   discovery.Discoverer
 	discoWait    sync.WaitGroup
@@ -70,10 +68,6 @@ func (p *ProviderInfo) dsKey() datastore.Key {
 	return datastore.NewKey(path.Join(providerKeyPath, p.AddrInfo.ID.String()))
 }
 
-func (p *ProviderInfo) dsUnregKey() datastore.Key {
-	return datastore.NewKey(path.Join(unregProviderKeyPath, p.AddrInfo.ID.String()))
-}
-
 // NewRegistry creates a new provider registry, giving it provider policy
 // configuration, a datastore to persist provider data, and a Discoverer
 // interface.
@@ -91,12 +85,11 @@ func NewRegistry(ctx context.Context, cfg *option.Discovery, cfglevel *option.Ac
 	}
 
 	r := &Registry{
-		actions:        make(chan func()),
-		closed:         make(chan struct{}),
-		policy:         discoPolicy,
-		providers:      map[peer.ID]*ProviderInfo{},
-		unregProviders: map[peer.ID]*ProviderInfo{},
-		sequences:      newSequences(0),
+		actions:   make(chan func()),
+		closed:    make(chan struct{}),
+		policy:    discoPolicy,
+		providers: map[peer.ID]*ProviderInfo{},
+		sequences: newSequences(0),
 
 		pollInterval:     time.Duration(cfg.PollIntervalInDurationFormat()),
 		rediscoverWait:   time.Duration(cfg.RediscoverWaitInDurationFormat()),
@@ -110,12 +103,11 @@ func NewRegistry(ctx context.Context, cfg *option.Discovery, cfglevel *option.Ac
 		dstore: dstore,
 	}
 
-	countReg, countUnreg, err := r.loadPersistedProviders(ctx)
+	count, err := r.loadPersistedProviders(ctx)
 	if err != nil {
 		return nil, err
 	}
-	log.Infow("loaded registered providers, unregister providers into registry",
-		"registered count", countReg, "unRegister count", countUnreg)
+	log.Infow("loaded providers into registry", "count", count)
 
 	r.periodicTimer = time.AfterFunc(r.pollInterval/2, func() {
 		r.cleanup()
@@ -194,23 +186,12 @@ func (r *Registry) Register(ctx context.Context, info *ProviderInfo) error {
 
 	errCh := make(chan error, 1)
 	r.actions <- func() {
-		errCh <- r.syncRegister(ctx, info, true)
+		errCh <- r.syncRegister(ctx, info)
 	}
 
 	err := <-errCh
 	if err != nil {
 		return err
-	}
-
-	if infos := r.UnregProviderInfo(info.AddrInfo.ID); infos != nil {
-		r.actions <- func() {
-			errCh <- r.syncDeleteProvider(ctx, info, false)
-		}
-		err = <-errCh
-		if err != nil {
-			return err
-		}
-		log.Infow("delete unregister provider info", "id", info.AddrInfo.ID)
 	}
 
 	log.Infow("registered provider", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
@@ -224,17 +205,6 @@ func (r *Registry) IsRegistered(providerID peer.ID) bool {
 	var found bool
 	r.actions <- func() {
 		_, found = r.providers[providerID]
-		close(done)
-	}
-	<-done
-	return found
-}
-
-func (r *Registry) InUnregister(providerID peer.ID) bool {
-	done := make(chan struct{})
-	var found bool
-	r.actions <- func() {
-		_, found = r.unregProviders[providerID]
 		close(done)
 	}
 	<-done
@@ -286,42 +256,6 @@ func (r *Registry) ProviderInfo(providerID peer.ID) []*ProviderInfo {
 	return []*ProviderInfo{info}
 }
 
-func (r *Registry) UnregProviderInfo(providerID peer.ID) []*ProviderInfo {
-	if providerID == "" {
-		return r.AllUnregProviderInfo()
-	}
-	infoChan := make(chan *ProviderInfo)
-	r.actions <- func() {
-		info, ok := r.unregProviders[providerID]
-		if ok {
-			infoChan <- info
-		}
-		close(infoChan)
-	}
-	info := <-infoChan
-	if info == nil {
-		return nil
-	}
-
-	return []*ProviderInfo{info}
-}
-
-func (r *Registry) AllUnregProviderInfo() []*ProviderInfo {
-	var infos []*ProviderInfo
-	done := make(chan struct{})
-	r.actions <- func() {
-		infos = make([]*ProviderInfo, len(r.unregProviders))
-		var i int
-		for _, info := range r.unregProviders {
-			infos[i] = info
-			i++
-		}
-		close(done)
-	}
-	<-done
-	return infos
-}
-
 // AllProviderInfo returns information for all registered providers
 func (r *Registry) AllProviderInfo() []*ProviderInfo {
 	var infos []*ProviderInfo
@@ -343,23 +277,17 @@ func (r *Registry) CheckSequence(peerID peer.ID, seq uint64) error {
 	return r.sequences.check(peerID, seq)
 }
 
-func (r *Registry) syncRegister(ctx context.Context, info *ProviderInfo, isReg bool) error {
-	if isReg {
-		r.providers[info.AddrInfo.ID] = info
-	} else {
-		r.unregProviders[info.AddrInfo.ID] = info
-	}
-
-	err := r.syncPersistProvider(ctx, info, isReg)
+func (r *Registry) syncRegister(ctx context.Context, info *ProviderInfo) error {
+	r.providers[info.AddrInfo.ID] = info
+	err := r.syncPersistProvider(ctx, info)
 	if err != nil {
 		err = fmt.Errorf("could not persist provider: %s", err)
 		return syserr.New(err, http.StatusInternalServerError)
 	}
-
 	return nil
 }
 
-func (r *Registry) syncPersistProvider(ctx context.Context, info *ProviderInfo, isReg bool) error {
+func (r *Registry) syncPersistProvider(ctx context.Context, info *ProviderInfo) error {
 	if r.dstore == nil {
 		// todo  why not return error?
 		//return fmt.Errorf("nil datastore")
@@ -369,12 +297,8 @@ func (r *Registry) syncPersistProvider(ctx context.Context, info *ProviderInfo, 
 	if err != nil {
 		return err
 	}
-	var dsKey datastore.Key
-	if isReg {
-		dsKey = info.dsKey()
-	} else {
-		dsKey = info.dsUnregKey()
-	}
+
+	dsKey := info.dsKey()
 	if err = r.dstore.Put(ctx, dsKey, value); err != nil {
 		return err
 	}
@@ -384,104 +308,43 @@ func (r *Registry) syncPersistProvider(ctx context.Context, info *ProviderInfo, 
 	return nil
 }
 
-func (r *Registry) syncDeleteProvider(ctx context.Context, info *ProviderInfo, isReg bool) error {
+func (r *Registry) loadPersistedProviders(ctx context.Context) (int, error) {
 	if r.dstore == nil {
-		return fmt.Errorf("nil datastore")
-	}
-	var key datastore.Key
-	if isReg {
-		pinfo, found := r.providers[info.AddrInfo.ID]
-		if !found {
-			return fmt.Errorf("provider: %s not exist", info.AddrInfo.ID.String())
-		}
-		key = pinfo.dsKey()
-		delete(r.providers, info.AddrInfo.ID)
-	} else {
-		pinfo, found := r.unregProviders[info.AddrInfo.ID]
-		if !found {
-			return fmt.Errorf("unregister provider: %s not exist", info.AddrInfo.ID.String())
-		}
-		key = pinfo.dsUnregKey()
-		delete(r.unregProviders, info.AddrInfo.ID)
-	}
-
-	if err := r.dstore.Delete(ctx, key); err != nil {
-		return err
-	}
-	if err := r.dstore.Sync(ctx, key); err != nil {
-		return fmt.Errorf("cannot sync to delete provider info: %s", err)
-	}
-	return nil
-}
-
-func (r *Registry) loadPersistedProviders(ctx context.Context) (int, int, error) {
-	if r.dstore == nil {
-		return 0, 0, fmt.Errorf("nil datastore for registry")
+		return 0, nil
 	}
 
 	// Load all providers from the datastore.
-	qreg := query.Query{
+	q := query.Query{
 		Prefix: providerKeyPath,
 	}
-	qunreg := query.Query{
-		Prefix: unregProviderKeyPath,
-	}
-	resultsReg, err := r.dstore.Query(ctx, qreg)
+	results, err := r.dstore.Query(ctx, q)
 	if err != nil {
-		return 0, 0, err
+		return 0, err
 	}
-	defer resultsReg.Close()
+	defer results.Close()
 
-	resultsUnreg, err := r.dstore.Query(ctx, qunreg)
-	if err != nil {
-		return 0, 0, err
-	}
-	defer resultsUnreg.Close()
-
-	var countReg int
-	var countUnreg int
-	for result := range resultsReg.Next() {
+	var count int
+	for result := range results.Next() {
 		if result.Error != nil {
-			return 0, 0, fmt.Errorf("cannot read provider data: %v", result.Error)
+			return 0, fmt.Errorf("cannot read provider data: %v", result.Error)
 		}
 		ent := result.Entry
 
 		peerID, err := peer.Decode(path.Base(ent.Key))
 		if err != nil {
-			return 0, 0, fmt.Errorf("cannot decode provider ID: %s", err)
+			return 0, fmt.Errorf("cannot decode provider ID: %s", err)
 		}
 
 		pinfo := new(ProviderInfo)
 		err = json.Unmarshal(ent.Value, pinfo)
 		if err != nil {
-			return 0, 0, err
+			return 0, err
 		}
 
 		r.providers[peerID] = pinfo
-		countReg++
+		count++
 	}
-	for result := range resultsUnreg.Next() {
-		if result.Error != nil {
-			return 0, 0, fmt.Errorf("cannot read unregister provider data: %v", result.Error)
-		}
-		ent := result.Entry
-
-		peerID, err := peer.Decode(path.Base(ent.Key))
-		if err != nil {
-			return 0, 0, fmt.Errorf("cannot decode provider ID: %s", err)
-		}
-
-		pinfo := new(ProviderInfo)
-		err = json.Unmarshal(ent.Value, pinfo)
-		if err != nil {
-			return 0, 0, err
-		}
-
-		r.unregProviders[peerID] = pinfo
-		countUnreg++
-	}
-
-	return countReg, countUnreg, nil
+	return count, nil
 }
 
 // Check if the peer is trusted by policy, or if it has been previously
@@ -534,26 +397,6 @@ func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, met
 	}
 
 	return r.Register(ctx, info)
-}
-
-func (r *Registry) SaveUnregisteredProvider(ctx context.Context, providerID peer.ID) error {
-	info := &ProviderInfo{
-		AddrInfo: peer.AddrInfo{ID: providerID},
-	}
-
-	errCh := make(chan error, 1)
-	r.actions <- func() {
-		errCh <- r.syncRegister(ctx, info, false)
-	}
-
-	err := <-errCh
-	if err != nil {
-		return err
-	}
-
-	log.Infow("save unregister provider", "id", info.AddrInfo.ID)
-
-	return nil
 }
 
 func (r *Registry) cleanup() {
