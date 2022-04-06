@@ -2,13 +2,13 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	v1Http "github.com/kenlabs/pando/pkg/api/v1/handler/httphandler"
+	v1Admin "github.com/kenlabs/pando/pkg/api/v1/handler/httphandler/admin"
+	v1Graphql "github.com/kenlabs/pando/pkg/api/v1/handler/httphandler/graphql"
 	"github.com/kenlabs/pando/pkg/option"
 
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/api/middleware"
-	v1Admin "github.com/kenlabs/pando/pkg/api/v1/admin"
-	v1Graphql "github.com/kenlabs/pando/pkg/api/v1/graphql"
-	v1Http "github.com/kenlabs/pando/pkg/api/v1/http"
 )
 
 func NewAdminRouter(core *core.Core, opt *option.Options) *gin.Engine {

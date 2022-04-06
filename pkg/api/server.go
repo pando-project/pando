@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/kenlabs/pando/pkg/api/v1/handler/p2phandler"
+	"github.com/kenlabs/pando/pkg/api/v1/libp2p"
 	"go.elastic.co/apm/module/apmhttp"
 	"golang.org/x/sync/errgroup"
 	"net/http"
@@ -32,6 +34,8 @@ type Server struct {
 
 	ProfileServer     *http.Server
 	ProfileListenAddr string
+
+	P2PServer *libp2p.Server
 }
 
 func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
@@ -55,7 +59,7 @@ func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
 		return nil, err
 	}
 
-	return &Server{
+	s := &Server{
 		Opt:  opt,
 		Core: core,
 
@@ -81,7 +85,14 @@ func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
 			Addr: profileListenAddress,
 		},
 		ProfileListenAddr: profileListenAddress,
-	}, nil
+	}
+
+	if !opt.ServerAddress.DisableP2PServer {
+		libp2pHandler := p2phandler.NewHandler(core, opt)
+		s.P2PServer = libp2p.New(context.Background(), core.LegsCore.Host, libp2pHandler)
+	}
+
+	return s, nil
 }
 
 func (s *Server) StartAdminServer() error {
@@ -136,6 +147,10 @@ func (s *Server) StopProfileServer() error {
 	return s.ProfileServer.Shutdown(ctx)
 }
 
+func (s *Server) StopP2pServer() error {
+	return s.P2PServer.Shutdown()
+}
+
 func (s *Server) MustStartAllServers() {
 	go func() {
 		err := s.StartAdminServer()
@@ -149,6 +164,10 @@ func (s *Server) MustStartAllServers() {
 		if err != nil && err != http.ErrServerClosed {
 			panic(fmt.Sprintf("http server cannot start: %v", err))
 		}
+	}()
+
+	go func() {
+
 	}()
 
 	go func() {

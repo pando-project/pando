@@ -52,7 +52,7 @@ func DaemonCmd() *cobra.Command {
 			}
 			defer storeInstance.CacheStore.Close()
 
-			privateKey, err := Opt.Identity.DecodePrivateKey()
+			_, privateKey, err := Opt.Identity.Decode()
 			if err != nil {
 				return fmt.Errorf(failedError, err)
 			}
@@ -190,20 +190,20 @@ func initStoreInstance() (*core.StoreInstance, error) {
 func initP2PHost(privateKey crypto.PrivKey) (libp2pHost.Host, error) {
 	var p2pHost libp2pHost.Host
 	var err error
-	if !Opt.ServerAddress.DisableP2P {
-		log.Info("initializing libp2p host...")
-		p2pHost, err = libp2p.New(
-			libp2p.ListenAddrStrings(Opt.ServerAddress.P2PAddress),
-			libp2p.Identity(privateKey),
-		)
-		if err != nil {
-			return nil, err
-		}
-		log.Debugf("multiaddr is: %s", p2pHost.Addrs())
-		log.Debugf("peerID is: %s", p2pHost.ID())
-	} else {
-		log.Info("libp2p host disabled")
+
+	log.Info("initializing libp2p host...")
+	if Opt.ServerAddress.P2PAddress == "" {
+		return nil, fmt.Errorf("valid p2p address")
 	}
+	p2pHost, err = libp2p.New(
+		libp2p.ListenAddrStrings(Opt.ServerAddress.P2PAddress),
+		libp2p.Identity(privateKey),
+	)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("multiaddr is: %s", p2pHost.Addrs())
+	log.Debugf("peerID is: %s", p2pHost.ID())
 
 	return p2pHost, nil
 }

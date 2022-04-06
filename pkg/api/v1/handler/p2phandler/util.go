@@ -1,0 +1,63 @@
+package p2phandler
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	v1 "github.com/kenlabs/pando/pkg/api/v1"
+	"net/http"
+)
+
+type ErrorMessage struct {
+	Message string `json:",omitempty"`
+	Status  int    `json:",omitempty"`
+}
+
+var serverError []byte
+
+func init() {
+	// Make sure there is always an error to return in case encoding fails
+	e := ErrorMessage{
+		Message: http.StatusText(http.StatusInternalServerError),
+	}
+
+	eb, err := json.Marshal(&e)
+	if err != nil {
+		panic(err)
+	}
+	serverError = eb
+}
+
+func EncodeError(err error) []byte {
+	if err == nil {
+		return nil
+	}
+
+	e := ErrorMessage{
+		Message: err.Error(),
+	}
+	var apierr *v1.Error
+	if errors.As(err, &apierr) {
+		e.Status = apierr.Status()
+	}
+
+	data, err := json.Marshal(&e)
+	if err != nil {
+		return serverError
+	}
+	return data
+}
+
+func DecodeError(data []byte) error {
+	if len(data) == 0 {
+		return nil
+	}
+	var e ErrorMessage
+	err := json.Unmarshal(data, &e)
+	if err != nil {
+		return fmt.Errorf("cannot decode error message: %s", err)
+	}
+
+	apierr := v1.NewError(errors.New(e.Message), e.Status)
+	return errors.New(apierr.Text())
+}

@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ipfs/go-cid"
 	"github.com/kenlabs/pando/pkg/api/types"
-	v1 "github.com/kenlabs/pando/pkg/api/v1"
+	"github.com/kenlabs/pando/pkg/api/v1"
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"net/http"

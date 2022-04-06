@@ -1,4 +1,4 @@
-package http
+package httphandler
 
 import (
 	"github.com/gin-gonic/gin"
