@@ -28,7 +28,7 @@ func (a *API) pandoInfo(ctx *gin.Context) {
 	pandoInfo, err := a.handler.PandoInfo()
 	if err != nil {
 		logger.Errorf("get pando pandoInfo failed: %v", err)
-		handleError(ctx, err)
+		HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, types.NewOKResponse("ok", *pandoInfo))
@@ -42,7 +42,7 @@ func (a *API) pandoInfo(ctx *gin.Context) {
 //	pandoInfo, err := a.core.StateTree.GetPandoInfo()
 //	if err != nil {
 //		logger.Errorf("get pando pandoInfo failed: %v", err)
-//		handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
+//		HandleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 //		return
 //	}
 //

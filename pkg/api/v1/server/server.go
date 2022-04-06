@@ -1,10 +1,11 @@
-package api
+package server
 
 import (
 	"context"
 	"fmt"
 	"github.com/kenlabs/pando/pkg/api/v1/handler/p2phandler"
-	"github.com/kenlabs/pando/pkg/api/v1/libp2p"
+	"github.com/kenlabs/pando/pkg/api/v1/server/httpserver"
+	"github.com/kenlabs/pando/pkg/api/v1/server/libp2p"
 	"go.elastic.co/apm/module/apmhttp"
 	"golang.org/x/sync/errgroup"
 	"net/http"
@@ -65,19 +66,19 @@ func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
 
 		AdminServer: &http.Server{
 			Addr:    adminListenAddress,
-			Handler: apmhttp.Wrap(NewAdminRouter(core, opt)),
+			Handler: apmhttp.Wrap(httpserver.NewAdminRouter(core, opt)),
 		},
 		AdminListenAddr: adminListenAddress,
 
 		HttpServer: &http.Server{
 			Addr:    httpListenAddress,
-			Handler: apmhttp.Wrap(NewHttpRouter(core, opt)),
+			Handler: apmhttp.Wrap(httpserver.NewHttpRouter(core, opt)),
 		},
 		HttpListenAddr: httpListenAddress,
 
 		GraphqlServer: &http.Server{
 			Addr:    graphqlListenAddress,
-			Handler: NewGraphqlRouter(core),
+			Handler: httpserver.NewGraphqlRouter(core),
 		},
 		GraphqlListenAddr: graphqlListenAddress,
 

@@ -30,13 +30,13 @@ func (a *API) providerRegister(ctx *gin.Context) {
 	bodyBytes, err := ioutil.ReadAll(ctx.Request.Body)
 	if err != nil {
 		logger.Errorf("read register body failed: %v\n", err)
-		handleError(ctx, v1.NewError(v1.InternalServerError, http.StatusInternalServerError))
+		HandleError(ctx, v1.NewError(v1.InternalServerError, http.StatusInternalServerError))
 		return
 	}
 
 	err = a.handler.ProviderRegister(ctx, bodyBytes)
 	if err != nil {
-		handleError(ctx, err)
+		HandleError(ctx, err)
 		return
 	}
 
@@ -47,7 +47,7 @@ func writeProviderInfo(ctx *gin.Context, info []*registry.ProviderInfo) {
 	res, err := model.GetProviderRes(info)
 	if err != nil {
 		logger.Errorf("failed to marshal provider info, err: %v", err)
-		handleError(ctx, v1.NewError(v1.InternalServerError, http.StatusInternalServerError))
+		HandleError(ctx, v1.NewError(v1.InternalServerError, http.StatusInternalServerError))
 		return
 	}
 
@@ -60,13 +60,13 @@ func (a *API) listProviderInfo(ctx *gin.Context) {
 
 	peerid, err := decodePeerid(ctx)
 	if err != nil {
-		handleError(ctx, v1.NewError(errors.New("invalid peerid"), http.StatusBadRequest))
+		HandleError(ctx, v1.NewError(errors.New("invalid peerid"), http.StatusBadRequest))
 		return
 	}
 
 	info, err := a.handler.ListProviderInfo(peerid)
 	if err != nil {
-		handleError(ctx, err)
+		HandleError(ctx, err)
 		return
 	}
 	writeProviderInfo(ctx, info)
@@ -80,12 +80,12 @@ func (a *API) listProviderInfo(ctx *gin.Context) {
 //	peerid, err := decodePeerid(ctx)
 //
 //	if err != nil {
-//		handleError(ctx, http.StatusBadRequest, fmt.Errorf("invalid peerid"))
+//		HandleError(ctx, http.StatusBadRequest, fmt.Errorf("invalid peerid"))
 //		return
 //	} else {
 //		info := a.core.Registry.ProviderInfo(peerid)
 //		if info == nil {
-//			handleError(ctx, http.StatusNotFound, fmt.Errorf("provider not found"))
+//			HandleError(ctx, http.StatusNotFound, fmt.Errorf("provider not found"))
 //			return
 //		}
 //		writeProviderInfo(ctx, info)
@@ -98,12 +98,12 @@ func (a *API) listProviderHead(ctx *gin.Context) {
 
 	peerid, err := decodePeerid(ctx)
 	if err != nil {
-		handleError(ctx, v1.NewError(errors.New("invalid peerid"), http.StatusBadRequest))
+		HandleError(ctx, v1.NewError(errors.New("invalid peerid"), http.StatusBadRequest))
 		return
 	}
 	headCid, err := a.handler.ListProviderHead(peerid)
 	if err != nil {
-		handleError(ctx, err)
+		HandleError(ctx, err)
 		return
 	}
 
@@ -122,7 +122,7 @@ func (a *API) listProviderHead(ctx *gin.Context) {
 //
 //	peerid, err := decodePeerid(ctx)
 //	if err != nil || peerid == "" {
-//		handleError(ctx, http.StatusBadRequest, fmt.Errorf("invalid peerid"))
+//		HandleError(ctx, http.StatusBadRequest, fmt.Errorf("invalid peerid"))
 //		return
 //	} else {
 //		res := struct {
@@ -132,17 +132,17 @@ func (a *API) listProviderHead(ctx *gin.Context) {
 //		cidBytes, err = a.core.StoreInstance.DataStore.Get(ctx, datastore.NewKey(legs.SyncPrefix+peerid.String()))
 //		if err != nil {
 //			if err == datastore.ErrNotFound {
-//				handleError(ctx, http.StatusNotFound, errors.New("not found the head of this provider"))
+//				HandleError(ctx, http.StatusNotFound, errors.New("not found the head of this provider"))
 //				return
 //			}
 //			logger.Errorf(failError, err)
-//			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
+//			HandleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 //			return
 //		}
 //		_, providerCid, err := cid.CidFromBytes(cidBytes)
 //		if err != nil {
 //			logger.Errorf(failError, err)
-//			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
+//			HandleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 //			return
 //		}
 //		res.Cid = providerCid.String()

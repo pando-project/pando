@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
-	pb "github.com/kenlabs/pando/pkg/api/v1/libp2p/proto"
 	"github.com/kenlabs/pando/pkg/api/v1/model"
+	pb "github.com/kenlabs/pando/pkg/api/v1/server/libp2p/proto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"net/http"
 )

@@ -9,8 +9,8 @@ import (
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
 	blockStoreFactory "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
-	"github.com/kenlabs/pando/pkg/api"
 	"github.com/kenlabs/pando/pkg/api/core"
+	"github.com/kenlabs/pando/pkg/api/v1/server"
 	"github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/pkg/lotus"
 	"github.com/kenlabs/pando/pkg/metadata"
@@ -67,7 +67,7 @@ func DaemonCmd() *cobra.Command {
 				return fmt.Errorf(failedError, err)
 			}
 
-			server, err := api.NewAPIServer(Opt, c)
+			server, err := server.NewAPIServer(Opt, c)
 			if err != nil {
 				return fmt.Errorf(failedError, err)
 			}

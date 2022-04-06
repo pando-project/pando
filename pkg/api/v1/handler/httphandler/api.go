@@ -36,7 +36,7 @@ func (a *API) RegisterAPIs() {
 	a.registerSwagger()
 }
 
-func handleError(ctx *gin.Context, err error) {
+func HandleError(ctx *gin.Context, err error) {
 	var apiErr *v1.Error
 	var code = http.StatusBadRequest
 	if errors.As(err, &apiErr) {

@@ -24,7 +24,7 @@ func (a *API) metadataList(ctx *gin.Context) {
 	snapCidList, err := a.handler.MetadataList()
 	if err != nil {
 		logger.Error(fmt.Sprintf("metadataList metadataSnapshot failed: %v", err))
-		handleError(ctx, err)
+		HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, types.NewOKResponse("OK", snapCidList))
@@ -37,7 +37,7 @@ func (a *API) metadataList(ctx *gin.Context) {
 //	snapCidList, err := a.core.StateTree.GetSnapShotCidList()
 //	if err != nil {
 //		logger.Error(fmt.Sprintf("metadataList metadataSnapshot failed: %v", err))
-//		handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
+//		HandleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 //		return
 //	}
 //
@@ -54,7 +54,7 @@ func (a *API) metadataSnapshot(ctx *gin.Context) {
 	snapshot, err := a.handler.MetadataSnapShot(snapshotCidQuery, heightQuery)
 	if err != nil {
 		logger.Error(fmt.Sprintf("metadataList metadataSnapshot failed: %v", err))
-		handleError(ctx, err)
+		HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, types.NewOKResponse("metadataSnapshot found", snapshot))
@@ -75,30 +75,30 @@ func (a *API) metadataSnapshot(ctx *gin.Context) {
 //		snapshot, err = a.getSnapshotByCid(snapshotCidQuery)
 //		if err != nil {
 //			if err == statetree.NotFoundErr {
-//				handleError(ctx, http.StatusNotFound,
+//				HandleError(ctx, http.StatusNotFound,
 //					fmt.Errorf("metadataSnapshot not found by cid: %s", snapshotCidQuery))
 //				return
 //			}
 //
 //			logger.Errorf("get metadataSnapshot failed: %v", err)
-//			handleError(ctx, http.StatusBadRequest, fmt.Errorf("invalid cid: %v", err))
+//			HandleError(ctx, http.StatusBadRequest, fmt.Errorf("invalid cid: %v", err))
 //			return
 //		}
 //	} else if heightQuery != "" {
 //		snapshot, err = a.getSnapshotByHeight(heightQuery)
 //		if err != nil {
 //			if err == statetree.NotFoundErr {
-//				handleError(ctx, http.StatusNotFound,
+//				HandleError(ctx, http.StatusNotFound,
 //					fmt.Errorf("metadataSnapshot not found by height: %s", heightQuery))
 //				return
 //			}
 //
 //			logger.Errorf("get metadataSnapshot failed: %v", err)
-//			handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
+//			HandleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
 //			return
 //		}
 //	} else {
-//		handleError(ctx, http.StatusBadRequest, errors.New("height or snapshotCid is required"))
+//		HandleError(ctx, http.StatusBadRequest, errors.New("height or snapshotCid is required"))
 //		return
 //	}
 //

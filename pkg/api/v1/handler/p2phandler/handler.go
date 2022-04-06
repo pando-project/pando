@@ -8,8 +8,8 @@ import (
 	"github.com/kenlabs/pando/pkg/api/core"
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
 	"github.com/kenlabs/pando/pkg/api/v1/handler"
-	"github.com/kenlabs/pando/pkg/api/v1/libp2p"
-	pb "github.com/kenlabs/pando/pkg/api/v1/libp2p/proto"
+	"github.com/kenlabs/pando/pkg/api/v1/server/libp2p"
+	pb "github.com/kenlabs/pando/pkg/api/v1/server/libp2p/proto"
 	"github.com/kenlabs/pando/pkg/option"
 
 	"context"
