@@ -65,10 +65,10 @@ func getDagNodes() []format.Node {
 	return []format.Node{nd3, nd2, nd1, c, b, a}
 }
 
-func (p *ProviderMock) getMeta(link datamodel.Link) (schema.Metadata, error) {
+func (p *ProviderMock) getMeta(link datamodel.Link) (*schema.Metadata, error) {
 	data := make([]byte, 256)
 	rand.Read(data)
-	var meta schema.Metadata
+	var meta *schema.Metadata
 	var err error
 	if link == nil {
 		meta, err = schema.NewMetadata(data, p.ID, p.pk)
@@ -147,7 +147,11 @@ func (p *ProviderMock) SendMeta(update bool) (cid.Cid, error) {
 	if err != nil {
 		return cid.Undef, err
 	}
-	lnk, err := p.lsys.Store(ipld.LinkContext{}, schema.LinkProto, meta.Representation())
+	mnode, err := meta.ToNode()
+	if err != nil {
+		return cid.Undef, err
+	}
+	lnk, err := p.lsys.Store(ipld.LinkContext{}, schema.LinkProto, mnode)
 	if err != nil {
 		return cid.Undef, err
 	}

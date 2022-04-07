@@ -16,7 +16,7 @@ const (
 type metaSignatureRecord struct {
 	domain *string
 	codec  []byte
-	advID  []byte
+	metaID []byte
 }
 
 func (r *metaSignatureRecord) Domain() string {
@@ -34,22 +34,18 @@ func (r *metaSignatureRecord) Codec() []byte {
 }
 
 func (r *metaSignatureRecord) MarshalRecord() ([]byte, error) {
-	return r.advID, nil
+	return r.metaID, nil
 }
 
 func (r *metaSignatureRecord) UnmarshalRecord(buf []byte) error {
-	r.advID = buf
+	r.metaID = buf
 	return nil
 }
 
 // VerifyMetadata verifies that the metadata has been signed and
 // generated correctly.  Returns the peer ID of the signer.
-func VerifyMetadata(meta Metadata) (peer.ID, error) {
-
-	previousID := meta.FieldPreviousID().v
-	data := meta.FieldPayload().x
-	sig := meta.FieldSignature().x
-	provider := meta.FieldProvider().x
+func VerifyMetadata(meta *Metadata) (peer.ID, error) {
+	sig := meta.Signature
 
 	// Consume envelope
 	rec := &metaSignatureRecord{}
@@ -58,12 +54,12 @@ func VerifyMetadata(meta Metadata) (peer.ID, error) {
 		return peer.ID(""), err
 	}
 
-	genID, err := signatureMetadata(&previousID, provider, data)
+	genID, err := signMetadata(meta)
 	if err != nil {
 		return peer.ID(""), err
 	}
 
-	if !bytes.Equal(genID, rec.advID) {
+	if !bytes.Equal(genID, rec.metaID) {
 		return peer.ID(""), errors.New("invalid signature")
 	}
 
