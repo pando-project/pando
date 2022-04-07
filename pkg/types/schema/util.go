@@ -1,5 +1,3 @@
-//go:generate go run gen.go .
-
 package schema
 
 import (
@@ -15,10 +13,7 @@ import (
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/record"
-	"github.com/multiformats/go-multihash"
 )
-
-var mhCode = multihash.Names["sha2-256"]
 
 // LinkContextKey used to propagate link info through the linkSystem context
 type LinkContextKey string

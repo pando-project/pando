@@ -28,7 +28,7 @@ func (m *Metadata) ToNode() (n ipld.Node, err error) {
 	return
 }
 
-// UnwrapMetadata unwraps the given node as an advertisement.
+// UnwrapMetadata unwraps the given node as metadata.
 //
 // Note that the node is reassigned to MetadataPrototype if its prototype is different.
 // Therefore, it is recommended to load the node using the correct prototype initially
@@ -52,7 +52,7 @@ func UnwrapMetadata(node ipld.Node) (*Metadata, error) {
 
 	ad, ok := bindnode.Unwrap(node).(*Metadata)
 	if !ok || ad == nil {
-		return nil, fmt.Errorf("unwrapped node does not match schema.Advertisement")
+		return nil, fmt.Errorf("unwrapped node does not match schema.Metadata")
 	}
 	return ad, nil
 }

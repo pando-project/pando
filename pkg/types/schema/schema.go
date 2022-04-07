@@ -23,7 +23,7 @@ var (
 		},
 	}
 
-	// MetadataPrototype represents the IPLD node prototype of Advertisement.
+	// MetadataPrototype represents the IPLD node prototype of Metadata.
 	// See: bindnode.Prototype.
 	MetadataPrototype schema.TypedPrototype
 
