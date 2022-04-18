@@ -139,11 +139,11 @@ func signMetadata(privkey crypto.PrivKey, meta Metadata) ([]byte, error) {
 	data := meta.FieldPayload().x
 	provider := meta.FieldProvider().x
 
-	advID, err := signatureMetadata(&previousID, provider, data)
+	metaID, err := signatureMetadata(&previousID, provider, data)
 	if err != nil {
 		return nil, err
 	}
-	envelope, err := record.Seal(&metaSignatureRecord{advID: advID}, privkey)
+	envelope, err := record.Seal(&metaSignatureRecord{metaID: metaID}, privkey)
 	if err != nil {
 		return nil, err
 	}

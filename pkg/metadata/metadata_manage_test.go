@@ -27,7 +27,7 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 			So(err, ShouldBeNil)
 			provider, err := mock.NewMockProvider(pando)
 			So(err, ShouldBeNil)
-			err = pando.Registry.RegisterOrUpdate(context.Background(), provider.ID, cid.Undef)
+			err = pando.Registry.RegisterOrUpdate(context.Background(), provider.ID, cid.Undef, provider.ID, false)
 			So(err, ShouldBeNil)
 			cid1, err := provider.SendMeta(true)
 			So(err, ShouldBeNil)
