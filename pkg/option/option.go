@@ -127,6 +127,10 @@ func New(root *cobra.Command) *Options {
 
 	opt.Discovery.PollInterval = defaultPollInterval.String()
 
+	opt.Discovery.PollRetryAfter = defaultPollRetryAfter.String()
+
+	opt.Discovery.PollStopAfter = defaultPollStopAfter.String()
+
 	opt.Discovery.RediscoverWait = defaultRediscoverWait.String()
 
 	opt.Discovery.Timeout = defaultDiscoveryTimeout.String()
