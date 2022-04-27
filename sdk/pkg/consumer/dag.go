@@ -20,6 +20,8 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/kenlabs/PandoStore/pkg/config"
+	"github.com/kenlabs/PandoStore/pkg/store"
 	link "github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/sdk/pkg"
 	"github.com/libp2p/go-libp2p"
@@ -34,6 +36,7 @@ import (
 type core struct {
 	Blockstore     blockstore.Blockstore
 	MutexDatastore *datastoreSync.MutexDatastore
+	PandoStore     *store.PandoStore
 	LinkSys        ipld.LinkSystem
 }
 
@@ -71,7 +74,11 @@ func NewDAGConsumer(privateKeyStr string, pandoAPI string, connectTimeout time.D
 	datastore, err := leveldb.NewDatastore("", nil)
 	storageCore.MutexDatastore = datastoreSync.MutexWrap(datastore)
 	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
-	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore, nil, nil)
+	storageCore.PandoStore, err = store.NewStoreFromDatastore(context.Background(), storageCore.MutexDatastore, &config.StoreConfig{SnapShotInterval: "999m"})
+	if err != nil {
+		return nil, err
+	}
+	storageCore.LinkSys = link.MkLinkSystem(storageCore.PandoStore, nil, nil)
 
 	graphSyncNet := gsnet.NewFromLibp2pHost(consumerHost)
 	dataTransferNet := dtnetwork.NewFromLibp2pHost(consumerHost)
