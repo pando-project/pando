@@ -9,6 +9,8 @@ import (
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
 	blockStoreFactory "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/kenlabs/PandoStore/pkg/config"
+	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/kenlabs/pando/pkg/api"
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/legs"
@@ -16,7 +18,6 @@ import (
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/policy"
 	"github.com/kenlabs/pando/pkg/registry"
-	"github.com/kenlabs/pando/pkg/statetree"
 	"github.com/kenlabs/pando/pkg/statetree/types"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -128,10 +129,10 @@ func setLoglevel() error {
 		return err
 	}
 	logging.SetAllLoggers(logLevel)
-	err = logging.SetLogLevel("addrutil", "warn")
-	if err != nil {
-		return err
-	}
+	//err = logging.SetLogLevel("addrutil", "warn")
+	//if err != nil {
+	//	return err
+	//}
 	err = logging.SetLogLevel("basichost", "warn")
 	if err != nil {
 		return err
@@ -178,12 +179,23 @@ func initStoreInstance() (*core.StoreInstance, error) {
 
 	cacheStoreDir := filepath.Join(Opt.PandoRoot, Opt.CacheStore.Dir)
 	cacheStore, err := badger.Open(badger.DefaultOptions(cacheStoreDir))
+	if err != nil {
+		return nil, err
+	}
+
+	pandoStore, err := store.NewStoreFromDatastore(context.Background(), dataStore, &config.StoreConfig{
+		SnapShotInterval: Opt.DataStore.SnapShotInterval,
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &core.StoreInstance{
 		DataStore:      dataStore,
 		CacheStore:     cacheStore,
 		MutexDataStore: mutexDataStore,
 		BlockStore:     blockStore,
+		PandoStore:     pandoStore,
 	}, nil
 }
 
@@ -213,7 +225,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	var err error
 
 	c.StoreInstance = storeInstance
-	linkSystem := legs.MkLinkSystem(c.StoreInstance.BlockStore, nil, nil)
+	linkSystem := legs.MkLinkSystem(c.StoreInstance.PandoStore, nil, nil)
 	c.LinkSystem = &linkSystem
 
 	var lotusDiscoverer *lotus.Discoverer
@@ -234,7 +246,6 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 
 	c.MetaManager, err = metadata.New(context.Background(),
 		storeInstance.MutexDataStore,
-		storeInstance.BlockStore,
 		c.LinkSystem,
 		c.Registry,
 		&Opt.Backup)
@@ -248,15 +259,15 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	}
 	info.PeerID = p2pHost.ID().String()
 
-	c.StateTree, err = statetree.New(context.Background(),
-		storeInstance.MutexDataStore,
-		storeInstance.BlockStore,
-		c.MetaManager.GetUpdateOut(),
-		info,
-	)
-	if err != nil {
-		return nil, err
-	}
+	//c.StateTree, err = statetree.New(context.Background(),
+	//	storeInstance.MutexDataStore,
+	//	storeInstance.BlockStore,
+	//	c.MetaManager.GetUpdateOut(),
+	//	info,
+	//)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	backupGenInterval, err := time.ParseDuration(Opt.Backup.BackupGenInterval)
 	if err != nil {
@@ -266,7 +277,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 		p2pHost,
 		storeInstance.MutexDataStore,
 		storeInstance.CacheStore,
-		storeInstance.BlockStore,
+		storeInstance.PandoStore,
 		c.MetaManager.GetMetaInCh(),
 		backupGenInterval,
 		nil,

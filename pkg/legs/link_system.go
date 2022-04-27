@@ -6,20 +6,21 @@ import (
 	"fmt"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	//blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
 	_ "github.com/ipld/go-ipld-prime/codec/dagcbor"
 	_ "github.com/ipld/go-ipld-prime/codec/dagjson"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/multicodec"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/kenlabs/pando/pkg/types/schema"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"io"
 )
 
-func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) ipld.LinkSystem {
+func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld.LinkSystem {
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.TrustedStorage = true
 	lsys.StorageReadOpener = func(lnkCtx ipld.LinkContext, lnk ipld.Link) (io.Reader, error) {
@@ -27,11 +28,11 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) 
 		if !ok {
 			return nil, fmt.Errorf("unsupported link types")
 		}
-		block, err := bs.Get(lnkCtx.Ctx, asCidLink.Cid)
+		block, err := ps.Get(lnkCtx.Ctx, asCidLink.Cid)
 		if err != nil {
 			return nil, err
 		}
-		return bytes.NewBuffer(block.RawData()), nil
+		return bytes.NewBuffer(block), nil
 	}
 	lsys.StorageWriteOpener = func(lctx ipld.LinkContext) (io.Writer, ipld.BlockWriteCommitter, error) {
 		buf := bytes.NewBuffer(nil)
@@ -75,7 +76,7 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) 
 						}
 					}(peerid)
 				}
-				return bs.Put(lctx.Ctx, block)
+				return ps.Store(lctx.Ctx, c, block.RawData(), peerid, nil)
 			}
 			log.Debug("Received unexpected IPLD node, skip")
 			return nil

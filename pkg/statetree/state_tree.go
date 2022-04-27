@@ -274,9 +274,7 @@ func (st *StateTree) GetSnapShotCidList() ([]cid.Cid, error) {
 func (st *StateTree) GetSnapShot(sscid cid.Cid) (shot *statetreeTypes.SnapShot, err error) {
 	ss := new(statetreeTypes.SnapShot)
 	err = st.Store.Get(st.ctx, sscid, ss)
-	if err == blockstore.ErrNotFound {
-		return nil, NotFoundErr
-	} else if err != nil {
+	if err != nil {
 		return nil, err
 	}
 	return ss, nil

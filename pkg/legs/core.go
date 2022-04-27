@@ -14,8 +14,9 @@ import (
 	"github.com/ipfs/go-graphsync"
 	gsimpl "github.com/ipfs/go-graphsync/impl"
 	gsnet "github.com/ipfs/go-graphsync/network"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	//blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/option"
 	"github.com/kenlabs/pando/pkg/policy"
@@ -41,7 +42,7 @@ type Core struct {
 	Host              host.Host
 	DS                datastore.Batching
 	CS                *badger.DB
-	BS                blockstore.Blockstore
+	PS                *store.PandoStore
 	GS                graphsync.GraphExchange
 	LS                *golegs.Subscriber
 	reg               *registry.Registry
@@ -59,7 +60,7 @@ func NewLegsCore(ctx context.Context,
 	host host.Host,
 	ds datastore.Batching,
 	cs *badger.DB,
-	bs blockstore.Blockstore,
+	ps *store.PandoStore,
 	outMetaCh chan<- *metadata.MetaRecord,
 	backupGenInterval time.Duration,
 	rateLimiter *policy.Limiter, reg *registry.Registry, options *option.Options) (*Core, error) {
@@ -68,7 +69,7 @@ func NewLegsCore(ctx context.Context,
 		Host:              host,
 		DS:                ds,
 		CS:                cs,
-		BS:                bs,
+		PS:                ps,
 		reg:               reg,
 		recvMetaCh:        outMetaCh,
 		backupGenInterval: backupGenInterval,
@@ -77,7 +78,7 @@ func NewLegsCore(ctx context.Context,
 		options:           options,
 	}
 
-	ls, gs, err := c.initSub(ctx, host, ds, bs, reg)
+	ls, gs, err := c.initSub(ctx, host, ds, ps, reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create legs subscriber, err: %s", err.Error())
 	}
@@ -101,8 +102,8 @@ func NewLegsCore(ctx context.Context,
 	return c, nil
 }
 
-func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, bs blockstore.Blockstore, reg *registry.Registry) (*golegs.Subscriber, graphsync.GraphExchange, error) {
-	lnkSys := MkLinkSystem(bs, c, reg)
+func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, ps *store.PandoStore, reg *registry.Registry) (*golegs.Subscriber, graphsync.GraphExchange, error) {
+	lnkSys := MkLinkSystem(ps, c, reg)
 	gsNet := gsnet.NewFromLibp2pHost(h)
 	dtNet := dtnetwork.NewFromLibp2pHost(h)
 	gs := gsimpl.New(context.Background(), gsNet, lnkSys)
@@ -216,7 +217,7 @@ func (c *Core) SetRatelimiter(rl *policy.Limiter) {
 // for the peer that was synced.
 func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 	for syncFin := range onSyncFin {
-		if _, err := c.BS.Get(context.Background(), syncFin.Cid); err != nil {
+		if _, err := c.PS.Get(context.Background(), syncFin.Cid); err != nil {
 			// skip if data is not stored
 			continue
 		}

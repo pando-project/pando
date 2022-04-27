@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	adapter "github.com/gwatts/gin-adapter"
 	"github.com/kenlabs/pando/pkg/api/types"
-	"github.com/kenlabs/pando/pkg/api/v1"
 	"github.com/kenlabs/pando/pkg/metrics"
 	"net/http"
 	"strings"
@@ -27,12 +26,12 @@ func (a *API) pandoInfo(ctx *gin.Context) {
 	record := metrics.APITimer(context.Background(), metrics.GetPandoInfoLatency)
 	defer record()
 
-	pandoInfo, err := a.core.StateTree.GetPandoInfo()
-	if err != nil {
-		logger.Errorf("get pando pandoInfo failed: %v", err)
-		handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
-		return
-	}
+	//pandoInfo, err := a.core.StateTree.GetPandoInfo()
+	//if err != nil {
+	//	logger.Errorf("get pando pandoInfo failed: %v", err)
+	//	handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
+	//	return
+	//}
 
 	ipReplacer := func(multiAddress string, replaceIP string) string {
 		splitAddress := strings.Split(multiAddress, "/")
@@ -49,5 +48,5 @@ func (a *API) pandoInfo(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, types.NewOKResponse("ok", struct {
 		PeerID       string
 		APIAddresses map[string]string
-	}{pandoInfo.PeerID, apiAddresses}))
+	}{a.core.LegsCore.Host.ID().String(), apiAddresses}))
 }

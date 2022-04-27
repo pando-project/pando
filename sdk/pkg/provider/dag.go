@@ -12,6 +12,8 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/kenlabs/PandoStore/pkg/config"
+	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/kenlabs/pando/pkg/types/schema"
 
 	datastoreSync "github.com/ipfs/go-datastore/sync"
@@ -67,8 +69,14 @@ func NewMetaProvider(privateKeyStr string, connectTimeout time.Duration, pushTim
 	datastore, err := leveldb.NewDatastore("", nil)
 	storageCore.MutexDatastore = datastoreSync.MutexWrap(datastore)
 	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
+	ps, err := store.NewStoreFromDatastore(context.Background(), datastore, &config.StoreConfig{
+		SnapShotInterval: "9999h",
+	})
+	if err != nil {
+		return nil, err
+	}
 
-	storageCore.LinkSys = link.MkLinkSystem(storageCore.Blockstore, nil, nil)
+	storageCore.LinkSys = link.MkLinkSystem(ps, nil, nil)
 	legsPublisher, err := dtsync.NewPublisher(providerHost, datastore, storageCore.LinkSys, topic)
 
 	time.Sleep(2 * time.Second)
@@ -107,13 +115,13 @@ func (p *DAGProvider) NewMetadataWithLink(payload []byte, link datamodel.Link) (
 	return schema.NewMetadataWithLink(payload, p.Host.ID(), p.PrivateKey, link)
 }
 
-func (p *DAGProvider) AppendMetadata(metadata *schema.Metadata, payload []byte) (*schema.Metadata, error) {
-	previousID, err := p.PushLocal(context.Background(), metadata)
-	if err != nil {
-		return nil, err
-	}
-	return metadata.AppendMetadata(previousID, p.Host.ID(), payload, p.PrivateKey)
-}
+//func (p *DAGProvider) AppendMetadata(metadata *schema.Metadata, payload []byte) (*schema.Metadata, error) {
+//	previousID, err := p.PushLocal(context.Background(), metadata)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return metadata.AppendMetadata(previousID, p.Host.ID(), payload, p.PrivateKey)
+//}
 
 func (p *DAGProvider) Push(metadata *schema.Metadata) (cid.Cid, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), p.PushTimeout)

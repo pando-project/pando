@@ -6,16 +6,16 @@ import (
 	"github.com/ipfs/go-ds-leveldb"
 	"github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
+	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/pkg/lotus"
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/registry"
-	"github.com/kenlabs/pando/pkg/statetree"
 )
 
 type Core struct {
-	MetaManager   *metadata.MetaManager
-	StateTree     *statetree.StateTree
+	MetaManager *metadata.MetaManager
+	//StateTree     *statetree.StateTree
 	LotusDiscover *lotus.Discoverer
 	Registry      *registry.Registry
 	LegsCore      *legs.Core
@@ -27,5 +27,6 @@ type StoreInstance struct {
 	DataStore      *leveldb.Datastore
 	MutexDataStore *sync.MutexDatastore
 	BlockStore     blockstore.Blockstore
+	PandoStore     *store.PandoStore
 	CacheStore     *badger.DB
 }
