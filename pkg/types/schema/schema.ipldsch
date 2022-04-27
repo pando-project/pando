@@ -1,11 +1,10 @@
-
 type Metadata struct {
 	# Previous metadata.
 	PreviousID nullable Link_Metadata
     # Provider ID of the metadata
     Provider String
 	# data
-	Payload   Bytes
+	Payload   Any
 	# metadata signature.
     Signature Bytes
 }

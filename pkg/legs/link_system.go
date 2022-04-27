@@ -43,7 +43,7 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) 
 			log := log.With("cid", c)
 
 			// Decode the node to check its type.
-			n, err := decodeIPLDNode(codec, buf)
+			n, err := decodeIPLDNode(codec, buf, basicnode.Prototype.Any)
 			if err != nil {
 				log.Errorw("Error decoding IPLD node in linksystem", "err", err)
 				return errors.New("bad ipld data")
@@ -69,7 +69,7 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) 
 				}
 				if reg != nil {
 					go func(p peer.ID) {
-						err = reg.RegisterOrUpdate(lctx.Ctx, p, cid.Undef)
+						err = reg.RegisterOrUpdate(lctx.Ctx, p, cid.Undef, peer.ID(""), true)
 						if err != nil {
 							log.Errorf("failed to register new provider, err: %v", err)
 						}
@@ -77,19 +77,23 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) 
 				}
 				return bs.Put(lctx.Ctx, block)
 			}
-			log.Debug("Received unexpected IPLD node, skip")
-			return nil
+			block, err := blocks.NewBlockWithCid(origBuf, c)
+			if err != nil {
+				return err
+			}
+			log.Debugf("Received unexpected IPLD node, cid: %s", c.String())
+			return bs.Put(lctx.Ctx, block)
 		}, nil
 	}
 	return lsys
 }
 
 // decodeIPLDNode decodes an ipld.Node from bytes read from an io.Reader.
-func decodeIPLDNode(codec uint64, r io.Reader) (ipld.Node, error) {
+func decodeIPLDNode(codec uint64, r io.Reader, prototype ipld.NodePrototype) (ipld.Node, error) {
 	// NOTE: Considering using the schema prototypes.  This was failing, using
 	// a map gives flexibility.  Maybe is worth revisiting this again in the
 	// future.
-	nb := basicnode.Prototype.Any.NewBuilder()
+	nb := prototype.NewBuilder()
 	decoder, err := multicodec.LookupDecoder(codec)
 	if err != nil {
 		return nil, err
@@ -111,17 +115,8 @@ func isMetadata(n ipld.Node) bool {
 	return signature != nil && provider != nil && payload != nil
 }
 
-func decodeMeta(n ipld.Node) (schema.Metadata, error) {
-	nb := schema.Type.Metadata.NewBuilder()
-	err := nb.AssignNode(n)
-	if err != nil {
-		return nil, err
-	}
-	return nb.Build().(schema.Metadata), nil
-}
-
-func verifyMetadata(n ipld.Node) (schema.Metadata, peer.ID, error) {
-	meta, err := decodeMeta(n)
+func verifyMetadata(n ipld.Node) (*schema.Metadata, peer.ID, error) {
+	meta, err := schema.UnwrapMetadata(n)
 	if err != nil {
 		log.Errorw("Cannot decode metadata", "err", err)
 		return nil, peer.ID(""), err
@@ -153,12 +148,8 @@ func verifyMetadata(n ipld.Node) (schema.Metadata, peer.ID, error) {
 }
 
 // providerFromMetadata reads the provider ID from an metadata
-func providerFromMetadata(ad schema.Metadata) (peer.ID, error) {
-	provider, err := ad.FieldProvider().AsString()
-	if err != nil {
-		return peer.ID(""), fmt.Errorf("cannot read provider from metadata: %w", err)
-	}
-
+func providerFromMetadata(m *schema.Metadata) (peer.ID, error) {
+	provider := m.Provider
 	providerID, err := peer.Decode(provider)
 	if err != nil {
 		return peer.ID(""), fmt.Errorf("cannot decode provider peer id: %w", err)
