@@ -107,10 +107,6 @@ func (a *API) newStateField() *graphql.Field {
 			if err != nil {
 				return nil, err
 			}
-			//providerState, err := a.core.StateTree.GetProviderStateByPeerID(peerID)
-			//if err != nil {
-			//	return nil, err
-			//}
 			providerState, err := a.core.StoreInstance.PandoStore.StateStore.GetProviderInfo(context.Background(), peerID)
 			if err != nil {
 				return nil, err
