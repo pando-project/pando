@@ -24,7 +24,6 @@ func TestOptions(t *testing.T) {
 			So(opt.ServerAddress.HttpAPIListenAddress, ShouldEqual, defaultHttpAPIListenAddress)
 			So(opt.ServerAddress.GraphqlListenAddress, ShouldEqual, defaultGraphqlListenAddress)
 			So(opt.ServerAddress.P2PAddress, ShouldEqual, defaultP2PAddress)
-			So(opt.ServerAddress.DisableP2P, ShouldEqual, defaultDisableP2P)
 			So(opt.DataStore.Type, ShouldEqual, defaultDataStoreType)
 			So(opt.DataStore.Dir, ShouldEqual, defaultDataStoreDir)
 			So(opt.Discovery.Policy.Allow, ShouldEqual, defaultAllow)

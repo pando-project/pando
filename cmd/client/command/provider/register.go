@@ -3,6 +3,7 @@ package provider
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/kenlabs/pando/pkg/api/v1/model"
 	"os"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -10,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/kenlabs/pando/cmd/client/command/api"
-	"github.com/kenlabs/pando/pkg/register"
 )
 
 const registerPath = "/register"
@@ -48,7 +48,7 @@ func registerCmd() *cobra.Command {
 				return err
 			}
 
-			data, err := register.MakeRegisterRequest(peerID, privateKey, registerInfo.addresses, registerInfo.miner)
+			data, err := model.MakeRegisterRequest(peerID, privateKey, registerInfo.addresses, registerInfo.miner)
 			if err != nil {
 				return err
 			}

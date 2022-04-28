@@ -1,8 +1,11 @@
-package api
+package server
 
 import (
 	"context"
 	"fmt"
+	"github.com/kenlabs/pando/pkg/api/v1/handler/p2phandler"
+	"github.com/kenlabs/pando/pkg/api/v1/server/httpserver"
+	"github.com/kenlabs/pando/pkg/api/v1/server/libp2p"
 	"go.elastic.co/apm/module/apmhttp"
 	"golang.org/x/sync/errgroup"
 	"net/http"
@@ -32,6 +35,8 @@ type Server struct {
 
 	ProfileServer     *http.Server
 	ProfileListenAddr string
+
+	P2PServer *libp2p.Server
 }
 
 func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
@@ -55,25 +60,25 @@ func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
 		return nil, err
 	}
 
-	return &Server{
+	s := &Server{
 		Opt:  opt,
 		Core: core,
 
 		AdminServer: &http.Server{
 			Addr:    adminListenAddress,
-			Handler: apmhttp.Wrap(NewAdminRouter(core, opt)),
+			Handler: apmhttp.Wrap(httpserver.NewAdminRouter(core, opt)),
 		},
 		AdminListenAddr: adminListenAddress,
 
 		HttpServer: &http.Server{
 			Addr:    httpListenAddress,
-			Handler: apmhttp.Wrap(NewHttpRouter(core, opt)),
+			Handler: apmhttp.Wrap(httpserver.NewHttpRouter(core, opt)),
 		},
 		HttpListenAddr: httpListenAddress,
 
 		GraphqlServer: &http.Server{
 			Addr:    graphqlListenAddress,
-			Handler: NewGraphqlRouter(core),
+			Handler: httpserver.NewGraphqlRouter(core),
 		},
 		GraphqlListenAddr: graphqlListenAddress,
 
@@ -81,7 +86,14 @@ func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
 			Addr: profileListenAddress,
 		},
 		ProfileListenAddr: profileListenAddress,
-	}, nil
+	}
+
+	if !opt.ServerAddress.DisableP2PServer {
+		libp2pHandler := p2phandler.NewHandler(core, opt)
+		s.P2PServer = libp2p.New(context.Background(), core.LegsCore.Host, libp2pHandler)
+	}
+
+	return s, nil
 }
 
 func (s *Server) StartAdminServer() error {
@@ -136,6 +148,10 @@ func (s *Server) StopProfileServer() error {
 	return s.ProfileServer.Shutdown(ctx)
 }
 
+func (s *Server) StopP2pServer() error {
+	return s.P2PServer.Shutdown()
+}
+
 func (s *Server) MustStartAllServers() {
 	go func() {
 		err := s.StartAdminServer()
@@ -149,6 +165,10 @@ func (s *Server) MustStartAllServers() {
 		if err != nil && err != http.ErrServerClosed {
 			panic(fmt.Sprintf("http server cannot start: %v", err))
 		}
+	}()
+
+	go func() {
+
 	}()
 
 	go func() {

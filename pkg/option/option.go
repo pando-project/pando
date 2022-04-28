@@ -95,8 +95,8 @@ func New(root *cobra.Command) *Options {
 	opt.flags.StringVar(&opt.ServerAddress.ProfileListenAddress, "profile-listen-addr", defaultProfileListenAddress,
 		fmt.Sprintf("Profile server listen address(in multiaddress format, like %s).", defaultProfileListenAddress))
 
-	opt.flags.BoolVar(&opt.ServerAddress.DisableP2P, "p2p-disable", defaultDisableP2P,
-		"Disable libp2p hosting.")
+	opt.flags.BoolVar(&opt.ServerAddress.DisableP2PServer, "p2p-server-disable", defaultDisableP2PServer,
+		"Disable libp2p server.")
 
 	opt.flags.StringVar(&opt.ServerAddress.P2PAddress, "p2p-address", defaultP2PAddress,
 		fmt.Sprintf("P2P hosting address(in multiaddress format, like %s).", defaultP2PAddress))

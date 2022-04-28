@@ -23,15 +23,27 @@ func (i Identity) DecodePrivateKey() (crypto.PrivKey, error) {
 }
 
 func (i Identity) Decode() (peer.ID, crypto.PrivKey, error) {
-	peerID, err := peer.Decode(i.PeerID)
+
+	privKey, err := i.DecodePrivateKey()
 	if err != nil {
-		return "", nil, fmt.Errorf("could not decode account id: %s", err)
+		return "", nil, fmt.Errorf("could not decode private key: %w", err)
 	}
 
-	privateKey, err := i.DecodePrivateKey()
+	peerIDFromPrivKey, err := peer.IDFromPrivateKey(privKey)
 	if err != nil {
-		return "", nil, fmt.Errorf("could not decode private key: %s", err)
+		return "", nil, fmt.Errorf("could not generate peer ID from private key: %w", err)
 	}
 
-	return peerID, privateKey, nil
+	if i.PeerID != "" {
+		peerID, err := peer.Decode(i.PeerID)
+		if err != nil {
+			return "", nil, fmt.Errorf("could not decode peer id: %w", err)
+		}
+
+		if peerID != "" && peerIDFromPrivKey != peerID {
+			return "", nil, fmt.Errorf("provided peer ID must either match the peer ID generated from private key or be omitted: expected %s but got %s", peerIDFromPrivKey, peerID)
+		}
+	}
+
+	return peerIDFromPrivKey, privKey, nil
 }
