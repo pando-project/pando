@@ -37,6 +37,8 @@ var (
 		"Time to fetch metadata snapshots", stats.UnitMilliseconds)
 	GetMetadataSnapshotLatency = stats.Float64("get/metadata/snapshot_latency",
 		"Time to fetch snapshot info", stats.UnitMilliseconds)
+	GetMetadataInclusionLatency = stats.Float64("get/metadata/inclusion_latency",
+		"Time to fetch meta inclusion", stats.UnitMilliseconds)
 
 	// go-legs graph persistence
 	GraphPersistenceLatency = stats.Float64("sync/graph/persistence_latency",
@@ -53,6 +55,7 @@ var (
 		{Measure: GetPandoSubscribeLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetMetadataListLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetMetadataSnapshotLatency, Aggregation: view.Distribution(bounds...)},
+		{Measure: GetMetadataInclusionLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GraphPersistenceLatency, Aggregation: view.Distribution(bounds...)},
 	}
 )

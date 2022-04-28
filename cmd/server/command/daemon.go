@@ -11,7 +11,6 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/PandoStore/pkg/config"
 	"github.com/kenlabs/PandoStore/pkg/store"
-	"github.com/kenlabs/pando/pkg/api"
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/api/v1/server"
 	"github.com/kenlabs/pando/pkg/legs"
@@ -19,7 +18,6 @@ import (
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/policy"
 	"github.com/kenlabs/pando/pkg/registry"
-	"github.com/kenlabs/pando/pkg/statetree/types"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	libp2pHost "github.com/libp2p/go-libp2p-core/host"
@@ -253,12 +251,6 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	if err != nil {
 		return nil, err
 	}
-
-	info := new(types.ExtraInfo)
-	for _, addr := range p2pHost.Addrs() {
-		info.MultiAddresses += addr.String() + " "
-	}
-	info.PeerID = p2pHost.ID().String()
 
 	backupGenInterval, err := time.ParseDuration(Opt.Backup.BackupGenInterval)
 	if err != nil {
