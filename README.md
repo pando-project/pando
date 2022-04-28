@@ -55,20 +55,9 @@ Make sure you correctly link your chained metadata using PreviousID node.
 
 #### Integration process
 The provider integration is recommended to follow the steps below:
-1. Refer to [Build Pando server and client](#build-pando-server-and-client) to build the client CLI.
-2. Go to the `bin` directory of the repo, and register the provider instance in Pando using the client CLI:
-```shell
-./pando-client -a https://pando-api.kencloud.com provider register \
-  --peer-id PROVIDER_PEER_ID_STR \
-  --private-key PROVIDER_PRIVATE_KEY_STR
-```
-Note: we will not upload any provider's private key to any network.
-CLI uses private key only for signing registration information,
-as Pando will verify that the provider peer ID matches the public key to prevent
-illegal provider from falsely using the peer ID of other providers.
 
-3. Create a provider instance with Pando SDK, then connect to Pando, initialize a metadata instance and append new metadata if you need.
-4. Push the latest metadata instance.
+1. Create a provider instance with Pando SDK, then connect to Pando, initialize a metadata instance and append new metadata if you need.
+2. Push the latest metadata instance.
 
 Check out [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
 
