@@ -6,6 +6,7 @@ import (
 	golegs "github.com/filecoin-project/go-legs"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
+	"github.com/ipfs/go-datastore/sync"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/PandoStore/pkg/config"
 	"github.com/kenlabs/PandoStore/pkg/store"
@@ -150,14 +151,14 @@ func TestSyncDataFromPando(t *testing.T) {
 		h, err := libp2p.New()
 		So(err, ShouldBeNil)
 		ds := datastore.NewMapDatastore()
-		//mds := sync.MutexWrap(ds)
+		mds := sync.MutexWrap(ds)
 		////bs := blockstore.NewBlockstore(mds)
-		ps, err := store.NewStoreFromDatastore(context.Background(), ds, &config.StoreConfig{
+		ps, err := store.NewStoreFromDatastore(context.Background(), mds, &config.StoreConfig{
 			SnapShotInterval: "1s",
 		})
 		So(err, ShouldBeNil)
 		lsys := legs.MkLinkSystem(ps, nil, nil)
-		consumer, err := golegs.NewSubscriber(h, ds, lsys, mock.GetTopic(), nil)
+		consumer, err := golegs.NewSubscriber(h, mds, lsys, mock.GetTopic(), nil)
 		So(err, ShouldBeNil)
 
 		multiAddress := pando.Host.Addrs()[0].String() + "/ipfs/" + pando.Host.ID().String()

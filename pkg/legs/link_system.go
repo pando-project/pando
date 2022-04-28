@@ -83,7 +83,7 @@ func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld
 				return err
 			}
 			log.Debugf("Received unexpected IPLD node, cid: %s", c.String())
-			return bs.Put(lctx.Ctx, block)
+			return ps.Store(lctx.Ctx, c, block.RawData(), peer.ID(""), nil)
 		}, nil
 	}
 	return lsys
