@@ -3,7 +3,6 @@ package core
 import (
 	badger "github.com/dgraph-io/badger/v3"
 	"github.com/ipfs/go-datastore/sync"
-	"github.com/ipfs/go-ds-leveldb"
 	"github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/kenlabs/PandoStore/pkg/store"
@@ -24,7 +23,7 @@ type Core struct {
 }
 
 type StoreInstance struct {
-	DataStore      *leveldb.Datastore
+	//DataStore      *leveldb.Datastore
 	MutexDataStore *sync.MutexDatastore
 	BlockStore     blockstore.Blockstore
 	PandoStore     *store.PandoStore

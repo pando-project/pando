@@ -142,7 +142,7 @@ func (a *API) listProviderHead(ctx *gin.Context) {
 			Cid string
 		}{}
 		var cidBytes []byte
-		cidBytes, err = a.core.StoreInstance.DataStore.Get(ctx, datastore.NewKey(legs.SyncPrefix+peerid.String()))
+		cidBytes, err = a.core.StoreInstance.MutexDataStore.Get(ctx, datastore.NewKey(legs.SyncPrefix+peerid.String()))
 		if err != nil {
 			if err == datastore.ErrNotFound {
 				handleError(ctx, http.StatusNotFound, "not found the head of this provider")

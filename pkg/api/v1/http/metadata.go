@@ -22,7 +22,26 @@ func (a *API) registerMetadata() {
 	{
 		metadata.GET("/list", a.metadataList)
 		metadata.GET("/snapshot", a.metadataSnapshot)
+		metadata.GET("/inclusion", a.metaInclusion)
 	}
+}
+
+func (a *API) metaInclusion(ctx *gin.Context) {
+	metaCidString := ctx.Query("cid")
+	c, err := cid.Decode(metaCidString)
+	if err != nil {
+		logger.Errorf("invalid cid: %s, err:%v", c.String(), err)
+		handleError(ctx, http.StatusBadRequest, v1.InvalidQuery)
+		return
+	}
+
+	inclusion, err := a.core.StoreInstance.PandoStore.MetaInclusion(ctx, c)
+	if err != nil {
+		logger.Errorf("failed to get meta inclusion for cid: %s, err:%v", c.String(), err)
+		handleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
+		return
+	}
+	ctx.JSON(http.StatusOK, types.NewOKResponse("OK", inclusion))
 }
 
 func (a *API) metadataList(ctx *gin.Context) {

@@ -858,6 +858,8 @@ github.com/kenlabs/PandoStore v0.0.0-20220427043735-ecf614488d91 h1:9DJBTG9gtQC5
 github.com/kenlabs/PandoStore v0.0.0-20220427043735-ecf614488d91/go.mod h1:s7vSmzeZxWGAtdIbp8S9OIOlaW7fVGJSGNsEho4+HvM=
 github.com/kenlabs/PandoStore v0.0.0-20220427091536-9d1f4a14af40 h1:MXwM5SI2Okez5+9cOoY7Yhe+rBw6cJvq7BDVQqLFqRs=
 github.com/kenlabs/PandoStore v0.0.0-20220427091536-9d1f4a14af40/go.mod h1:s7vSmzeZxWGAtdIbp8S9OIOlaW7fVGJSGNsEho4+HvM=
+github.com/kenlabs/PandoStore v0.0.0-20220428043537-d017430af65a h1:6Zc2bLzJgeH8Fms8q8ycnmsAcAfizDWbGt2CRYuF6pU=
+github.com/kenlabs/PandoStore v0.0.0-20220428043537-d017430af65a/go.mod h1:s7vSmzeZxWGAtdIbp8S9OIOlaW7fVGJSGNsEho4+HvM=
 github.com/kenlabs/speedtest-go v1.1.5 h1:mKwFB1rbf4gdzlc0CIMqHvCf2jjaLqwLgAOne2hpTDM=
 github.com/kenlabs/speedtest-go v1.1.5/go.mod h1:dJugxvC/AQDt4HQQKZ9lKNa2+b1c8nzj9IL0a/F8l1U=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=

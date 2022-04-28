@@ -69,7 +69,7 @@ func NewMetaProvider(privateKeyStr string, connectTimeout time.Duration, pushTim
 	datastore, err := leveldb.NewDatastore("", nil)
 	storageCore.MutexDatastore = datastoreSync.MutexWrap(datastore)
 	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
-	ps, err := store.NewStoreFromDatastore(context.Background(), datastore, &config.StoreConfig{
+	ps, err := store.NewStoreFromDatastore(context.Background(), storageCore.MutexDatastore, &config.StoreConfig{
 		SnapShotInterval: "9999h",
 	})
 	if err != nil {

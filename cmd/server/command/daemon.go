@@ -183,7 +183,7 @@ func initStoreInstance() (*core.StoreInstance, error) {
 		return nil, err
 	}
 
-	pandoStore, err := store.NewStoreFromDatastore(context.Background(), dataStore, &config.StoreConfig{
+	pandoStore, err := store.NewStoreFromDatastore(context.Background(), mutexDataStore, &config.StoreConfig{
 		SnapShotInterval: Opt.DataStore.SnapShotInterval,
 	})
 	if err != nil {
@@ -191,7 +191,7 @@ func initStoreInstance() (*core.StoreInstance, error) {
 	}
 
 	return &core.StoreInstance{
-		DataStore:      dataStore,
+		//DataStore:      dataStore,
 		CacheStore:     cacheStore,
 		MutexDataStore: mutexDataStore,
 		BlockStore:     blockStore,
@@ -239,7 +239,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	}
 
 	c.Registry, err = registry.NewRegistry(context.Background(), &Opt.Discovery, &Opt.AccountLevel,
-		storeInstance.DataStore, lotusDiscoverer)
+		storeInstance.MutexDataStore, lotusDiscoverer)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create provider registryInstance: %v", err)
 	}
@@ -258,16 +258,6 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 		info.MultiAddresses += addr.String() + " "
 	}
 	info.PeerID = p2pHost.ID().String()
-
-	//c.StateTree, err = statetree.New(context.Background(),
-	//	storeInstance.MutexDataStore,
-	//	storeInstance.BlockStore,
-	//	c.MetaManager.GetUpdateOut(),
-	//	info,
-	//)
-	//if err != nil {
-	//	return nil, err
-	//}
 
 	backupGenInterval, err := time.ParseDuration(Opt.Backup.BackupGenInterval)
 	if err != nil {

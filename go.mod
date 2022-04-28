@@ -41,7 +41,7 @@ require (
 	github.com/ipfs/go-merkledag v0.6.0
 	github.com/ipld/go-car/v2 v2.1.1
 	github.com/ipld/go-ipld-prime v0.16.0
-	github.com/kenlabs/PandoStore v0.0.0-20220427091536-9d1f4a14af40 // indirect
+	github.com/kenlabs/PandoStore v0.0.0-20220428043537-d017430af65a // indirect
 	github.com/libp2p/go-libp2p v0.18.1
 	github.com/libp2p/go-libp2p-core v0.15.1
 	github.com/libp2p/go-libp2p-record v0.1.3 // indirect
