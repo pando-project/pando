@@ -1,0 +1,29 @@
+syntax = "proto3";
+package proto;
+option go_package = "./proto";
+
+// protoc -I=../proto --go_out=../ pando.proto
+
+message PandoMessage {
+  enum MessageType {
+    ERROR_RESPONSE = 0;
+    GET_SNAPSHOT_CID_LIST = 1;
+    GET_SNAPSHOT_CID_LIST_RESPONSE = 2;
+    GET_SNAPSHOT = 3;
+    GET_SNAPSHOT_RESPONSE = 4;
+    REGISTER_PROVIDER = 5;
+    REGISTER_PROVIDER_RESPONSE = 6;
+    GET_PROVIDER_INFO = 7;
+    GET_PROVIDER_INFO_RESPONSE = 8;
+    GET_PROVIDER_HEAD = 9;
+    GET_PROVIDER_HEAD_RESPONSE = 10;
+    GET_PANDO_INFO = 11;
+    GET_PANDO_INFO_RESPONSE = 12;
+  }
+
+  // defines what type of message it is.
+  MessageType type = 1;
+
+  // Value for the message
+  bytes data = 2;
+}

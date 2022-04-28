@@ -96,7 +96,7 @@ Now you can start a pando server:
 or start with custom listen address (in multiaddress format):
 ```shell
 ./pando-server daemon \
-  --http-listen-addr /ip4/0.0.0.0/tcp/8080 \
+  --httphandler-listen-addr /ip4/0.0.0.0/tcp/8080 \
   --graphql-listen-addr /ipv/0.0.0.0/tcp/8081
 ```
 
