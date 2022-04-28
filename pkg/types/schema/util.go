@@ -25,13 +25,34 @@ const (
 	IsMetadataKey = LinkContextKey("isMetadataLink")
 )
 
-func NewMetadata(payload []byte, provider peer.ID, signKey crypto.PrivKey) (*Metadata, error) {
+func NewMetaWithBytesPayload(payload []byte, provider peer.ID, signKey crypto.PrivKey) (*Metadata, error) {
 
 	pnode := basicnode.NewBytes(payload)
 	meta := &Metadata{
 		PreviousID: nil,
 		Provider:   provider.String(),
 		Payload:    pnode,
+	}
+
+	sig, err := SignWithPrivky(signKey, meta)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add signature
+	meta.Signature = sig
+	return meta, nil
+}
+
+func NewMetaWithPayloadNode(payload datamodel.Node, provider peer.ID, signKey crypto.PrivKey, prev datamodel.Link) (*Metadata, error) {
+	meta := &Metadata{
+		Provider: provider.String(),
+		Payload:  payload,
+	}
+	if prev == nil {
+		meta.PreviousID = nil
+	} else {
+		meta.PreviousID = &prev
 	}
 
 	sig, err := SignWithPrivky(signKey, meta)
