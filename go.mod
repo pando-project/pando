@@ -42,7 +42,8 @@ require (
 	github.com/ipfs/go-log/v2 v2.5.0
 	github.com/ipfs/go-merkledag v0.5.1
 	github.com/ipld/go-car/v2 v2.1.1
-	github.com/ipld/go-ipld-prime v0.14.4
+	github.com/ipld/go-ipld-prime v0.16.0
+	//github.com/ipld/go-ipld-prime v0.14.4
 	github.com/libp2p/go-libp2p v0.18.0-rc1
 	github.com/libp2p/go-libp2p-core v0.14.0
 	github.com/libp2p/go-libp2p-record v0.1.3 // indirect
@@ -80,7 +81,7 @@ require (
 )
 
 replace (
-	github.com/ipld/go-ipld-prime v0.14.4 => github.com/ipld/go-ipld-prime v0.14.3
+	//github.com/ipld/go-ipld-prime v0.14.4 => github.com/ipld/go-ipld-prime v0.14.3
 	github.com/libp2p/go-libp2p v0.18.0-rc1 => github.com/libp2p/go-libp2p v0.17.0
 	github.com/libp2p/go-libp2p-core v0.14.0 => github.com/libp2p/go-libp2p-core v0.13.0
 	github.com/showwin/speedtest-go v1.1.4 => github.com/kenlabs/speedtest-go v1.1.5

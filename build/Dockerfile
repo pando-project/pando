@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:20.04
 
 ADD ./pando-server /opt/pando-server
 ADD start.sh /opt/start.sh
