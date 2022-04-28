@@ -24,6 +24,7 @@ require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-openapi/runtime v0.21.0
 	github.com/go-resty/resty/v2 v2.7.0
+	github.com/gogo/protobuf v1.3.2
 	github.com/graphql-go/graphql v0.8.0
 	github.com/gwatts/gin-adapter v0.0.0-20170508204228-c44433c485ad
 	github.com/ipfs/go-block-format v0.0.3
@@ -45,6 +46,7 @@ require (
 	github.com/libp2p/go-libp2p v0.18.1
 	github.com/libp2p/go-libp2p-core v0.15.1
 	github.com/libp2p/go-libp2p-record v0.1.3 // indirect
+	github.com/libp2p/go-msgio v0.1.0
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
@@ -70,6 +72,9 @@ require (
 	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f
+	golang.org/x/tools v0.1.8 // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 

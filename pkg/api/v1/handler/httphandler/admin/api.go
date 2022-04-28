@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando/pkg/api/core"
-	"github.com/kenlabs/pando/pkg/api/types"
 	"github.com/kenlabs/pando/pkg/option"
 )
 
@@ -28,6 +27,6 @@ func (a *API) RegisterAPIs() {
 	a.registerBackup()
 }
 
-func handleError(ctx *gin.Context, code int, errStr string) {
-	ctx.AbortWithStatusJSON(code, types.NewErrorResponse(code, errStr))
-}
+//func handleError(ctx *gin.Context, code int, errStr string) {
+//	ctx.AbortWithStatusJSON(code, types.NewErrorResponse(code, errStr))
+//}

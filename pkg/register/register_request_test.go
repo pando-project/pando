@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	. "github.com/agiledragon/gomonkey/v2"
+	"github.com/kenlabs/pando/pkg/api/v1/model"
 	"github.com/kenlabs/pando/test/mock"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/record"
@@ -18,15 +19,15 @@ func TestRegisterRequest(t *testing.T) {
 	addrs := []string{"/ip4/127.0.0.1/tcp/9999"}
 	Convey("test create and load register request", t, func() {
 		So(err, ShouldBeNil)
-		data, err := MakeRegisterRequest(peerID, privKey, addrs, account)
+		data, err := model.MakeRegisterRequest(peerID, privKey, addrs, account)
 		So(err, ShouldBeNil)
-		peerRec, err := ReadRegisterRequest(data)
+		peerRec, err := model.ReadRegisterRequest(data)
 		So(err, ShouldBeNil)
 		seq0 := peerRec.Seq
 		// register again
-		data, err = MakeRegisterRequest(peerID, privKey, addrs, account)
+		data, err = model.MakeRegisterRequest(peerID, privKey, addrs, account)
 		So(err, ShouldBeNil)
-		peerRec, err = ReadRegisterRequest(data)
+		peerRec, err = model.ReadRegisterRequest(data)
 		So(err, ShouldBeNil)
 		// seq create from time
 		So(seq0, ShouldBeLessThan, peerRec.Seq)
@@ -46,7 +47,7 @@ func TestRegisterRequest(t *testing.T) {
 				return nil, errors.New("failed seal")
 			})
 			defer patch.Reset()
-			_, err := MakeRegisterRequest(peerID, privKey, addrs, account)
+			_, err := model.MakeRegisterRequest(peerID, privKey, addrs, account)
 			So(err, ShouldResemble, fmt.Errorf("could not sign request: failed seal"))
 		})
 		Convey("failed marshal the register", func() {
@@ -54,7 +55,7 @@ func TestRegisterRequest(t *testing.T) {
 				return nil, errors.New("failed")
 			})
 			defer patch.Reset()
-			_, err := MakeRegisterRequest(peerID, privKey, addrs, account)
+			_, err := model.MakeRegisterRequest(peerID, privKey, addrs, account)
 			So(err, ShouldResemble, fmt.Errorf("could not marshal request register: failed"))
 		})
 	})
