@@ -108,7 +108,7 @@ func (p *DAGProvider) Close() error {
 }
 
 func (p *DAGProvider) NewMetadata(payload []byte) (*schema.Metadata, error) {
-	return schema.NewMetadata(payload, p.Host.ID(), p.PrivateKey)
+	return schema.NewMetaWithBytesPayload(payload, p.Host.ID(), p.PrivateKey)
 }
 
 func (p *DAGProvider) NewMetadataWithLink(payload []byte, link datamodel.Link) (*schema.Metadata, error) {

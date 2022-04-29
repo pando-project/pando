@@ -20,6 +20,7 @@ import (
 	"time"
 )
 
+var _ = logging.SetLogLevel("*", "error")
 var _ = logging.SetLogLevel("core", "debug")
 
 func TestCreate(t *testing.T) {
@@ -176,5 +177,49 @@ func TestSyncDataFromPando(t *testing.T) {
 			So(err, ShouldBeNil)
 		}
 
+	})
+}
+
+func TestGetPayloadFromLink(t *testing.T) {
+	Convey("Test fetch payload data from link", t, func() {
+		pando, err := mock.NewPandoMock()
+		So(err, ShouldBeNil)
+		ch, err := pando.GetMetaRecordCh()
+		So(err, ShouldBeNil)
+		provider, err := mock.NewMockProvider(pando)
+		So(err, ShouldBeNil)
+		var cids []cid.Cid
+		var payloadCids []cid.Cid
+		for i := 0; i < 5; i++ {
+			c, pc, err := provider.SendMetaWithDataLink(true)
+			cids = append(cids, c)
+			payloadCids = append(payloadCids, pc)
+			So(err, ShouldBeNil)
+			t.Logf("send meta[cid:%s] with payload link: %s", c.String(), pc.String())
+		}
+		time.Sleep(time.Second)
+		ctx, cncl := context.WithTimeout(context.Background(), time.Second*10)
+		t.Cleanup(
+			cncl,
+		)
+
+		//c, err := provider.SendMeta(true)
+		//So(err, ShouldBeNil)
+		//cids = append(cids, c)
+
+		time.Sleep(time.Second * 1)
+		for i := 0; i < 5; i++ {
+			_, err = pando.BS.Get(ctx, cids[i])
+			So(err, ShouldBeNil)
+			_, err = pando.BS.Get(ctx, payloadCids[i])
+			So(err, ShouldBeNil)
+			select {
+			case rec, ok := <-ch:
+				if !ok {
+					t.Error("error closed")
+				}
+				t.Log(rec.Cid)
+			}
+		}
 	})
 }
