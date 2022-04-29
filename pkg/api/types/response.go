@@ -1,6 +1,9 @@
 package types
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 type ResponseJson struct {
 	Code    int         `json:"code"`
@@ -16,6 +19,20 @@ func NewErrorResponse(code int, message string) *ResponseJson {
 }
 
 func NewOKResponse(message string, data interface{}) *ResponseJson {
+	var res interface{}
+	byteData, ok := data.([]byte)
+	if ok {
+		err := json.Unmarshal(byteData, &res)
+		if err != nil {
+			// todo failed unmarshal the []byte result(json)
+		} else {
+			return &ResponseJson{
+				Code:    http.StatusOK,
+				Message: message,
+				Data:    res,
+			}
+		}
+	}
 	return &ResponseJson{
 		Code:    http.StatusOK,
 		Message: message,
