@@ -203,15 +203,11 @@ func TestGetPayloadFromLink(t *testing.T) {
 			cncl,
 		)
 
-		//c, err := provider.SendMeta(true)
-		//So(err, ShouldBeNil)
-		//cids = append(cids, c)
-
 		time.Sleep(time.Second * 1)
 		for i := 0; i < 5; i++ {
-			_, err = pando.BS.Get(ctx, cids[i])
+			_, err = pando.PS.Get(ctx, cids[i])
 			So(err, ShouldBeNil)
-			_, err = pando.BS.Get(ctx, payloadCids[i])
+			_, err = pando.PS.Get(ctx, payloadCids[i])
 			So(err, ShouldBeNil)
 			select {
 			case rec, ok := <-ch:

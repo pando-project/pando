@@ -34,14 +34,6 @@ func TestRegisterRequest(t *testing.T) {
 
 	})
 	Convey("test create error and load error", t, func() {
-		//Convey("nil addr", func() {
-		//	account := "t12345"
-		//	peerID, privKey, err := mock.GetPrivkyAndPeerID()
-		//	So(err, ShouldBeNil)
-		//	data, err := MakeRegisterRequest(peerID, privKey, []string{}, account)
-		//	So(err, ShouldResemble, errors.New("missing address"))
-		//	So(data, ShouldBeNil)
-		//})
 		Convey("failed seal the register", func() {
 			patch := ApplyFunc(record.Seal, func(rec record.Record, privateKey crypto.PrivKey) (*record.Envelope, error) {
 				return nil, errors.New("failed seal")
