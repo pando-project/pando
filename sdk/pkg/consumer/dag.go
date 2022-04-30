@@ -139,18 +139,18 @@ func (c *DAGConsumer) Close() error {
 	return c.Subscriber.Close()
 }
 
-type ResponseJson struct {
+type responseJson struct {
 	Code    int                  `json:"code"`
 	Message string               `json:"message"`
 	Data    struct{ Cid string } `json:"Data"`
 }
 
 func (c *DAGConsumer) GetLatestHead(providerPeerID string) (cid.Cid, error) {
-	res, err := handleResError(c.HttpClient.R().Get("/provider/head?peerid=" + providerPeerID))
+	res, err := pkg.HandleResError(c.HttpClient.R().Get("/provider/head?peerid=" + providerPeerID))
 	if err != nil {
 		return cid.Undef, err
 	}
-	resJson := ResponseJson{}
+	resJson := responseJson{}
 	err = json.Unmarshal(res.Body(), &resJson)
 	if err != nil {
 		return cid.Undef, err
@@ -165,21 +165,6 @@ func (c *DAGConsumer) GetLatestHead(providerPeerID string) (cid.Cid, error) {
 	}
 
 	return nextCid, nil
-}
-
-func handleResError(res *resty.Response, err error) (*resty.Response, error) {
-	errTmpl := "failed to get latest head, error: %v"
-	if err != nil {
-		return res, err
-	}
-	if res.IsError() {
-		return res, fmt.Errorf(errTmpl, res.Error())
-	}
-	if res.StatusCode() != http.StatusOK {
-		return res, fmt.Errorf(errTmpl, fmt.Sprintf("expect 200, got %d", res.StatusCode()))
-	}
-
-	return res, nil
 }
 
 func (c *DAGConsumer) GetLatestSync() cid.Cid {

@@ -25,7 +25,7 @@ func main() {
 	}
 	fmt.Printf("provider peerID: %v\n", peerID.String())
 
-	provider, err := pandoSdk.NewMetaProvider(privateKeyStr, 10*time.Second, 10*time.Minute)
+	provider, err := pandoSdk.NewMetaProvider(privateKeyStr, "http://127.0.0.1:9000", 10*time.Second, 10*time.Minute)
 	if err != nil {
 		panic(err)
 	}

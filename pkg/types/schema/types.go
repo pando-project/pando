@@ -1,12 +1,18 @@
 package schema
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/node/bindnode"
 )
+
+type Meta interface {
+	ToNode() (ipld.Node, error)
+	LinkContext(context.Context) ipld.LinkContext
+}
 
 type Metadata struct {
 	PreviousID *ipld.Link
