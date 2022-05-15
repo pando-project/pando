@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Opt *option.Options
+var Opt *option.DaemonOptions
 
 var ExampleUsage = `
 # Init Pando configs(default path is ~/.pando/config.yaml).

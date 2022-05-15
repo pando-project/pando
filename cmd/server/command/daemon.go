@@ -128,10 +128,10 @@ func setLoglevel() error {
 		return err
 	}
 	logging.SetAllLoggers(logLevel)
-	err = logging.SetLogLevel("addrutil", "warn")
-	if err != nil {
-		return err
-	}
+	//err = logging.SetLogLevel("addrutil", "warn")
+	//if err != nil {
+	//	return err
+	//}
 	err = logging.SetLogLevel("basichost", "warn")
 	if err != nil {
 		return err

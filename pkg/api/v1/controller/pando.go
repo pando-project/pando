@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
@@ -7,9 +7,9 @@ import (
 	"strings"
 )
 
-func (h *ServerHandler) PandoInfo() (*model.PandoInfo, error) {
+func (c *Controller) PandoInfo() (*model.PandoInfo, error) {
 
-	pandoInfo, err := h.Core.StateTree.GetPandoInfo()
+	pandoInfo, err := c.Core.StateTree.GetPandoInfo()
 	if err != nil {
 		return nil, v1.NewError(err, http.StatusNotFound)
 	}
@@ -23,9 +23,9 @@ func (h *ServerHandler) PandoInfo() (*model.PandoInfo, error) {
 	return &model.PandoInfo{
 		PeerID: pandoInfo.PeerID,
 		Addresses: model.APIAddresses{
-			HttpAPI:      ipReplacer(h.Options.ServerAddress.HttpAPIListenAddress, h.Options.ServerAddress.ExternalIP),
-			GraphQLAPI:   ipReplacer(h.Options.ServerAddress.GraphqlListenAddress, h.Options.ServerAddress.ExternalIP),
-			GraphSyncAPI: ipReplacer(h.Options.ServerAddress.P2PAddress, h.Options.ServerAddress.ExternalIP),
+			HttpAPI:      ipReplacer(c.Options.ServerAddress.HttpAPIListenAddress, c.Options.ServerAddress.ExternalIP),
+			GraphQLAPI:   ipReplacer(c.Options.ServerAddress.GraphqlListenAddress, c.Options.ServerAddress.ExternalIP),
+			GraphSyncAPI: ipReplacer(c.Options.ServerAddress.P2PAddress, c.Options.ServerAddress.ExternalIP),
 		},
 	}, nil
 }

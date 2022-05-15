@@ -13,7 +13,7 @@ import (
 const testMinerAddr = "t01000"
 
 func TestDiscoverMock(t *testing.T) {
-	Convey("test discovery mock", t, func() {
+	Convey("test discovery test", t, func() {
 		peerID, err := peer.Decode("12D3KooWRqmtFv7ccFfjR7RDcevoMEMXdCHNR8JNN8aNiH2dgk8Z")
 		So(err, ShouldBeNil)
 		diso, err := NewDiscoverer("???")

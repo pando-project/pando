@@ -1,4 +1,4 @@
-package p2phandler
+package p2p
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 func (h *libp2pHandler) pandoInfo(ctx context.Context, p peer.ID, msg *pb.PandoMessage) ([]byte, error) {
-	pandoInfo, err := h.handler.PandoInfo()
+	pandoInfo, err := h.controller.PandoInfo()
 	if err != nil {
 		return nil, err
 	}

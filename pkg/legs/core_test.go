@@ -109,7 +109,7 @@ func TestRecurseFetchMeta(t *testing.T) {
 			t.Logf("send meta[cid:%s]", c.String())
 		}
 		time.Sleep(time.Second)
-		ctx, cncl := context.WithTimeout(context.Background(), time.Second*10)
+		ctx, cncl := context.WithTimeout(context.Background(), time.Minute)
 		t.Cleanup(
 			cncl,
 		)

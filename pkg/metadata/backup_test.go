@@ -82,10 +82,10 @@ func TestCheckSuccess(t *testing.T) {
 			APIKey:            apiKey,
 		}
 		tmpDir := t.TempDir()
-		patch2 := gomonkey.ApplyGlobalVar(&metadata.BackupTmpPath, tmpDir)
+		patch2 := patch.ApplyGlobalVar(&metadata.BackupTmpPath, tmpDir)
 		defer patch2.Reset()
 
-		patch3 := gomonkey.ApplyPrivateMethod(reflect.TypeOf(&metadata.BackupSystem{}), "checkDealForBackup", func(_ *metadata.BackupSystem, _ uint64) (bool, error) {
+		patch3 := patch.ApplyPrivateMethod(reflect.TypeOf(&metadata.BackupSystem{}), "checkDealForBackup", func(_ *metadata.BackupSystem, _ uint64) (bool, error) {
 			return true, nil
 		})
 		defer patch3.Reset()

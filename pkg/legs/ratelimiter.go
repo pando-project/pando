@@ -1,6 +1,7 @@
 package legs
 
 import (
+	"context"
 	"github.com/ipfs/go-graphsync"
 	"github.com/kenlabs/pando/pkg/account"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -30,7 +31,7 @@ func (c *Core) rateLimitHook() graphsync.OnOutgoingRequestHook {
 }
 
 func (c *Core) pauseRequest(request graphsync.RequestID) {
-	if err := c.GS.PauseRequest(request); err != nil {
+	if err := c.GS.Pause(context.Background(), request); err != nil {
 		log.Warnf("pause request failed, error: %s", err.Error())
 	}
 }
@@ -38,7 +39,7 @@ func (c *Core) pauseRequest(request graphsync.RequestID) {
 func (c *Core) unpauseRequest(request graphsync.RequestID, peerRateLimiter *rate.Limiter) {
 	time.Sleep(time.Second)
 	if c.rateLimiter.Allow() && peerRateLimiter.Allow() {
-		if err := c.GS.UnpauseRequest(request); err != nil {
+		if err := c.GS.Unpause(context.Background(), request); err != nil {
 			log.Warnf("unpause request %d failed, error: %s", request, err.Error())
 		} else {
 			log.Debugf("request %d unpaused", request)

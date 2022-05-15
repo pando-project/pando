@@ -1,4 +1,4 @@
-package httphandler
+package pando
 
 import (
 	"context"
@@ -34,7 +34,7 @@ func (a *API) providerRegister(ctx *gin.Context) {
 		return
 	}
 
-	err = a.handler.ProviderRegister(ctx, bodyBytes)
+	err = a.controller.ProviderRegister(ctx, bodyBytes)
 	if err != nil {
 		HandleError(ctx, err)
 		return
@@ -64,7 +64,7 @@ func (a *API) listProviderInfo(ctx *gin.Context) {
 		return
 	}
 
-	info, err := a.handler.ListProviderInfo(peerid)
+	info, err := a.controller.ListProviderInfo(peerid)
 	if err != nil {
 		HandleError(ctx, err)
 		return
@@ -72,25 +72,6 @@ func (a *API) listProviderInfo(ctx *gin.Context) {
 	writeProviderInfo(ctx, info)
 
 }
-
-//func (a *API) listProviderInfo(ctx *gin.Context) {
-//	record := metrics.APITimer(context.Background(), metrics.GetRegisteredProviderInfoLatency)
-//	defer record()
-//
-//	peerid, err := decodePeerid(ctx)
-//
-//	if err != nil {
-//		HandleError(ctx, http.StatusBadRequest, fmt.Errorf("invalid peerid"))
-//		return
-//	} else {
-//		info := a.core.Registry.ProviderInfo(peerid)
-//		if info == nil {
-//			HandleError(ctx, http.StatusNotFound, fmt.Errorf("provider not found"))
-//			return
-//		}
-//		writeProviderInfo(ctx, info)
-//	}
-//}
 
 func (a *API) listProviderHead(ctx *gin.Context) {
 	record := metrics.APITimer(context.Background(), metrics.GetProviderHeadLatency)
@@ -101,7 +82,7 @@ func (a *API) listProviderHead(ctx *gin.Context) {
 		HandleError(ctx, v1.NewError(errors.New("invalid peerid"), http.StatusBadRequest))
 		return
 	}
-	headCid, err := a.handler.ListProviderHead(peerid)
+	headCid, err := a.controller.ListProviderHead(peerid)
 	if err != nil {
 		HandleError(ctx, err)
 		return
@@ -113,42 +94,6 @@ func (a *API) listProviderHead(ctx *gin.Context) {
 	res.Cid = headCid.String()
 	ctx.JSON(http.StatusOK, types.NewOKResponse("OK", res))
 }
-
-//func (a *API) listProviderHead(ctx *gin.Context) {
-//	record := metrics.APITimer(context.Background(), metrics.GetProviderHeadLatency)
-//	defer record()
-//
-//	failError := "failed to retrieve the head of the provider, err: %v"
-//
-//	peerid, err := decodePeerid(ctx)
-//	if err != nil || peerid == "" {
-//		HandleError(ctx, http.StatusBadRequest, fmt.Errorf("invalid peerid"))
-//		return
-//	} else {
-//		res := struct {
-//			Cid string
-//		}{}
-//		var cidBytes []byte
-//		cidBytes, err = a.core.StoreInstance.DataStore.Get(ctx, datastore.NewKey(legs.SyncPrefix+peerid.String()))
-//		if err != nil {
-//			if err == datastore.ErrNotFound {
-//				HandleError(ctx, http.StatusNotFound, errors.New("not found the head of this provider"))
-//				return
-//			}
-//			logger.Errorf(failError, err)
-//			HandleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
-//			return
-//		}
-//		_, providerCid, err := cid.CidFromBytes(cidBytes)
-//		if err != nil {
-//			logger.Errorf(failError, err)
-//			HandleError(ctx, http.StatusInternalServerError, v1.InternalServerError)
-//			return
-//		}
-//		res.Cid = providerCid.String()
-//		ctx.JSON(http.StatusOK, types.NewOKResponse("OK", res))
-//	}
-//}
 
 func decodePeerid(ctx *gin.Context) (peer.ID, error) {
 	peeridStr := ctx.Query("peerid")
