@@ -1,7 +1,6 @@
 package pando
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/agiledragon/gomonkey/v2"
@@ -71,12 +70,14 @@ func TestMetadataList(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			respData, err := base64.StdEncoding.DecodeString(resp.Data.(string))
+
+			respDataBytes, err := json.Marshal(resp.Data)
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
+
 			var respCidList []cid.Cid
-			err = json.Unmarshal(respData, &respCidList)
+			err = json.Unmarshal(respDataBytes, &respCidList)
 			if err != nil {
 				t.Error(err)
 			}
@@ -152,8 +153,16 @@ func TestMetadataSnapshot(t *testing.T) {
 
 			var resp types.ResponseJson
 			respBody, err := ioutil.ReadAll(responseRecorder.Result().Body)
-			err = json.Unmarshal(respBody, &resp)
-			respData, err := base64.StdEncoding.DecodeString(resp.Data.(string))
+			if err != nil {
+				t.Error(err)
+			}
+			if err = json.Unmarshal(respBody, &resp); err != nil {
+				t.Error(err)
+			}
+			respData, err := json.Marshal(resp.Data)
+			if err != nil {
+				t.Error(err)
+			}
 
 			var actualSnapshot snapshotTypes.SnapShot
 			err = json.Unmarshal(respData, &actualSnapshot)
