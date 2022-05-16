@@ -104,7 +104,7 @@ func (p *ProviderMock) genMetaWithLinkPayload(prev datamodel.Link) (*schema.Meta
 
 func NewMockProvider(p *PandoMock) (*ProviderMock, error) {
 	rand.Seed(time.Now().UnixNano())
-	// mock provider legs
+	// test provider legs
 	srcHost, err := libp2p.New()
 	if err != nil {
 		return nil, err

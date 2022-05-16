@@ -36,7 +36,7 @@ func TestRegisterRequest(t *testing.T) {
 	Convey("test create error and load error", t, func() {
 		//Convey("nil addr", func() {
 		//	account := "t12345"
-		//	peerID, privKey, err := mock.GetPrivkyAndPeerID()
+		//	peerID, privKey, err := test.GetPrivkyAndPeerID()
 		//	So(err, ShouldBeNil)
 		//	data, err := MakeRegisterRequest(peerID, privKey, []string{}, account)
 		//	So(err, ShouldResemble, errors.New("missing address"))

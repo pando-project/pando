@@ -7,7 +7,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/kenlabs/pando/pkg/api/types"
 	"github.com/kenlabs/pando/pkg/api/v1"
-	handler "github.com/kenlabs/pando/pkg/api/v1/handler/httphandler"
+	"github.com/kenlabs/pando/pkg/api/v1/handler/http/pando"
 
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -27,7 +27,7 @@ func (a *API) registerBackup() {
 func (a *API) backupMeta(ctx *gin.Context) {
 	backInfo, err := decodeBackupInfo(ctx)
 	if err != nil || backInfo == nil {
-		handler.HandleError(ctx, v1.NewError(errors.New("invalid start/end cid for backup"), http.StatusBadRequest))
+		pando.HandleError(ctx, v1.NewError(errors.New("invalid start/end cid for backup"), http.StatusBadRequest))
 		return
 	} else {
 		if err := backInfo.provider.Validate(); err != nil {
@@ -55,7 +55,7 @@ func (a *API) backupMeta(ctx *gin.Context) {
 		if err != nil {
 			logger.Errorf("failed to generate car file start: %s end : %s filepath: %s\r\n, err:%v",
 				backInfo.start, backInfo.end, filePath, err)
-			handler.HandleError(ctx, v1.NewError(v1.InternalServerError, http.StatusInternalServerError))
+			pando.HandleError(ctx, v1.NewError(v1.InternalServerError, http.StatusInternalServerError))
 			return
 		}
 		// back up right now. If false, pando will back up in the config time
@@ -63,7 +63,7 @@ func (a *API) backupMeta(ctx *gin.Context) {
 			estId, err := a.core.MetaManager.EstBackupSys.BackupToEstuary(filePath)
 			if err != nil {
 				logger.Errorf("failed to back up car file(%s) to estuary, err:%v", filePath, err)
-				handler.HandleError(ctx, v1.NewError(v1.InternalServerError, http.StatusInternalServerError))
+				pando.HandleError(ctx, v1.NewError(v1.InternalServerError, http.StatusInternalServerError))
 				return
 			}
 			ctx.JSON(http.StatusOK, types.NewOKResponse(fmt.Sprintf("back up successfully! Estuary id: %d", estId), ""))

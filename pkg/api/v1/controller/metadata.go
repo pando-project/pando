@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (
 	"encoding/json"
@@ -11,8 +11,8 @@ import (
 	"strconv"
 )
 
-func (h *ServerHandler) MetadataList() ([]byte, error) {
-	res, err := h.Core.StateTree.GetSnapShotCidList()
+func (c *Controller) MetadataList() ([]byte, error) {
+	res, err := c.Core.StateTree.GetSnapShotCidList()
 	if err != nil {
 		return nil, v1.NewError(err, http.StatusInternalServerError)
 	}
@@ -27,19 +27,19 @@ func (h *ServerHandler) MetadataList() ([]byte, error) {
 	return data, nil
 }
 
-func (h *ServerHandler) MetadataSnapShot(c string, height string) ([]byte, error) {
+func (c *Controller) MetadataSnapShot(snapshotCid string, height string) ([]byte, error) {
 	var snapshotFromHeight *snapshotTypes.SnapShot
 	var snapshotFromCid *snapshotTypes.SnapShot
-	if c == "" && height == "" {
+	if snapshotCid == "" && height == "" {
 		return nil, v1.NewError(errors.New("height or cid is required"), http.StatusBadRequest)
 	}
 
-	if c != "" {
-		snapshotCid, err := cid.Decode(c)
+	if snapshotCid != "" {
+		snapshotCid, err := cid.Decode(snapshotCid)
 		if err != nil {
 			return nil, err
 		}
-		snapshotFromCid, err = h.Core.StateTree.GetSnapShot(snapshotCid)
+		snapshotFromCid, err = c.Core.StateTree.GetSnapShot(snapshotCid)
 		if err != nil {
 			if err == statetree.NotFoundErr {
 				return nil, v1.NewError(v1.ResourceNotFound, http.StatusNotFound)
@@ -52,7 +52,7 @@ func (h *ServerHandler) MetadataSnapShot(c string, height string) ([]byte, error
 		if err != nil {
 			return nil, v1.NewError(err, http.StatusBadRequest)
 		}
-		snapshotFromHeight, err = h.Core.StateTree.GetSnapShotByHeight(snapshotHeight)
+		snapshotFromHeight, err = c.Core.StateTree.GetSnapShotByHeight(snapshotHeight)
 		if err != nil {
 			if err == statetree.NotFoundErr {
 				return nil, v1.NewError(v1.ResourceNotFound, http.StatusNotFound)
