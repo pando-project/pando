@@ -2,18 +2,18 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	blocks "github.com/ipfs/go-block-format"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/multicodec"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"io"
-	"os"
+	"time"
 )
 
 // decodeIPLDNode decodes an ipld.Node from bytes read from an io.Reader.
@@ -40,7 +40,7 @@ func isMetadata(n ipld.Node) bool {
 	return signature != nil && provider != nil && payload != nil
 }
 
-func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
+func MkLinkSystem(bs blockstore.Blockstore, ch chan Status) ipld.LinkSystem {
 	log := logging.Logger("consumer-lsys")
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.TrustedStorage = true
@@ -70,13 +70,25 @@ func MkLinkSystem(bs blockstore.Blockstore) ipld.LinkSystem {
 				log.Errorw("Error decoding IPLD node in linksystem", "err", err)
 				return errors.New("bad ipld data")
 			}
-			fmt.Println("Reveiving ipld node:")
+			//fmt.Println("Reveiving ipld node:")
 			t, err := UnwrapFinishedTask(n)
 			if err == nil {
-				dagjson.Encode(n, os.Stdout)
-				fmt.Println(t.Status)
+				//dagjson.Encode(n, os.Stdout)
+				//fmt.Println(t.Status)
+				if ch != nil {
+					go func() {
+						ctx, cncl := context.WithTimeout(context.Background(), time.Second*3)
+						defer cncl()
+						select {
+						case _ = <-ctx.Done():
+							log.Errorf("time out for send status info")
+							return
+						case ch <- t.Status:
+						}
+					}()
+				}
 			} else {
-				fmt.Println(err.Error())
+				fmt.Println("not FinishedTask, ignore...")
 			}
 
 			//dagjson.Encode(n, os.Stdout)

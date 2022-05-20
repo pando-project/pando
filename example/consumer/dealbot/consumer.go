@@ -56,7 +56,22 @@ func main() {
 	ds := datastore.NewMapDatastore()
 	mds := sync.MutexWrap(ds)
 	bs := blockstore.NewBlockstore(mds)
-	lsys := MkLinkSystem(bs)
+	ch := make(chan Status, 0)
+
+	go func() {
+		var total float32
+		var success float32
+		for status := range ch {
+			total += 1
+			if status == Status(4) {
+				success += 1
+			}
+			successRate := success / total
+			fmt.Println("success rate: ", successRate)
+		}
+	}()
+
+	lsys := MkLinkSystem(bs, ch)
 	graphSyncNet := gsnet.NewFromLibp2pHost(consumerHost)
 	dataTransferNet := dtnetwork.NewFromLibp2pHost(consumerHost)
 	graphExchange := gsimpl.New(context.Background(), graphSyncNet, lsys)
