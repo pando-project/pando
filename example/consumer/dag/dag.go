@@ -9,9 +9,9 @@ import (
 
 const (
 	privateKeyStr  = "CAESQAycIStrQXBoxgf2pEazDLoZbL8WCLX5GIb69dl4x2mJMpukCAPbzq1URPtKen4Bpxfz9et2exWhfAfZ/RG30ts="
-	pandoAddr      = "/ip4/127.0.0.1/tcp/9002"
-	pandoPeerID    = "12D3KooWJjPMqp1eAN6DAvDXJQGivWBq85EqFP29VkteePBKgesa"
-	providerPeerID = "12D3KooWSS3sEujyAXB9SWUvVtQZmxH6vTi9NitqaaRQoUjeEk3M"
+	pandoAddr      = "/ip4/52.14.211.248/tcp/9013"
+	pandoPeerID    = "12D3KooWNU48MUrPEoYh77k99RbskgftfmSm3CdkonijcM5VehS9"
+	providerPeerID = "12D3KooWNnK4gnNKmh6JUzRb34RqNcBahN5B8v18DsMxQ8mCqw81"
 )
 
 const (
@@ -26,7 +26,7 @@ func main() {
 	}
 	fmt.Printf("consumer peerID: %v\n", peerID.String())
 
-	consumer, err := consumerSdk.NewDAGConsumer(privateKeyStr, "http://127.0.0.1:9000", connectTimeout, syncTimeout)
+	consumer, err := consumerSdk.NewDAGConsumer(privateKeyStr, "http://52.14.211.248:9011", connectTimeout, syncTimeout)
 	if err != nil {
 		panic(err)
 	}

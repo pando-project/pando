@@ -193,12 +193,12 @@ func (c *DAGConsumer) Sync(nextCid cid.Cid, selector ipld.Node) (cid.Cid, error)
 
 func (c *DAGConsumer) Start(pandoAddr string, pandoPeerID string, providerPeerID string) error {
 	logging.SetAllLoggers(logging.LevelDebug)
-	err := logging.SetLogLevel("addrutil", "warn")
-	if err != nil {
-		return err
-	}
+	//err := logging.SetLogLevel("addrutil", "warn")
+	//if err != nil {
+	//	return err
+	//}
 
-	err = c.ConnectPando(pandoAddr, pandoPeerID)
+	err := c.ConnectPando(pandoAddr, pandoPeerID)
 	if err != nil {
 		return err
 	}
