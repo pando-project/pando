@@ -88,7 +88,7 @@ func MkLinkSystem(bs blockstore.Blockstore, ch chan Status) ipld.LinkSystem {
 					}()
 				}
 			} else {
-				fmt.Println("not FinishedTask, ignore...")
+				log.Debugf("not FinishedTask, ignore...")
 			}
 
 			//dagjson.Encode(n, os.Stdout)
@@ -99,12 +99,6 @@ func MkLinkSystem(bs blockstore.Blockstore, ch chan Status) ipld.LinkSystem {
 				//if err != nil {
 				//	return err
 				//}
-				metadataProvider, _ := n.LookupByString("Provider")
-				metadataProviderStr, _ := metadataProvider.AsString()
-				metadataPayload, _ := n.LookupByString("Payload")
-				metadataPayloadBytes, _ := metadataPayload.AsBytes()
-				log.Debugf("metadata:\n\tProvider: %v\n\tPayload: %v\n",
-					metadataProviderStr, string(metadataPayloadBytes))
 				block, err := blocks.NewBlockWithCid(origBuf, c)
 				if err != nil {
 					return err

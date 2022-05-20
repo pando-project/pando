@@ -26,12 +26,12 @@ func main() {
 	}
 	fmt.Printf("consumer peerID: %v\n", peerID.String())
 
-	consumer, err := consumerSdk.NewDAGConsumer(privateKeyStr, "http://52.14.211.248:9011", connectTimeout, syncTimeout)
+	consumer, err := consumerSdk.NewDAGConsumer(privateKeyStr, "http://52.14.211.248:9011", connectTimeout, nil, syncTimeout)
 	if err != nil {
 		panic(err)
 	}
 
-	err = consumer.Start(pandoAddr, pandoPeerID, providerPeerID)
+	err = consumer.Start(pandoAddr, pandoPeerID, providerPeerID, nil)
 	if err != nil {
 		panic(err)
 	}
