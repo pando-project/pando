@@ -1,31 +1,31 @@
-package httphandler
+package pando
 
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando/pkg/api/core"
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
-	"github.com/kenlabs/pando/pkg/api/v1/handler"
+	"github.com/kenlabs/pando/pkg/api/v1/controller"
 	"github.com/kenlabs/pando/pkg/option"
+	"github.com/kenlabs/pando/pkg/util/log"
 	"net/http"
 
 	"github.com/kenlabs/pando/pkg/api/types"
 )
 
-var logger = logging.Logger("v1HttpAPI")
+var logger = log.NewSubsystemLogger()
 
 type API struct {
-	router  *gin.Engine
-	handler *handler.ServerHandler
+	router     *gin.Engine
+	controller *controller.Controller
 }
 
 type ErrorTemplate map[string]string
 
-func NewV1HttpAPI(router *gin.Engine, core *core.Core, opt *option.Options) *API {
+func NewV1HttpAPI(router *gin.Engine, core *core.Core, opt *option.DaemonOptions) *API {
 	return &API{
-		router:  router,
-		handler: handler.New(core, opt),
+		router:     router,
+		controller: controller.New(core, opt),
 	}
 }
 

@@ -14,8 +14,8 @@ import (
 	"strings"
 )
 
-// Options is the server daemon start-up options
-type Options struct {
+// DaemonOptions is the server daemon start-up options
+type DaemonOptions struct {
 	flags   *pflag.FlagSet `yaml:"-"`
 	viper   *viper.Viper   `yaml:"-"`
 	yamlStr string         `yaml:"-"`
@@ -41,16 +41,16 @@ type Options struct {
 	Backup        Backup        `yaml:"Backup"`
 }
 
-// New creates a default Options.
-func New(root *cobra.Command) *Options {
-	var opt *Options
+// New creates a default DaemonOptions.
+func New(root *cobra.Command) *DaemonOptions {
+	var opt *DaemonOptions
 	if root == nil {
-		opt = &Options{
+		opt = &DaemonOptions{
 			flags: pflag.NewFlagSet(os.Args[0], pflag.ContinueOnError),
 			viper: viper.New(),
 		}
 	} else {
-		opt = &Options{
+		opt = &DaemonOptions{
 			flags: root.PersistentFlags(),
 			viper: viper.New(),
 		}
@@ -176,12 +176,12 @@ func New(root *cobra.Command) *Options {
 }
 
 // YAML returns yaml string of options, should be called after Parse the options
-func (opt *Options) YAML() string {
+func (opt *DaemonOptions) YAML() string {
 	return opt.yamlStr
 }
 
 // Parse parses all arguments
-func (opt *Options) Parse() (string, error) {
+func (opt *DaemonOptions) Parse() (string, error) {
 	err := opt.flags.Parse(os.Args[1:])
 	if err != nil {
 		return "", err
@@ -237,7 +237,7 @@ func (opt *Options) Parse() (string, error) {
 	return "", nil
 }
 
-func (opt *Options) validate() error {
+func (opt *DaemonOptions) validate() error {
 	//ToDo: validate flags
 	return nil
 }

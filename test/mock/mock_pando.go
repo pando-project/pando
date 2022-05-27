@@ -22,7 +22,7 @@ import (
 const topic = "/pando/v0.0.1"
 
 type PandoMock struct {
-	Opt      *option.Options
+	Opt      *option.DaemonOptions
 	DS       datastore.Batching
 	CS       *badger.DB
 	PS       *store.PandoStore

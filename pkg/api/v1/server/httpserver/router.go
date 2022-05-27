@@ -2,16 +2,16 @@ package httpserver
 
 import (
 	"github.com/gin-gonic/gin"
-	v1Http "github.com/kenlabs/pando/pkg/api/v1/handler/httphandler"
-	v1Admin "github.com/kenlabs/pando/pkg/api/v1/handler/httphandler/admin"
-	v1Graphql "github.com/kenlabs/pando/pkg/api/v1/handler/httphandler/graphql"
+	v1Admin "github.com/kenlabs/pando/pkg/api/v1/handler/http/admin"
+	v1Graphql "github.com/kenlabs/pando/pkg/api/v1/handler/http/graphql"
+	"github.com/kenlabs/pando/pkg/api/v1/handler/http/pando"
 	"github.com/kenlabs/pando/pkg/option"
 
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/api/middleware"
 )
 
-func NewAdminRouter(core *core.Core, opt *option.Options) *gin.Engine {
+func NewAdminRouter(core *core.Core, opt *option.DaemonOptions) *gin.Engine {
 	adminRouter := gin.New()
 	adminRouter.Use(gin.Recovery())
 
@@ -21,14 +21,14 @@ func NewAdminRouter(core *core.Core, opt *option.Options) *gin.Engine {
 	return adminRouter
 }
 
-func NewHttpRouter(core *core.Core, opt *option.Options) *gin.Engine {
+func NewHttpRouter(core *core.Core, opt *option.DaemonOptions) *gin.Engine {
 	httpRouter := gin.New()
 	httpRouter.Use(middleware.WithLoggerFormatter())
 	httpRouter.Use(middleware.WithCorsAllowAllOrigin())
 	httpRouter.Use(gin.Recovery())
 	httpRouter.Use(middleware.WithAPIDoc())
 
-	v1HttpAPI := v1Http.NewV1HttpAPI(httpRouter, core, opt)
+	v1HttpAPI := pando.NewV1HttpAPI(httpRouter, core, opt)
 	v1HttpAPI.RegisterAPIs()
 
 	return httpRouter

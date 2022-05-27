@@ -1,4 +1,4 @@
-package p2phandler
+package p2p
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 )
 
 func (h *libp2pHandler) providerRegister(ctx context.Context, p peer.ID, msg *pb.PandoMessage) ([]byte, error) {
-	err := h.handler.ProviderRegister(ctx, msg.GetData())
+	err := h.controller.ProviderRegister(ctx, msg.GetData())
 	if err != nil {
 		logger.Errorf("register provider failed: %v\n", err)
 		return nil, err
@@ -26,7 +26,7 @@ func (h *libp2pHandler) listProviderInfo(ctx context.Context, p peer.ID, msg *pb
 	if err != nil {
 		return nil, v1.NewError(fmt.Errorf("failed to unmarshal peerid: %v", err), http.StatusBadRequest)
 	}
-	info, err := h.handler.ListProviderInfo(peerid)
+	info, err := h.controller.ListProviderInfo(peerid)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (h *libp2pHandler) listProviderHead(ctx context.Context, p peer.ID, msg *pb
 	if err != nil {
 		return nil, v1.NewError(fmt.Errorf("failed to unmarshal peerid: %v", err), http.StatusBadRequest)
 	}
-	headCid, err := h.handler.ListProviderHead(peerid)
+	headCid, err := h.controller.ListProviderHead(peerid)
 	if err != nil {
 		return nil, err
 	}

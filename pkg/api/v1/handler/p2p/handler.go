@@ -1,4 +1,4 @@
-package p2phandler
+package p2p
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando/pkg/api/core"
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
-	"github.com/kenlabs/pando/pkg/api/v1/handler"
+	"github.com/kenlabs/pando/pkg/api/v1/controller"
 	"github.com/kenlabs/pando/pkg/api/v1/server/libp2p"
 	pb "github.com/kenlabs/pando/pkg/api/v1/server/libp2p/proto"
 	"github.com/kenlabs/pando/pkg/option"
@@ -18,19 +18,19 @@ import (
 	"net/http"
 )
 
-var logger = logging.Logger("pando/libp2p")
+var logger = logging.Logger("api/v1/controller/p2p")
 
-// handler handles requests for the providers resource
+// controller handles requests for the providers resource
 type libp2pHandler struct {
-	handler *handler.ServerHandler
+	controller *controller.Controller
 }
 
 // handlerFunc is the function signature required by handlers in this package
 type handlerFunc func(context.Context, peer.ID, *pb.PandoMessage) ([]byte, error)
 
-func NewHandler(core *core.Core, opt *option.Options) *libp2pHandler {
+func NewHandler(core *core.Core, opt *option.DaemonOptions) *libp2pHandler {
 	return &libp2pHandler{
-		handler: handler.New(core, opt),
+		controller: controller.New(core, opt),
 	}
 }
 

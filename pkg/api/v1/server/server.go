@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/kenlabs/pando/pkg/api/v1/handler/p2phandler"
+	"github.com/kenlabs/pando/pkg/api/v1/handler/p2p"
 	"github.com/kenlabs/pando/pkg/api/v1/server/httpserver"
 	"github.com/kenlabs/pando/pkg/api/v1/server/libp2p"
 	"go.elastic.co/apm/module/apmhttp"
@@ -21,7 +21,7 @@ import (
 var logger = logging.Logger("http-server")
 
 type Server struct {
-	Opt  *option.Options
+	Opt  *option.DaemonOptions
 	Core *core.Core
 
 	AdminServer     *http.Server
@@ -39,7 +39,7 @@ type Server struct {
 	P2PServer *libp2p.Server
 }
 
-func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
+func NewAPIServer(opt *option.DaemonOptions, core *core.Core) (*Server, error) {
 	adminListenAddress, err := multiaddress.MultiaddressToNetAddress(opt.ServerAddress.AdminListenAddress)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func NewAPIServer(opt *option.Options, core *core.Core) (*Server, error) {
 	}
 
 	if !opt.ServerAddress.DisableP2PServer {
-		libp2pHandler := p2phandler.NewHandler(core, opt)
+		libp2pHandler := p2p.NewHandler(core, opt)
 		s.P2PServer = libp2p.New(context.Background(), core.LegsCore.Host, libp2pHandler)
 	}
 

@@ -53,7 +53,7 @@ type Core struct {
 
 	waitForPendingSyncs sync.WaitGroup
 	watchDone           chan struct{}
-	options             *option.Options
+	options             *option.DaemonOptions
 }
 
 func NewLegsCore(ctx context.Context,
@@ -63,7 +63,7 @@ func NewLegsCore(ctx context.Context,
 	ps *store.PandoStore,
 	outMetaCh chan<- *metadata.MetaRecord,
 	backupGenInterval time.Duration,
-	rateLimiter *policy.Limiter, reg *registry.Registry, options *option.Options) (*Core, error) {
+	rateLimiter *policy.Limiter, reg *registry.Registry, options *option.DaemonOptions) (*Core, error) {
 
 	c := &Core{
 		Host:              host,

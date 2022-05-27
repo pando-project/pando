@@ -9,7 +9,7 @@ jobs:
   unit-test:
     working_directory: ~/repo
     docker:
-      - image: circleci/golang:1.16
+      - image: circleci/golang:1.17
     steps:
       - checkout
       - run:
@@ -20,7 +20,7 @@ jobs:
       - run:
           name: Test and Coverage
           command: |
-            TEST_TARGET=`go list ./... | grep -v pkg/statetree/types | grep -v example | grep -v test`
+            TEST_TARGET=`go list ./... | grep -v pkg/statetree/types | grep -v example | grep -v test | grep -v cmd`
             go test -gcflags=all=-l -coverprofile=coverage.txt -covermode=atomic $TEST_TARGET
       - codecov/upload:
           file: coverage.txt
@@ -32,7 +32,7 @@ jobs:
   build-push:
     working_directory: ~/repo
     docker:
-      - image: circleci/golang:1.16
+      - image: circleci/golang:1.17
     steps:
       - checkout
       - run:
@@ -81,4 +81,3 @@ workflows:
             branches:
               only:
                 - main
-                - feat/PANDO-30

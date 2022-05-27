@@ -1,7 +1,7 @@
 package core
 
 import (
-	badger "github.com/dgraph-io/badger/v3"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/ipfs/go-datastore/sync"
 	"github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"

@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"net/http"
 )
 
-func (h *ServerHandler) ProviderRegister(ctx context.Context, data []byte) error {
+func (c *Controller) ProviderRegister(ctx context.Context, data []byte) error {
 	registerRequest, err := model.ReadRegisterRequest(data)
 	if err != nil {
 		logger.Errorf("read register info failed: %v\n", err)
@@ -27,7 +27,7 @@ func (h *ServerHandler) ProviderRegister(ctx context.Context, data []byte) error
 		return v1.NewError(errors.New("missing account id"), http.StatusBadRequest)
 	}
 
-	if err = h.Core.Registry.CheckSequence(registerRequest.PeerID, registerRequest.Seq); err != nil {
+	if err = c.Core.Registry.CheckSequence(registerRequest.PeerID, registerRequest.Seq); err != nil {
 		logger.Errorf("bad sequence: %v", err.Error())
 		return v1.NewError(fmt.Errorf("bad sequence: %v", err.Error()), http.StatusBadRequest)
 	}
@@ -48,7 +48,7 @@ func (h *ServerHandler) ProviderRegister(ctx context.Context, data []byte) error
 			Addrs: providerMultiAddr,
 		},
 	}
-	err = h.Core.Registry.Register(ctx, info)
+	err = c.Core.Registry.Register(ctx, info)
 
 	logger.Debugf("pando register success: %s", info.AddrInfo.ID)
 
@@ -56,15 +56,15 @@ func (h *ServerHandler) ProviderRegister(ctx context.Context, data []byte) error
 
 }
 
-func (h *ServerHandler) ListProviderInfo(p peer.ID) ([]*registry.ProviderInfo, error) {
-	info := h.Core.Registry.ProviderInfo(p)
+func (c *Controller) ListProviderInfo(p peer.ID) ([]*registry.ProviderInfo, error) {
+	info := c.Core.Registry.ProviderInfo(p)
 	if info == nil {
 		return nil, v1.NewError(errors.New("provider not found"), http.StatusNotFound)
 	}
 	return info, nil
 }
 
-func (h *ServerHandler) ListProviderHead(p peer.ID) (cid.Cid, error) {
+func (c *Controller) ListProviderHead(p peer.ID) (cid.Cid, error) {
 	var cidBytes []byte
 	var err error
 	cidBytes, err = h.Core.StoreInstance.MutexDataStore.Get(context.Background(), datastore.NewKey(legs.SyncPrefix+p.String()))

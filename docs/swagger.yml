@@ -24,7 +24,7 @@ tags:
 
 schemes:
 - "https"
-- "httphandler"
+- "http"
 
 
 paths:

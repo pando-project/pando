@@ -12,10 +12,10 @@ var logger = logging.Logger("v1AdminAPI")
 type API struct {
 	router  *gin.Engine
 	core    *core.Core
-	options *option.Options
+	options *option.DaemonOptions
 }
 
-func NewV1AdminAPI(router *gin.Engine, core *core.Core, opt *option.Options) *API {
+func NewV1AdminAPI(router *gin.Engine, core *core.Core, opt *option.DaemonOptions) *API {
 	return &API{
 		router:  router,
 		core:    core,
