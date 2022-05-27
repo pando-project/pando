@@ -15,6 +15,7 @@ import (
 	"github.com/kenlabs/pando/test/mock"
 	. "github.com/smartystreets/goconvey/convey"
 
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -137,7 +138,7 @@ func TestMetadataSnapshot(t *testing.T) {
 			testSnapshotRes, err := json.Marshal(testSnapshot)
 			patch := gomonkey.ApplyMethodFunc(reflect.TypeOf(mockAPI.controller),
 				"MetadataSnapShot",
-				func(_ string, _ string) ([]byte, error) {
+				func(_ context.Context, _ string, _ string) ([]byte, error) {
 					return testSnapshotRes, nil
 				},
 			)
@@ -171,7 +172,7 @@ func TestMetadataSnapshot(t *testing.T) {
 		Convey("Given an monkey error, should return a monkey error resp", func() {
 			patch := gomonkey.ApplyMethodFunc(reflect.TypeOf(mockAPI.controller),
 				"MetadataSnapShot",
-				func(_ string, _ string) ([]byte, error) {
+				func(_ context.Context, _ string, _ string) ([]byte, error) {
 					return nil, fmt.Errorf("monkey error")
 				},
 			)
