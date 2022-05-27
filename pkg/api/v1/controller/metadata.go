@@ -12,8 +12,8 @@ import (
 	"strconv"
 )
 
-func (h *ServerHandler) MetadataList() ([]byte, error) {
-	res, err := h.Core.StoreInstance.PandoStore.SnapShotStore.GetSnapShotList(context.Background())
+func (c *Controller) MetadataList() ([]byte, error) {
+	res, err := c.Core.StoreInstance.PandoStore.SnapShotStore.GetSnapShotList(context.Background())
 	if err != nil {
 		return nil, v1.NewError(err, http.StatusInternalServerError)
 	}
@@ -28,19 +28,19 @@ func (h *ServerHandler) MetadataList() ([]byte, error) {
 	return data, nil
 }
 
-func (h *ServerHandler) MetadataSnapShot(ctx context.Context, c string, height string) ([]byte, error) {
+func (c *Controller) MetadataSnapShot(ctx context.Context, cidstr string, height string) ([]byte, error) {
 	var snapshotFromHeight *cbortypes.SnapShot
 	var snapshotFromCid *cbortypes.SnapShot
-	if c == "" && height == "" {
+	if cidstr == "" && height == "" {
 		return nil, v1.NewError(errors.New("height or cid is required"), http.StatusBadRequest)
 	}
 
-	if c != "" {
-		snapshotCid, err := cid.Decode(c)
+	if cidstr != "" {
+		snapshotCid, err := cid.Decode(cidstr)
 		if err != nil {
 			return nil, err
 		}
-		snapshotFromCid, err = h.Core.StoreInstance.PandoStore.SnapShotStore.GetSnapShotByCid(ctx, snapshotCid)
+		snapshotFromCid, err = c.Core.StoreInstance.PandoStore.SnapShotStore.GetSnapShotByCid(ctx, snapshotCid)
 		if err != nil {
 			if err == storeError.InvalidParameters {
 				return nil, v1.NewError(v1.InvalidQuery, http.StatusBadRequest)
@@ -53,7 +53,7 @@ func (h *ServerHandler) MetadataSnapShot(ctx context.Context, c string, height s
 		if err != nil {
 			return nil, v1.NewError(err, http.StatusBadRequest)
 		}
-		snapshotFromHeight, _, err = h.Core.StoreInstance.PandoStore.SnapShotStore.GetSnapShotByHeight(ctx, snapshotHeight)
+		snapshotFromHeight, _, err = c.Core.StoreInstance.PandoStore.SnapShotStore.GetSnapShotByHeight(ctx, snapshotHeight)
 		if err != nil {
 			if err == storeError.InvalidParameters {
 				return nil, v1.NewError(v1.InvalidQuery, http.StatusBadRequest)
@@ -82,16 +82,16 @@ func (h *ServerHandler) MetadataSnapShot(ctx context.Context, c string, height s
 	return res, nil
 }
 
-func (a *ServerHandler) MetaInclusion(ctx context.Context, metaCid string) ([]byte, error) {
-	c, err := cid.Decode(metaCid)
+func (c *Controller) MetaInclusion(ctx context.Context, cidstr string) ([]byte, error) {
+	metaCid, err := cid.Decode(cidstr)
 	if err != nil {
-		logger.Errorf("invalid cid: %s, err:%v", c.String(), err)
+		logger.Errorf("invalid cid: %s, err:%v", metaCid.String(), err)
 		return nil, v1.NewError(errors.New("invalid cid"), http.StatusBadRequest)
 	}
 
-	inclusion, err := a.Core.StoreInstance.PandoStore.MetaInclusion(ctx, c)
+	inclusion, err := c.Core.StoreInstance.PandoStore.MetaInclusion(ctx, metaCid)
 	if err != nil {
-		logger.Errorf("failed to get meta inclusion for cid: %s, err:%v", c.String(), err)
+		logger.Errorf("failed to get meta inclusion for cid: %s, err:%v", metaCid.String(), err)
 		return nil, v1.NewError(v1.InternalServerError, http.StatusInternalServerError)
 	}
 

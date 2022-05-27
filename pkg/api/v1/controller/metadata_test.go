@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,10 +29,10 @@ func TestMetadataList(t *testing.T) {
 
 		Convey("when GetSnapShotCidList returns valid cid list, should returns that list", func() {
 			patch := gomonkey.ApplyMethodFunc(
-				reflect.TypeOf(mockController.Core.StateTree),
-				"GetSnapShotCidList",
-				func() ([]cid.Cid, error) {
-					return testMetadataList, nil
+				reflect.TypeOf(mockController.Core.StoreInstance.PandoStore.SnapShotStore),
+				"GetSnapShotList",
+				func(ctx context.Context) (*[]cid.Cid, error) {
+					return &testMetadataList, nil
 				},
 			)
 			defer patch.Reset()
@@ -48,9 +49,9 @@ func TestMetadataList(t *testing.T) {
 
 		Convey("when GetSnapShotCidList returns an error, should returns that error with code 500", func() {
 			patch := gomonkey.ApplyMethodFunc(
-				reflect.TypeOf(mockController.Core.StateTree),
-				"GetSnapShotCidList",
-				func() ([]cid.Cid, error) {
+				reflect.TypeOf(mockController.Core.StoreInstance.PandoStore.SnapShotStore),
+				"GetSnapShotList",
+				func(context.Context) (*[]cid.Cid, error) {
 					return nil, fmt.Errorf("monkey error")
 				},
 			)
@@ -66,9 +67,9 @@ func TestMetadataList(t *testing.T) {
 
 		Convey("when GetSnapShotCidList returns a nil value and an nil error, should returns resource not found error with code 404", func() {
 			patch := gomonkey.ApplyMethodFunc(
-				reflect.TypeOf(mockController.Core.StateTree),
-				"GetSnapShotCidList",
-				func() ([]cid.Cid, error) {
+				reflect.TypeOf(mockController.Core.StoreInstance.PandoStore.SnapShotStore),
+				"GetSnapShotList",
+				func(context.Context) (*[]cid.Cid, error) {
 					return nil, nil
 				},
 			)

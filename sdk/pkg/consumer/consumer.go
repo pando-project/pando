@@ -19,6 +19,8 @@ import (
 	"github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/kenlabs/PandoStore/pkg/config"
+	"github.com/kenlabs/PandoStore/pkg/store"
 	link "github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/sdk/pkg"
 	"github.com/libp2p/go-libp2p"
@@ -33,6 +35,7 @@ import (
 type core struct {
 	Blockstore     blockstore.Blockstore
 	MutexDatastore *datastoreSync.MutexDatastore
+	PandoStore     *store.PandoStore
 	LinkSys        ipld.LinkSystem
 }
 
@@ -66,16 +69,15 @@ func NewDAGConsumer(privateKeyStr string, pandoAPI string, connectTimeout time.D
 		return nil, err
 	}
 
+	storageCore := &core{}
 	datastore, err := leveldb.NewDatastore("", nil)
-	if err != nil {
-		return nil, err
-	}
-	mds := datastoreSync.MutexWrap(datastore)
+	storageCore.MutexDatastore = datastoreSync.MutexWrap(datastore)
+	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
+	storageCore.PandoStore, err = store.NewStoreFromDatastore(context.Background(), storageCore.MutexDatastore, &config.StoreConfig{SnapShotInterval: "999m"})
 
 	var linksystem ipld.LinkSystem
 	if lsys == nil {
-		bs := blockstore.NewBlockstore(mds)
-		linksystem = link.MkLinkSystem(bs, nil, nil)
+		linksystem = link.MkLinkSystem(storageCore.PandoStore, nil, nil)
 	} else {
 		linksystem = *lsys
 	}
@@ -85,7 +87,7 @@ func NewDAGConsumer(privateKeyStr string, pandoAPI string, connectTimeout time.D
 	graphExchange := gsimpl.New(context.Background(), graphSyncNet, linksystem)
 	graphTransport := gstransport.NewTransport(consumerHost.ID(), graphExchange)
 
-	dataManager, err := dt.NewDataTransfer(mds, dataTransferNet, graphTransport)
+	dataManager, err := dt.NewDataTransfer(storageCore.MutexDatastore, dataTransferNet, graphTransport)
 	if err != nil {
 		return nil, err
 	}

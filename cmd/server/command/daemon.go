@@ -7,7 +7,6 @@ import (
 	"github.com/ipfs/go-cid"
 	mutexDataStoreFactory "github.com/ipfs/go-datastore/sync"
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
-	blockStoreFactory "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/PandoStore/pkg/config"
 	"github.com/kenlabs/PandoStore/pkg/store"
@@ -174,7 +173,7 @@ func initStoreInstance() (*core.StoreInstance, error) {
 		return nil, err
 	}
 	mutexDataStore := mutexDataStoreFactory.MutexWrap(dataStore)
-	blockStore := blockStoreFactory.NewBlockstore(mutexDataStore)
+	//blockStore := blockStoreFactory.NewBlockstore(mutexDataStore)
 
 	cacheStoreDir := filepath.Join(Opt.PandoRoot, Opt.CacheStore.Dir)
 	cacheStore, err := badger.Open(badger.DefaultOptions(cacheStoreDir))
@@ -193,7 +192,6 @@ func initStoreInstance() (*core.StoreInstance, error) {
 		//DataStore:      dataStore,
 		CacheStore:     cacheStore,
 		MutexDataStore: mutexDataStore,
-		BlockStore:     blockStore,
 		PandoStore:     pandoStore,
 	}, nil
 }

@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/ipfs/go-datastore/sync"
-	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/option"
@@ -42,19 +41,18 @@ func newMockController() (*Controller, error) {
 		return nil, err
 	}
 
-	dsLevelDB, err := leveldb.NewDatastore("/tmp/datastore", nil)
-	if err != nil {
-		return nil, err
-	}
+	//dsLevelDB, err := leveldb.NewDatastore("/tmp/datastore", nil)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	apiCore := &core.Core{
 		LegsCore: pandoMock.Core,
 		Registry: pandoMock.Registry,
 		StoreInstance: &core.StoreInstance{
-			DataStore:      dsLevelDB,
 			MutexDataStore: pandoMock.DS.(*sync.MutexDatastore),
-			BlockStore:     pandoMock.BS,
 			CacheStore:     pandoMock.CS,
+			PandoStore:     pandoMock.PS,
 		},
 	}
 	return New(apiCore, pandoMock.Opt), nil

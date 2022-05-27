@@ -1,9 +1,7 @@
 package controller
 
 import (
-	v1 "github.com/kenlabs/pando/pkg/api/v1"
 	"github.com/kenlabs/pando/pkg/api/v1/model"
-	"net/http"
 	"strings"
 )
 
@@ -15,7 +13,7 @@ func (c *Controller) PandoInfo() (*model.PandoInfo, error) {
 	}
 
 	return &model.PandoInfo{
-		PeerID: h.Core.LegsCore.Host.ID().String(),
+		PeerID: c.Core.LegsCore.Host.ID().String(),
 		Addresses: model.APIAddresses{
 			HttpAPI:      ipReplacer(c.Options.ServerAddress.HttpAPIListenAddress, c.Options.ServerAddress.ExternalIP),
 			GraphQLAPI:   ipReplacer(c.Options.ServerAddress.GraphqlListenAddress, c.Options.ServerAddress.ExternalIP),

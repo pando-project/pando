@@ -37,7 +37,7 @@ func (a *API) metadataSnapshot(ctx *gin.Context) {
 	heightQuery := ctx.Query("height")
 	snapshotCidQuery := ctx.Query("cid")
 
-	snapshot, err := a.controller.MetadataSnapShot(snapshotCidQuery, heightQuery)
+	snapshot, err := a.controller.MetadataSnapShot(ctx, snapshotCidQuery, heightQuery)
 	if err != nil {
 		logger.Error(fmt.Sprintf("metadataList metadataSnapshot failed: %v", err))
 		HandleError(ctx, err)
