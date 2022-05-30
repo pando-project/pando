@@ -8,7 +8,9 @@ import (
 	mutexDataStoreFactory "github.com/ipfs/go-datastore/sync"
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
 	logging "github.com/ipfs/go-log/v2"
+	PandoStore "github.com/kenlabs/PandoStore/pkg"
 	"github.com/kenlabs/PandoStore/pkg/config"
+	"github.com/kenlabs/PandoStore/pkg/migrate"
 	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/api/v1/server"
@@ -166,6 +168,17 @@ func initStoreInstance() (*core.StoreInstance, error) {
 	}
 	if !writable {
 		return nil, err
+	}
+
+	version, err := PandoStore.CheckVersion(dataStoreDir)
+	if err != nil {
+		return nil, err
+	}
+	if version != PandoStore.CurrentVersion {
+		err = migrate.Migrate(version, PandoStore.CurrentVersion, dataStoreDir, false)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	dataStore, err := dataStoreFactory.NewDatastore(dataStoreDir, nil)
