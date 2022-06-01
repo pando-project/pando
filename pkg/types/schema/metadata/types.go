@@ -1,4 +1,4 @@
-package schema
+package metadata
 
 import (
 	"errors"
@@ -9,10 +9,13 @@ import (
 )
 
 type Metadata struct {
-	PreviousID *ipld.Link
-	Provider   string
-	Payload    datamodel.Node
-	Signature  []byte
+	PreviousID     *ipld.Link
+	Provider       string
+	Cache          *bool
+	DatabaseName   *string
+	CollectionName *string
+	Payload        datamodel.Node
+	Signature      []byte
 }
 
 // ToNode converts this metadata to its representation as an IPLD typed node.

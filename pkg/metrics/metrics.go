@@ -32,6 +32,14 @@ var (
 	GetProviderHeadLatency = stats.Float64("get/provider/provider_head_latency",
 		"Time to respond to get provider's head", stats.UnitMilliseconds)
 
+	// schema handlers
+	PostSchemaRegisterLatency = stats.Float64("post/schema/register_latency",
+		"Time to respond to register a schema", stats.UnitMilliseconds)
+
+	// query handlers
+	PostQueryLatency = stats.Float64("post/query/register_latency",
+		"Time to respond to data query", stats.UnitMilliseconds)
+
 	// metadata handlers
 	GetMetadataListLatency = stats.Float64("get/metadata/list_latency",
 		"Time to fetch metadata snapshots", stats.UnitMilliseconds)
@@ -54,6 +62,8 @@ var (
 		{Measure: GetMetadataListLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetMetadataSnapshotLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GraphPersistenceLatency, Aggregation: view.Distribution(bounds...)},
+		{Measure: PostSchemaRegisterLatency, Aggregation: view.Distribution(bounds...)},
+		{Measure: PostQueryLatency, Aggregation: view.Distribution(bounds...)},
 	}
 )
 

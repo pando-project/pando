@@ -29,11 +29,15 @@ func NewV1HttpAPI(router *gin.Engine, core *core.Core, opt *option.DaemonOptions
 	}
 }
 
+// RegisterAPIs register API separately
+// DO NOT REGISTER IF THE API IS NOT READY
 func (a *API) RegisterAPIs() {
 	a.registerMetadata()
 	a.registerProvider()
 	a.registerPando()
+	//a.registerSchema()
 	a.registerSwagger()
+	a.registerQuery()
 }
 
 func HandleError(ctx *gin.Context, err error) {

@@ -1,0 +1,30 @@
+package legs
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"github.com/ipld/go-ipld-prime"
+	"github.com/ipld/go-ipld-prime/codec/dagjson"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+func CommitPayloadToMetastore(dbName string, dbCollection string, data ipld.Node, client *mongo.Client) error {
+	dataBuffer := bytes.NewBuffer(nil)
+	err := dagjson.Encode(data, dataBuffer)
+	if err != nil {
+		return err
+	}
+	var dataJson map[string]interface{}
+	err = json.Unmarshal(dataBuffer.Bytes(), &dataJson)
+	if err != nil {
+		return err
+	}
+	locationCollection := client.Database(dbName).Collection(dbCollection)
+	result, err := locationCollection.InsertOne(context.TODO(), dataJson)
+	if err != nil {
+		return err
+	}
+	log.Debugf("insert a doc into mongo, ID: %s", result.InsertedID)
+	return nil
+}

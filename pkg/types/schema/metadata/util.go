@@ -1,4 +1,4 @@
-package schema
+package metadata
 
 import (
 	"bytes"
@@ -34,7 +34,7 @@ func NewMetaWithBytesPayload(payload []byte, provider peer.ID, signKey crypto.Pr
 		Payload:    pnode,
 	}
 
-	sig, err := SignWithPrivky(signKey, meta)
+	sig, err := SignWithPrivateKey(signKey, meta)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func NewMetaWithPayloadNode(payload datamodel.Node, provider peer.ID, signKey cr
 		meta.PreviousID = &prev
 	}
 
-	sig, err := SignWithPrivky(signKey, meta)
+	sig, err := SignWithPrivateKey(signKey, meta)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func NewMetadataWithLink(payload []byte, provider peer.ID, signKey crypto.PrivKe
 		Payload:    pnode,
 	}
 
-	sig, err := SignWithPrivky(signKey, meta)
+	sig, err := SignWithPrivateKey(signKey, meta)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (m Metadata) AppendMetadata(previousID cid.Cid, provider peer.ID, payload [
 		Provider:   provider.String(),
 		Payload:    pnode,
 	}
-	signature, err := SignWithPrivky(signKey, metadata)
+	signature, err := SignWithPrivateKey(signKey, metadata)
 	if err != nil {
 		return nil, err
 	}
@@ -129,13 +129,13 @@ func (m Metadata) LinkContext(ctx context.Context) ipld.LinkContext {
 	}
 }
 
-// Signs metadata using libp2p envelope
-func SignWithPrivky(privkey crypto.PrivKey, meta *Metadata) ([]byte, error) {
+// SignWithPrivateKey Signs metadata using libp2p envelope
+func SignWithPrivateKey(privateKey crypto.PrivKey, meta *Metadata) ([]byte, error) {
 	metaID, err := signMetadata(meta)
 	if err != nil {
 		return nil, err
 	}
-	envelope, err := record.Seal(&metaSignatureRecord{metaID: metaID}, privkey)
+	envelope, err := record.Seal(&metaSignatureRecord{metaID: metaID}, privateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -145,9 +145,12 @@ func SignWithPrivky(privkey crypto.PrivKey, meta *Metadata) ([]byte, error) {
 func signMetadata(meta *Metadata) ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
 	m := &Metadata{
-		PreviousID: meta.PreviousID,
-		Provider:   meta.Provider,
-		Payload:    meta.Payload,
+		PreviousID:     meta.PreviousID,
+		Provider:       meta.Provider,
+		Cache:          meta.Cache,
+		DatabaseName:   meta.DatabaseName,
+		CollectionName: meta.CollectionName,
+		Payload:        meta.Payload,
 	}
 	n, err := m.ToNode()
 	if err != nil {

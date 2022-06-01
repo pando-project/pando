@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	InvalidQuery        = "invalid query"
+	InvalidQuery        = errors.New("invalid query")
 	ResourceNotFound    = errors.New("resource not found")
 	InternalServerError = errors.New("internal server error, please contact with administrator")
 )

@@ -19,7 +19,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
 	"github.com/kenlabs/pando/pkg/legs"
-	"github.com/kenlabs/pando/pkg/types/schema"
+	"github.com/kenlabs/pando/pkg/types/schema/metadata"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -66,18 +66,18 @@ func getDagNodes() []format.Node {
 	return []format.Node{nd3, nd2, nd1, c, b, a}
 }
 
-func (p *ProviderMock) genMetaWithBytesPayload(link datamodel.Link) (*schema.Metadata, error) {
+func (p *ProviderMock) genMetaWithBytesPayload(link datamodel.Link) (*metadata.Metadata, error) {
 	data := make([]byte, 256)
 	rand.Read(data)
-	var meta *schema.Metadata
+	var meta *metadata.Metadata
 	var err error
 	if link == nil {
-		meta, err = schema.NewMetaWithBytesPayload(data, p.ID, p.pk)
+		meta, err = metadata.NewMetaWithBytesPayload(data, p.ID, p.pk)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create meta: %s", err.Error())
 		}
 	} else {
-		meta, err = schema.NewMetadataWithLink(data, p.ID, p.pk, link)
+		meta, err = metadata.NewMetadataWithLink(data, p.ID, p.pk, link)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create meta with link: %s", err.Error())
 		}
@@ -85,17 +85,17 @@ func (p *ProviderMock) genMetaWithBytesPayload(link datamodel.Link) (*schema.Met
 	return meta, nil
 }
 
-func (p *ProviderMock) genMetaWithLinkPayload(prev datamodel.Link) (*schema.Metadata, cid.Cid, error) {
+func (p *ProviderMock) genMetaWithLinkPayload(prev datamodel.Link) (*metadata.Metadata, cid.Cid, error) {
 	data := make([]byte, 256)
 	rand.Read(data)
-	var meta *schema.Metadata
+	var meta *metadata.Metadata
 	var err error
 	pnode := basicnode.NewBytes(data)
-	lnk, err := p.lsys.Store(ipld.LinkContext{}, schema.LinkProto, pnode)
+	lnk, err := p.lsys.Store(ipld.LinkContext{}, metadata.LinkProto, pnode)
 	if err != nil {
 		return nil, cid.Undef, err
 	}
-	meta, err = schema.NewMetaWithPayloadNode(basicnode.NewLink(lnk), p.ID, p.pk, prev)
+	meta, err = metadata.NewMetaWithPayloadNode(basicnode.NewLink(lnk), p.ID, p.pk, prev)
 	if err != nil {
 		return nil, cid.Undef, fmt.Errorf("failed to create meta: %s", err.Error())
 	}
@@ -168,7 +168,7 @@ func (p *ProviderMock) SendMeta(update bool) (cid.Cid, error) {
 	if err != nil {
 		return cid.Undef, err
 	}
-	lnk, err := p.lsys.Store(ipld.LinkContext{}, schema.LinkProto, mnode)
+	lnk, err := p.lsys.Store(ipld.LinkContext{}, metadata.LinkProto, mnode)
 	if err != nil {
 		return cid.Undef, err
 	}
@@ -192,7 +192,7 @@ func (p *ProviderMock) SendMetaWithDataLink(update bool) (cid.Cid, cid.Cid, erro
 	if err != nil {
 		return cid.Undef, cid.Undef, err
 	}
-	lnk, err := p.lsys.Store(ipld.LinkContext{}, schema.LinkProto, mnode)
+	lnk, err := p.lsys.Store(ipld.LinkContext{}, metadata.LinkProto, mnode)
 	if err != nil {
 		return cid.Undef, cid.Undef, err
 	}

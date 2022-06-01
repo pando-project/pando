@@ -1,4 +1,4 @@
-package schema
+package metadata
 
 import (
 	_ "embed"

@@ -11,6 +11,7 @@ import (
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/kenlabs/pando/pkg/statetree"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Core struct {
@@ -28,4 +29,5 @@ type StoreInstance struct {
 	MutexDataStore *sync.MutexDatastore
 	BlockStore     blockstore.Blockstore
 	CacheStore     *badger.DB
+	MetaStore      *mongo.Client
 }

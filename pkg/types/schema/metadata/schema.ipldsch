@@ -1,0 +1,24 @@
+type Metadata struct {
+	# Previous metadata
+	PreviousID nullable Link_Metadata
+
+    # Provider's PeerID
+    Provider String
+
+    # Cache option
+    Cache optional Bool
+
+    # DB name
+    DatabaseName optional String
+
+    # Collection name
+    CollectionName optional String
+
+	# Data that provider want store and share
+	Payload   Any
+
+	# Metadata signature
+    Signature Bytes
+}
+
+type Link_Metadata &Metadata
