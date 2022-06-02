@@ -17,7 +17,7 @@ func (a *API) registerPando() {
 		pando.GET("/metrics", adapter.Wrap(func(h http.Handler) http.Handler {
 			return metrics.Handler(coremetrics.DefaultViews)
 		}))
-		pando.OPTIONS("/health")
+		pando.GET("/health", a.pandoHealthCheck)
 	}
 }
 
@@ -33,3 +33,8 @@ func (a *API) pandoInfo(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, types.NewOKResponse("OK", *pandoInfo))
 }
+
+func (a *API) pandoHealthCheck(ctx *gin.Context) {
+	ctx.String(http.StatusOK, "Good")
+}
+
