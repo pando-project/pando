@@ -60,7 +60,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/kenlabs/PandoStore v0.0.0-20220530135553-5bb8f25ecd8d
+require github.com/kenlabs/PandoStore v0.0.0-20220602082018-b2eee8851dd9
 
 require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
