@@ -109,7 +109,7 @@ func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, 
 	gs := gsimpl.New(context.Background(), gsNet, lnkSys)
 	tp := gstransport.NewTransport(h.ID(), gs)
 
-	dtManager, err := dt.NewDataTransfer(ds, dtNet, tp)
+	dtManager, err := dt.NewDataTransfer(datastore.NewMapDatastore(), dtNet, tp)
 	if err != nil {
 		return nil, nil, err
 	}
