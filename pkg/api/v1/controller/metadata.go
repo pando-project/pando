@@ -13,7 +13,7 @@ import (
 )
 
 func (c *Controller) MetadataList() ([]byte, error) {
-	res, err := c.Core.StoreInstance.PandoStore.SnapShotStore.GetSnapShotList(context.Background())
+	res, err := c.Core.StoreInstance.PandoStore.SnapShotStore().GetSnapShotList(context.Background())
 	if err != nil {
 		return nil, v1.NewError(err, http.StatusInternalServerError)
 	}
@@ -40,7 +40,7 @@ func (c *Controller) MetadataSnapShot(ctx context.Context, cidstr string, height
 		if err != nil {
 			return nil, err
 		}
-		snapshotFromCid, err = c.Core.StoreInstance.PandoStore.SnapShotStore.GetSnapShotByCid(ctx, snapshotCid)
+		snapshotFromCid, err = c.Core.StoreInstance.PandoStore.SnapShotStore().GetSnapShotByCid(ctx, snapshotCid)
 		if err != nil {
 			if err == storeError.InvalidParameters {
 				return nil, v1.NewError(v1.InvalidQuery, http.StatusBadRequest)
@@ -53,7 +53,7 @@ func (c *Controller) MetadataSnapShot(ctx context.Context, cidstr string, height
 		if err != nil {
 			return nil, v1.NewError(err, http.StatusBadRequest)
 		}
-		snapshotFromHeight, _, err = c.Core.StoreInstance.PandoStore.SnapShotStore.GetSnapShotByHeight(ctx, snapshotHeight)
+		snapshotFromHeight, _, err = c.Core.StoreInstance.PandoStore.SnapShotStore().GetSnapShotByHeight(ctx, snapshotHeight)
 		if err != nil {
 			if err == storeError.InvalidParameters {
 				return nil, v1.NewError(v1.InvalidQuery, http.StatusBadRequest)

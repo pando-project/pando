@@ -50,7 +50,7 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 			})
 
 			time.Sleep(time.Second * 5)
-			update, _, err := pando.PS.SnapShotStore.GetSnapShotByHeight(ctx, 0)
+			update, _, err := pando.PS.SnapShotStore().GetSnapShotByHeight(ctx, 0)
 			So(err, ShouldBeNil)
 			So(update.PrevSnapShot, ShouldEqual, "")
 			So(len(update.Update[provider.ID.String()].MetaList), ShouldEqual, 3)

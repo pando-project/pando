@@ -132,7 +132,7 @@ func (a *API) newSnapshotField() *graphql.Field {
 			if err != nil {
 				return nil, err
 			}
-			ss, err := a.core.StoreInstance.PandoStore.SnapShotStore.GetSnapShotByCid(context.Background(), snapshotCid)
+			ss, err := a.core.StoreInstance.PandoStore.SnapShotStore().GetSnapShotByCid(context.Background(), snapshotCid)
 			if err != nil {
 				return nil, err
 			}

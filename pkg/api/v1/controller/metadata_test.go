@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ipfs/go-cid"
+	"github.com/kenlabs/PandoStore/pkg/snapshotstore"
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
 	"github.com/kenlabs/pando/pkg/util/cids"
 	. "github.com/smartystreets/goconvey/convey"
@@ -29,7 +30,7 @@ func TestMetadataList(t *testing.T) {
 
 		Convey("when GetSnapShotCidList returns valid cid list, should returns that list", func() {
 			patch := gomonkey.ApplyMethodFunc(
-				reflect.TypeOf(mockController.Core.StoreInstance.PandoStore.SnapShotStore),
+				reflect.TypeOf(&snapshotstore.SnapShotStore{}),
 				"GetSnapShotList",
 				func(ctx context.Context) (*[]cid.Cid, error) {
 					return &testMetadataList, nil
@@ -49,7 +50,7 @@ func TestMetadataList(t *testing.T) {
 
 		Convey("when GetSnapShotCidList returns an error, should returns that error with code 500", func() {
 			patch := gomonkey.ApplyMethodFunc(
-				reflect.TypeOf(mockController.Core.StoreInstance.PandoStore.SnapShotStore),
+				reflect.TypeOf(&snapshotstore.SnapShotStore{}),
 				"GetSnapShotList",
 				func(context.Context) (*[]cid.Cid, error) {
 					return nil, fmt.Errorf("monkey error")
@@ -67,7 +68,7 @@ func TestMetadataList(t *testing.T) {
 
 		Convey("when GetSnapShotCidList returns a nil value and an nil error, should returns resource not found error with code 404", func() {
 			patch := gomonkey.ApplyMethodFunc(
-				reflect.TypeOf(mockController.Core.StoreInstance.PandoStore.SnapShotStore),
+				reflect.TypeOf(&snapshotstore.SnapShotStore{}),
 				"GetSnapShotList",
 				func(context.Context) (*[]cid.Cid, error) {
 					return nil, nil
