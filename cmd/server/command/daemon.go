@@ -7,8 +7,11 @@ import (
 	"github.com/ipfs/go-cid"
 	mutexDataStoreFactory "github.com/ipfs/go-datastore/sync"
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
-	blockStoreFactory "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
+	PandoStore "github.com/kenlabs/PandoStore/pkg"
+	"github.com/kenlabs/PandoStore/pkg/config"
+	"github.com/kenlabs/PandoStore/pkg/migrate"
+	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/api/v1/server"
 	"github.com/kenlabs/pando/pkg/legs"
@@ -16,8 +19,6 @@ import (
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/policy"
 	"github.com/kenlabs/pando/pkg/registry"
-	"github.com/kenlabs/pando/pkg/statetree"
-	"github.com/kenlabs/pando/pkg/statetree/types"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	libp2pHost "github.com/libp2p/go-libp2p-core/host"
@@ -169,21 +170,42 @@ func initStoreInstance() (*core.StoreInstance, error) {
 		return nil, err
 	}
 
+	version, err := PandoStore.CheckVersion(dataStoreDir)
+	if err != nil {
+		return nil, err
+	}
+	if version != PandoStore.CurrentVersion {
+		err = migrate.Migrate(version, PandoStore.CurrentVersion, dataStoreDir, false)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	dataStore, err := dataStoreFactory.NewDatastore(dataStoreDir, nil)
 	if err != nil {
 		return nil, err
 	}
 	mutexDataStore := mutexDataStoreFactory.MutexWrap(dataStore)
-	blockStore := blockStoreFactory.NewBlockstore(mutexDataStore)
+	//blockStore := blockStoreFactory.NewBlockstore(mutexDataStore)
 
 	cacheStoreDir := filepath.Join(Opt.PandoRoot, Opt.CacheStore.Dir)
 	cacheStore, err := badger.Open(badger.DefaultOptions(cacheStoreDir))
+	if err != nil {
+		return nil, err
+	}
+
+	pandoStore, err := store.NewStoreFromDatastore(context.Background(), mutexDataStore, &config.StoreConfig{
+		SnapShotInterval: Opt.DataStore.SnapShotInterval,
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &core.StoreInstance{
-		DataStore:      dataStore,
+		//DataStore:      dataStore,
 		CacheStore:     cacheStore,
 		MutexDataStore: mutexDataStore,
-		BlockStore:     blockStore,
+		PandoStore:     pandoStore,
 	}, nil
 }
 
@@ -213,7 +235,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	var err error
 
 	c.StoreInstance = storeInstance
-	linkSystem := legs.MkLinkSystem(c.StoreInstance.BlockStore, nil, nil)
+	linkSystem := legs.MkLinkSystem(c.StoreInstance.PandoStore, nil, nil)
 	c.LinkSystem = &linkSystem
 
 	var lotusDiscoverer *lotus.Discoverer
@@ -227,33 +249,16 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	}
 
 	c.Registry, err = registry.NewRegistry(context.Background(), &Opt.Discovery, &Opt.AccountLevel,
-		storeInstance.DataStore, lotusDiscoverer)
+		storeInstance.MutexDataStore, lotusDiscoverer)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create provider registryInstance: %v", err)
 	}
 
 	c.MetaManager, err = metadata.New(context.Background(),
 		storeInstance.MutexDataStore,
-		storeInstance.BlockStore,
 		c.LinkSystem,
 		c.Registry,
 		&Opt.Backup)
-	if err != nil {
-		return nil, err
-	}
-
-	info := new(types.ExtraInfo)
-	for _, addr := range p2pHost.Addrs() {
-		info.MultiAddresses += addr.String() + " "
-	}
-	info.PeerID = p2pHost.ID().String()
-
-	c.StateTree, err = statetree.New(context.Background(),
-		storeInstance.MutexDataStore,
-		storeInstance.BlockStore,
-		c.MetaManager.GetUpdateOut(),
-		info,
-	)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +271,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 		p2pHost,
 		storeInstance.MutexDataStore,
 		storeInstance.CacheStore,
-		storeInstance.BlockStore,
+		storeInstance.PandoStore,
 		c.MetaManager.GetMetaInCh(),
 		backupGenInterval,
 		nil,

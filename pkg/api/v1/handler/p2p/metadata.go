@@ -27,7 +27,7 @@ func (h *libp2pHandler) metadataSnapShot(ctx context.Context, p peer.ID, msg *pb
 		logger.Errorw("error unmarshalling metadataSnapShot request", "err", err)
 		return nil, v1.NewError(errors.New("cannot decode request"), http.StatusBadRequest)
 	}
-	data, err := h.controller.MetadataSnapShot(query.CidString, query.Height)
+	data, err := h.controller.MetadataSnapShot(ctx, query.CidString, query.Height)
 	if err != nil {
 		logger.Errorf("failed to get snapshot: %v", err)
 		return nil, err

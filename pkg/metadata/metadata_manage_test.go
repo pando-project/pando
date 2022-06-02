@@ -18,12 +18,12 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 		So(err, ShouldBeNil)
 		err = logging.SetLogLevel("meta-manager", "debug")
 		So(err, ShouldBeNil)
-		lys := legs.MkLinkSystem(pando.BS, nil, nil)
+		lys := legs.MkLinkSystem(pando.PS, nil, nil)
 
 		Convey("give records when wait for maxInterval then update and backup", func() {
 			//BackupMaxInterval = time.Second * 3
 			pando.Opt.Backup.BackupGenInterval = (time.Second * 3).String()
-			mm, err := New(context.Background(), pando.DS, pando.BS, &lys, pando.Registry, &pando.Opt.Backup)
+			mm, err := New(context.Background(), pando.DS, &lys, pando.Registry, &pando.Opt.Backup)
 			So(err, ShouldBeNil)
 			provider, err := mock.NewMockProvider(pando)
 			So(err, ShouldBeNil)
@@ -44,21 +44,21 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 			for _, r := range mockRecord {
 				recvCh <- r
 			}
-			outCh := mm.GetUpdateOut()
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 			t.Cleanup(func() {
 				cancel()
 			})
 
 			time.Sleep(time.Second * 5)
-			select {
-			case <-ctx.Done():
-				t.Error("timeout!not get update rightly")
-			case update := <-outCh:
-				So(len(update), ShouldEqual, 1)
-				So(update, ShouldContainKey, mockRecord[0].ProviderID)
-				So(update[mockRecord[0].ProviderID].Cidlist, ShouldResemble, []cid.Cid{mockRecord[0].Cid, mockRecord[1].Cid, mockRecord[2].Cid})
-			}
+			update, _, err := pando.PS.SnapShotStore().GetSnapShotByHeight(ctx, 0)
+			So(err, ShouldBeNil)
+			So(update.PrevSnapShot, ShouldEqual, "")
+			So(len(update.Update[provider.ID.String()].MetaList), ShouldEqual, 3)
+			So(update.Update[provider.ID.String()].MetaList, ShouldContain, cid1)
+			So(update.Update[provider.ID.String()].MetaList, ShouldContain, cid2)
+			So(update.Update[provider.ID.String()].MetaList, ShouldContain, cid3)
+			t.Logf("%#v", update)
+
 			mm.Close()
 		})
 	})

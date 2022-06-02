@@ -7,14 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore/sync"
-	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/ipfs/go-log/v2"
+	"github.com/kenlabs/PandoStore/pkg/types/cbortypes"
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/api/types"
-	snapshotTypes "github.com/kenlabs/pando/pkg/statetree/types"
 	"github.com/kenlabs/pando/pkg/util/cids"
 	"github.com/kenlabs/pando/test/mock"
 	. "github.com/smartystreets/goconvey/convey"
+
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -125,26 +126,19 @@ func TestMetadataSnapshot(t *testing.T) {
 				t.Error(err)
 			}
 
-			testSnapshot := snapshotTypes.SnapShot{
-				Update: map[string]*snapshotTypes.ProviderState{
-					"12D3KooWSS3sEujyAXB9SWUvVtQZmxH6vTi9NitqaaRQoUjeEk3M": {
-						Cidlist:          testCidList,
-						LastCommitHeight: 1,
-					},
+			testSnapshot := cbortypes.SnapShot{
+				Update: map[string]*cbortypes.Metalist{
+					"12D3KooWSS3sEujyAXB9SWUvVtQZmxH6vTi9NitqaaRQoUjeEk3M": {testCidList},
 				},
 				PrevSnapShot: "bafy2bzacebxvzutul3nqhdalyxqphxyrpw2xfxa4dfuiew5uhyg2phln444us",
 				Height:       1,
-				ExtraInfo: &snapshotTypes.ExtraInfo{
-					PeerID:         "12D3KooWNU48MUrPEoYh77k99RbskgftfmSm3CdkonijcM5VehS9",
-					MultiAddresses: "/ip4/172.17.0.19/tcp/9013 /ip4/127.0.0.1/tcp/9013 ",
-				},
-				CreateTime: 1646124783926371600,
+				CreateTime:   1646124783926371600,
 			}
 
 			testSnapshotRes, err := json.Marshal(testSnapshot)
 			patch := gomonkey.ApplyMethodFunc(reflect.TypeOf(mockAPI.controller),
 				"MetadataSnapShot",
-				func(_ string, _ string) ([]byte, error) {
+				func(_ context.Context, _ string, _ string) ([]byte, error) {
 					return testSnapshotRes, nil
 				},
 			)
@@ -164,7 +158,7 @@ func TestMetadataSnapshot(t *testing.T) {
 				t.Error(err)
 			}
 
-			var actualSnapshot snapshotTypes.SnapShot
+			var actualSnapshot cbortypes.SnapShot
 			err = json.Unmarshal(respData, &actualSnapshot)
 			if err != nil {
 				t.Error(err)
@@ -178,7 +172,7 @@ func TestMetadataSnapshot(t *testing.T) {
 		Convey("Given an monkey error, should return a monkey error resp", func() {
 			patch := gomonkey.ApplyMethodFunc(reflect.TypeOf(mockAPI.controller),
 				"MetadataSnapShot",
-				func(_ string, _ string) ([]byte, error) {
+				func(_ context.Context, _ string, _ string) ([]byte, error) {
 					return nil, fmt.Errorf("monkey error")
 				},
 			)
@@ -206,19 +200,18 @@ func newHttpAPIMock() (*API, error) {
 		return nil, err
 	}
 
-	dsLevelDB, err := leveldb.NewDatastore("/tmp/datastore", nil)
-	if err != nil {
-		return nil, err
-	}
+	//dsLevelDB, err := leveldb.NewDatastore("/tmp/datastore", nil)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	apiCore := &core.Core{
 		LegsCore: pandoMock.Core,
 		Registry: pandoMock.Registry,
 		StoreInstance: &core.StoreInstance{
-			DataStore:      dsLevelDB,
 			MutexDataStore: pandoMock.DS.(*sync.MutexDatastore),
-			BlockStore:     pandoMock.BS,
 			CacheStore:     pandoMock.CS,
+			PandoStore:     pandoMock.PS,
 		},
 	}
 	return NewV1HttpAPI(gin.Default(), apiCore, pandoMock.Opt), nil

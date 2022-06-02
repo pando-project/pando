@@ -120,11 +120,11 @@ func TestBackUpWithStopLink(t *testing.T) {
 		time.Sleep(time.Second * 3)
 
 		for i := 0; i < 5; i++ {
-			_, err = pando.BS.Get(context.Background(), cids[i])
+			_, err = pando.PS.Get(context.Background(), cids[i])
 			So(err, ShouldBeNil)
 		}
 
-		linksys := legs.MkLinkSystem(pando.BS, nil, nil)
+		linksys := legs.MkLinkSystem(pando.PS, nil, nil)
 		ss := golegs.ExploreRecursiveWithStopNode(selector.RecursionLimit{}, nil, cidlink.Link{cids[4]})
 		tmpdir := t.TempDir()
 		f, err := os.OpenFile(path.Join(tmpdir, "test1.car"), os.O_WRONLY|os.O_CREATE, 0666)

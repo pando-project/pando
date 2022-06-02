@@ -67,7 +67,7 @@ func (c *Controller) ListProviderInfo(p peer.ID) ([]*registry.ProviderInfo, erro
 func (c *Controller) ListProviderHead(p peer.ID) (cid.Cid, error) {
 	var cidBytes []byte
 	var err error
-	cidBytes, err = c.Core.StoreInstance.DataStore.Get(context.Background(), datastore.NewKey(legs.SyncPrefix+p.String()))
+	cidBytes, err = c.Core.StoreInstance.MutexDataStore.Get(context.Background(), datastore.NewKey(legs.SyncPrefix+p.String()))
 	if err != nil {
 		if err == datastore.ErrNotFound {
 			return cid.Undef, v1.NewError(errors.New("not found the head of this provider"), http.StatusNotFound)

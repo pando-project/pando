@@ -1,25 +1,26 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/ipfs/go-cid"
+	storeError "github.com/kenlabs/PandoStore/pkg/error"
+	"github.com/kenlabs/PandoStore/pkg/types/cbortypes"
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
-	"github.com/kenlabs/pando/pkg/statetree"
-	snapshotTypes "github.com/kenlabs/pando/pkg/statetree/types"
 	"net/http"
 	"strconv"
 )
 
 func (c *Controller) MetadataList() ([]byte, error) {
-	res, err := c.Core.StateTree.GetSnapShotCidList()
+	res, err := c.Core.StoreInstance.PandoStore.SnapShotStore().GetSnapShotList(context.Background())
 	if err != nil {
 		return nil, v1.NewError(err, http.StatusInternalServerError)
 	}
 	if res == nil {
 		return nil, v1.NewError(v1.ResourceNotFound, http.StatusNotFound)
 	}
-	data, err := json.Marshal(res)
+	data, err := json.Marshal(*res)
 	if err != nil {
 		return nil, v1.NewError(err, http.StatusInternalServerError)
 	}
@@ -27,22 +28,22 @@ func (c *Controller) MetadataList() ([]byte, error) {
 	return data, nil
 }
 
-func (c *Controller) MetadataSnapShot(snapshotCid string, height string) ([]byte, error) {
-	var snapshotFromHeight *snapshotTypes.SnapShot
-	var snapshotFromCid *snapshotTypes.SnapShot
-	if snapshotCid == "" && height == "" {
+func (c *Controller) MetadataSnapShot(ctx context.Context, cidstr string, height string) ([]byte, error) {
+	var snapshotFromHeight *cbortypes.SnapShot
+	var snapshotFromCid *cbortypes.SnapShot
+	if cidstr == "" && height == "" {
 		return nil, v1.NewError(errors.New("height or cid is required"), http.StatusBadRequest)
 	}
 
-	if snapshotCid != "" {
-		snapshotCid, err := cid.Decode(snapshotCid)
+	if cidstr != "" {
+		snapshotCid, err := cid.Decode(cidstr)
 		if err != nil {
 			return nil, err
 		}
-		snapshotFromCid, err = c.Core.StateTree.GetSnapShot(snapshotCid)
+		snapshotFromCid, err = c.Core.StoreInstance.PandoStore.SnapShotStore().GetSnapShotByCid(ctx, snapshotCid)
 		if err != nil {
-			if err == statetree.NotFoundErr {
-				return nil, v1.NewError(v1.ResourceNotFound, http.StatusNotFound)
+			if err == storeError.InvalidParameters {
+				return nil, v1.NewError(v1.InvalidQuery, http.StatusBadRequest)
 			}
 			return nil, v1.NewError(err, http.StatusInternalServerError)
 		}
@@ -52,10 +53,10 @@ func (c *Controller) MetadataSnapShot(snapshotCid string, height string) ([]byte
 		if err != nil {
 			return nil, v1.NewError(err, http.StatusBadRequest)
 		}
-		snapshotFromHeight, err = c.Core.StateTree.GetSnapShotByHeight(snapshotHeight)
+		snapshotFromHeight, _, err = c.Core.StoreInstance.PandoStore.SnapShotStore().GetSnapShotByHeight(ctx, snapshotHeight)
 		if err != nil {
-			if err == statetree.NotFoundErr {
-				return nil, v1.NewError(v1.ResourceNotFound, http.StatusNotFound)
+			if err == storeError.InvalidParameters {
+				return nil, v1.NewError(v1.InvalidQuery, http.StatusBadRequest)
 			}
 			return nil, v1.NewError(err, http.StatusInternalServerError)
 		}
@@ -64,7 +65,7 @@ func (c *Controller) MetadataSnapShot(snapshotCid string, height string) ([]byte
 		return nil, v1.NewError(errors.New("dismatched cid and height for snapshot"), http.StatusBadRequest)
 	}
 
-	var resSnapshot *snapshotTypes.SnapShot
+	var resSnapshot *cbortypes.SnapShot
 	var res []byte
 	var err error
 	if snapshotFromCid != nil {
@@ -74,6 +75,27 @@ func (c *Controller) MetadataSnapShot(snapshotCid string, height string) ([]byte
 	}
 
 	res, err = json.Marshal(resSnapshot)
+	if err != nil {
+		return nil, v1.NewError(err, http.StatusInternalServerError)
+	}
+
+	return res, nil
+}
+
+func (c *Controller) MetaInclusion(ctx context.Context, cidstr string) ([]byte, error) {
+	metaCid, err := cid.Decode(cidstr)
+	if err != nil {
+		logger.Errorf("invalid cid: %s, err:%v", metaCid.String(), err)
+		return nil, v1.NewError(errors.New("invalid cid"), http.StatusBadRequest)
+	}
+
+	inclusion, err := c.Core.StoreInstance.PandoStore.MetaInclusion(ctx, metaCid)
+	if err != nil {
+		logger.Errorf("failed to get meta inclusion for cid: %s, err:%v", metaCid.String(), err)
+		return nil, v1.NewError(v1.InternalServerError, http.StatusInternalServerError)
+	}
+
+	res, err := json.Marshal(inclusion)
 	if err != nil {
 		return nil, v1.NewError(err, http.StatusInternalServerError)
 	}

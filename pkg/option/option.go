@@ -111,6 +111,9 @@ func New(root *cobra.Command) *DaemonOptions {
 	opt.flags.StringVar(&opt.DataStore.Dir, "datastore-dir", defaultDataStoreDir,
 		"Directory of datastore files.")
 
+	opt.flags.StringVar(&opt.DataStore.SnapShotInterval, "snapshot-interval", defaultSnapShotInterval,
+		"interval to generate snapshot for meta.")
+
 	// options for cachestore
 	opt.flags.StringVar(&opt.CacheStore.Dir, "cachestore-dir", defaultCacheStoreDir,
 		"Directory of cachestore files.")

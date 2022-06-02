@@ -7,8 +7,9 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/sync"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
+	"github.com/kenlabs/PandoStore/pkg/config"
+	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/pkg/option"
 	"github.com/kenlabs/pando/test/mock"
@@ -63,7 +64,7 @@ func TestGetMetaRecord(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		c, err := legs.NewLegsCore(ctx, p.Host, p.DS, p.CS, p.BS, nil, time.Minute, nil, p.Registry, opt)
+		c, err := legs.NewLegsCore(ctx, p.Host, p.DS, p.CS, p.PS, nil, time.Minute, nil, p.Registry, opt)
 		So(err, ShouldBeNil)
 		err = c.Close()
 		So(err, ShouldBeNil)
@@ -120,7 +121,7 @@ func TestRecurseFetchMeta(t *testing.T) {
 
 		time.Sleep(time.Second * 5)
 		for i := 0; i < 6; i++ {
-			_, err = pando.BS.Get(ctx, cids[i])
+			_, err = pando.PS.Get(ctx, cids[i])
 			So(err, ShouldBeNil)
 			select {
 			case rec, ok := <-ch:
@@ -152,9 +153,13 @@ func TestSyncDataFromPando(t *testing.T) {
 		So(err, ShouldBeNil)
 		ds := datastore.NewMapDatastore()
 		mds := sync.MutexWrap(ds)
-		bs := blockstore.NewBlockstore(mds)
-		lsys := legs.MkLinkSystem(bs, nil, nil)
-		consumer, err := golegs.NewSubscriber(h, ds, lsys, mock.GetTopic(), nil)
+		////bs := blockstore.NewBlockstore(mds)
+		ps, err := store.NewStoreFromDatastore(context.Background(), mds, &config.StoreConfig{
+			SnapShotInterval: "1s",
+		})
+		So(err, ShouldBeNil)
+		lsys := legs.MkLinkSystem(ps, nil, nil)
+		consumer, err := golegs.NewSubscriber(h, mds, lsys, mock.GetTopic(), nil)
 		So(err, ShouldBeNil)
 
 		multiAddress := pando.Host.Addrs()[0].String() + "/ipfs/" + pando.Host.ID().String()
@@ -168,7 +173,7 @@ func TestSyncDataFromPando(t *testing.T) {
 		So(c.Equals(cids[4]), ShouldBeTrue)
 
 		for i := 0; i < 5; i++ {
-			_, err := bs.Get(context.Background(), cids[i])
+			_, err := ps.Get(context.Background(), cids[i])
 			So(err, ShouldBeNil)
 		}
 
@@ -198,15 +203,11 @@ func TestGetPayloadFromLink(t *testing.T) {
 			cncl,
 		)
 
-		//c, err := provider.SendMeta(true)
-		//So(err, ShouldBeNil)
-		//cids = append(cids, c)
-
 		time.Sleep(time.Second * 1)
 		for i := 0; i < 5; i++ {
-			_, err = pando.BS.Get(ctx, cids[i])
+			_, err = pando.PS.Get(ctx, cids[i])
 			So(err, ShouldBeNil)
-			_, err = pando.BS.Get(ctx, payloadCids[i])
+			_, err = pando.PS.Get(ctx, payloadCids[i])
 			So(err, ShouldBeNil)
 			select {
 			case rec, ok := <-ch:

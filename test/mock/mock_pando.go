@@ -6,7 +6,8 @@ import (
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	"github.com/kenlabs/PandoStore/pkg/config"
+	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/option"
@@ -24,7 +25,7 @@ type PandoMock struct {
 	Opt      *option.DaemonOptions
 	DS       datastore.Batching
 	CS       *badger.DB
-	BS       blockstore.Blockstore
+	PS       *store.PandoStore
 	Host     host.Host
 	Core     *legs.Core
 	Registry *registry.Registry
@@ -35,8 +36,8 @@ type PandoMock struct {
 func NewPandoMock() (*PandoMock, error) {
 	ctx := context.Background()
 
-	ds := datastore.NewMapDatastore()
-	mds := dssync.MutexWrap(ds)
+	_ds := datastore.NewMapDatastore()
+	ds := dssync.MutexWrap(_ds)
 	cs, err := badger.Open(badger.DefaultOptions("").WithInMemory(true))
 	if err != nil {
 		return nil, err
@@ -45,14 +46,20 @@ func NewPandoMock() (*PandoMock, error) {
 	if err != nil {
 		return nil, err
 	}
-	bs := blockstore.NewBlockstore(mds)
+	//bs := blockstore.NewBlockstore(mds)
+	ps, err := store.NewStoreFromDatastore(ctx, ds, &config.StoreConfig{
+		SnapShotInterval: "5s",
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	mockDisco, err := NewMockDiscoverer(exceptID)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := registry.NewRegistry(ctx, &MockDiscoveryCfg, &MockAclCfg, mds, mockDisco)
+	r, err := registry.NewRegistry(ctx, &MockDiscoveryCfg, &MockAclCfg, ds, mockDisco)
 	if err != nil {
 		return nil, err
 	}
@@ -74,14 +81,14 @@ func NewPandoMock() (*PandoMock, error) {
 	if err != nil {
 		return nil, err
 	}
-	core, err := legs.NewLegsCore(ctx, h, mds, cs, bs, outCh, time.Minute, limiter, r, opt)
+	core, err := legs.NewLegsCore(ctx, h, ds, cs, ps, outCh, time.Minute, limiter, r, opt)
 	if err != nil {
 		return nil, err
 	}
 
 	return &PandoMock{
-		DS:       mds,
-		BS:       bs,
+		DS:       ds,
+		PS:       ps,
 		CS:       cs,
 		Host:     h,
 		Core:     core,

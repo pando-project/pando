@@ -2,11 +2,11 @@ package graphql
 
 import (
 	"fmt"
+	"github.com/kenlabs/PandoStore/pkg/statestore/registry"
+	"github.com/kenlabs/PandoStore/pkg/types/cbortypes"
 	"strings"
 
 	"github.com/graphql-go/graphql"
-
-	"github.com/kenlabs/pando/pkg/statetree/types"
 )
 
 type postData struct {
@@ -21,45 +21,45 @@ var StateType = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "State",
 		Fields: graphql.Fields{
-			"Cidlist": &graphql.Field{
+			"PeerID": &graphql.Field{
 				Type:    graphql.String,
-				Resolve: StateCidListResolver,
+				Resolve: StatePeerIDResolver,
+			},
+			"MetaList": &graphql.Field{
+				Type:    graphql.String,
+				Resolve: StateMetaListResolver,
 			},
 			"LastUpdateHeight": &graphql.Field{
 				Type:    graphql.Int,
 				Resolve: StateLastHeightResolver,
 			},
-			"LastUpdate": &graphql.Field{
-				Type:    graphql.String,
-				Resolve: StateLastUpdateResolver,
-			},
 		},
 	},
 )
 
-func StateCidListResolver(params graphql.ResolveParams) (interface{}, error) {
-	ts, ok := params.Source.(*types.ProviderStateRes)
+func StatePeerIDResolver(params graphql.ResolveParams) (interface{}, error) {
+	ts, ok := params.Source.(*registry.ProviderInfo)
 	if ok {
-		return ts.State.Cidlist, nil
+		return ts.PeerID.String(), nil
 	} else {
-		return nil, fmt.Errorf(errUnexpectedType, params.Source, "State.Cidlist")
-	}
-}
-func StateLastHeightResolver(params graphql.ResolveParams) (interface{}, error) {
-	ts, ok := params.Source.(*types.ProviderStateRes)
-	if ok {
-		return ts.State.LastCommitHeight, nil
-	} else {
-		return nil, fmt.Errorf(errUnexpectedType, params.Source, "State.LastUpdateHeight")
+		return nil, fmt.Errorf(errUnexpectedType, params.Source, "ProviderInfo.PeerID")
 	}
 }
 
-func StateLastUpdateResolver(params graphql.ResolveParams) (interface{}, error) {
-	ts, ok := params.Source.(*types.ProviderStateRes)
+func StateMetaListResolver(params graphql.ResolveParams) (interface{}, error) {
+	ts, ok := params.Source.(*registry.ProviderInfo)
 	if ok {
-		return ts.NewestUpdate, nil
+		return ts.MetaList, nil
 	} else {
-		return nil, fmt.Errorf(errUnexpectedType, params.Source, "State.LastUpdate")
+		return nil, fmt.Errorf(errUnexpectedType, params.Source, "ProviderInfo.MetaList")
+	}
+}
+func StateLastHeightResolver(params graphql.ResolveParams) (interface{}, error) {
+	ts, ok := params.Source.(*registry.ProviderInfo)
+	if ok {
+		return ts.LastUpdateHeight, nil
+	} else {
+		return nil, fmt.Errorf(errUnexpectedType, params.Source, "ProviderInfo.LastUpdateHeight")
 	}
 }
 
@@ -75,13 +75,9 @@ var SnapShotType = graphql.NewObject(
 				Type:    graphql.String,
 				Resolve: SnapshotCreateTimeResolver,
 			},
-			"PreviousSnapShot": &graphql.Field{
+			"PrevSnapShot": &graphql.Field{
 				Type:    graphql.String,
 				Resolve: SnapshotPreviousSnapshotResolver,
-			},
-			"ExtraInfo": &graphql.Field{
-				Type:    graphql.String,
-				Resolve: SnapshotExtraInfoResolver,
 			},
 			"Update": &graphql.Field{
 				Type:    graphql.String,
@@ -91,7 +87,7 @@ var SnapShotType = graphql.NewObject(
 	})
 
 func SnapshotHeightResolver(params graphql.ResolveParams) (interface{}, error) {
-	snapshot, ok := params.Source.(*types.SnapShot)
+	snapshot, ok := params.Source.(*cbortypes.SnapShot)
 	if ok {
 		return snapshot.Height, nil
 	} else {
@@ -100,7 +96,7 @@ func SnapshotHeightResolver(params graphql.ResolveParams) (interface{}, error) {
 }
 
 func SnapshotCreateTimeResolver(params graphql.ResolveParams) (interface{}, error) {
-	snapshot, ok := params.Source.(*types.SnapShot)
+	snapshot, ok := params.Source.(*cbortypes.SnapShot)
 	if ok {
 		return snapshot.CreateTime, nil
 	} else {
@@ -109,7 +105,7 @@ func SnapshotCreateTimeResolver(params graphql.ResolveParams) (interface{}, erro
 }
 
 func SnapshotPreviousSnapshotResolver(params graphql.ResolveParams) (interface{}, error) {
-	snapshot, ok := params.Source.(*types.SnapShot)
+	snapshot, ok := params.Source.(*cbortypes.SnapShot)
 	if ok {
 		return snapshot.PrevSnapShot, nil
 	} else {
@@ -118,22 +114,14 @@ func SnapshotPreviousSnapshotResolver(params graphql.ResolveParams) (interface{}
 }
 
 func SnapshotUpdateResolver(params graphql.ResolveParams) (interface{}, error) {
-	snapshot, ok := params.Source.(*types.SnapShot)
+	snapshot, ok := params.Source.(*cbortypes.SnapShot)
 	if ok {
 		updateInfo := strings.Builder{}
 		for peer, update := range snapshot.Update {
-			updateInfo.WriteString(fmt.Sprintf("{%s : %s},", peer, update.String()))
+			updateInfo.WriteString(fmt.Sprintf("{%s : %v},", peer, *update))
 		}
 		return updateInfo.String(), nil
 	} else {
 		return nil, fmt.Errorf(errUnexpectedType, params.Source, "SnapShot.Update")
-	}
-}
-func SnapshotExtraInfoResolver(params graphql.ResolveParams) (interface{}, error) {
-	snapshot, ok := params.Source.(*types.SnapShot)
-	if ok {
-		return snapshot.ExtraInfo.String(), nil
-	} else {
-		return nil, fmt.Errorf(errUnexpectedType, params.Source, "SnapShot.ExtraInfo")
 	}
 }

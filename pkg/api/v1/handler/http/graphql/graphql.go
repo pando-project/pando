@@ -107,11 +107,10 @@ func (a *API) newStateField() *graphql.Field {
 			if err != nil {
 				return nil, err
 			}
-			providerState, err := a.core.StateTree.GetProviderStateByPeerID(peerID)
+			providerState, err := a.core.StoreInstance.PandoStore.StateStore.GetProviderInfo(context.Background(), peerID)
 			if err != nil {
 				return nil, err
 			}
-
 			return providerState, nil
 		},
 	}
@@ -133,7 +132,7 @@ func (a *API) newSnapshotField() *graphql.Field {
 			if err != nil {
 				return nil, err
 			}
-			ss, err := a.core.StateTree.GetSnapShot(snapshotCid)
+			ss, err := a.core.StoreInstance.PandoStore.SnapShotStore().GetSnapShotByCid(context.Background(), snapshotCid)
 			if err != nil {
 				return nil, err
 			}

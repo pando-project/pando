@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	peerHelper "github.com/kenlabs/pando/pkg/util/peer"
 	"os"
 	"os/signal"
@@ -14,7 +15,7 @@ import (
 const (
 	privateKeyStr = "CAESQHWlReUYxW7FDvTAAqG+kNH2U7khW+iv0r+070+zKmFn9t80v5e30/NsBx5XzBLCE4uH/h3d3tpXlwCuO4YGN+w="
 	pandoAddr     = "/ip4/127.0.0.1/tcp/9002"
-	pandoPeerID   = "12D3KooWJjPMqp1eAN6DAvDXJQGivWBq85EqFP29VkteePBKgesa"
+	pandoPeerID   = "12D3KooWRaycBxKTgcQsgJrcuCZzMvSCrzz1EJZ73tT88SBtBut5"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 	}
 	fmt.Printf("provider peerID: %v\n", peerID.String())
 
-	provider, err := pandoSdk.NewMetaProvider(privateKeyStr, 10*time.Second, 10*time.Minute)
+	provider, err := pandoSdk.NewMetaProvider(privateKeyStr, "http://127.0.0.1:9000", 10*time.Second, 10*time.Minute)
 	if err != nil {
 		panic(err)
 	}
@@ -43,7 +44,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	metadata2, err := provider.AppendMetadata(metadata1, []byte("kitty"))
+	metadata2, err := provider.NewMetadataWithLink([]byte("kitty"), cidlink.Link{Cid: metadata1Cid})
 	if err != nil {
 		panic(err)
 	}

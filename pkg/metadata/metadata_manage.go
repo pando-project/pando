@@ -12,11 +12,9 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando/pkg/option"
 	"github.com/kenlabs/pando/pkg/registry"
-	"github.com/kenlabs/pando/pkg/statetree/types"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"os"
 	"path"
@@ -68,12 +66,12 @@ func init() {
 }
 
 type MetaManager struct {
-	flushTime         time.Duration
-	recvCh            chan *MetaRecord
-	outStateTreeCh    chan map[peer.ID]*types.ProviderState
-	backupCh          chan cid.Cid
-	ds                datastore.Datastore
-	bs                blockstore.Blockstore
+	flushTime time.Duration
+	recvCh    chan *MetaRecord
+	//outStateTreeCh    chan map[peer.ID]*types.ProviderState
+	backupCh chan cid.Cid
+	ds       datastore.Datastore
+	//bs                blockstore.Blockstore
 	cache             map[peer.ID][]*MetaRecord
 	mutex             sync.Mutex
 	backupMaxInterval time.Duration
@@ -91,7 +89,7 @@ type MetaRecord struct {
 	Time       uint64
 }
 
-func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, ls *ipld.LinkSystem, registry *registry.Registry, backupCfg *option.Backup) (*MetaManager, error) {
+func New(ctx context.Context, ds datastore.Batching, ls *ipld.LinkSystem, registry *registry.Registry, backupCfg *option.Backup) (*MetaManager, error) {
 	ebs, err := NewBackupSys(backupCfg)
 	if err != nil {
 		return nil, err
@@ -100,23 +98,22 @@ func New(ctx context.Context, ds datastore.Batching, bs blockstore.Blockstore, l
 	cctx, cncl := context.WithCancel(ctx)
 
 	mm := &MetaManager{
-		flushTime:      SnapShotDuration,
-		recvCh:         make(chan *MetaRecord),
-		outStateTreeCh: make(chan map[peer.ID]*types.ProviderState),
-		backupCh:       make(chan cid.Cid, 1000),
-		ds:             ds,
-		bs:             bs,
-		ls:             ls,
-		cache:          make(map[peer.ID][]*MetaRecord),
-		EstBackupSys:   ebs,
-		registry:       registry,
-		backupCfg:      backupCfg,
-		ctx:            cctx,
-		cncl:           cncl,
+		flushTime: SnapShotDuration,
+		recvCh:    make(chan *MetaRecord),
+		//outStateTreeCh: make(chan map[peer.ID]*types.ProviderState),
+		backupCh:     make(chan cid.Cid, 1000),
+		ds:           ds,
+		ls:           ls,
+		cache:        make(map[peer.ID][]*MetaRecord),
+		EstBackupSys: ebs,
+		registry:     registry,
+		backupCfg:    backupCfg,
+		ctx:          cctx,
+		cncl:         cncl,
 	}
 
 	go mm.dealReceivedMeta()
-	go mm.flushRegular()
+	//go mm.flushRegular()
 	go mm.genCarForProviders(cctx)
 	return mm, nil
 }
@@ -141,37 +138,37 @@ func (mm *MetaManager) dealReceivedMeta() {
 	}
 }
 
-func (mm *MetaManager) flushRegular() {
-
-	for range time.NewTicker(mm.flushTime).C {
-		select {
-		case _ = <-mm.ctx.Done():
-			return
-		default:
-		}
-		update := make(map[peer.ID]*types.ProviderState)
-		for peerID, records := range mm.cache {
-			cidlist := make([]cid.Cid, 0)
-			for _, r := range records {
-				cidlist = append(cidlist, r.Cid)
-			}
-			update[peerID] = &types.ProviderState{Cidlist: cidlist}
-		}
-		if len(update) > 0 {
-			log.Debugw("send update to state tree")
-			mm.outStateTreeCh <- update
-		}
-		mm.cache = make(map[peer.ID][]*MetaRecord)
-	}
-}
+//func (mm *MetaManager) flushRegular() {
+//
+//	for range time.NewTicker(mm.flushTime).C {
+//		select {
+//		case _ = <-mm.ctx.Done():
+//			return
+//		default:
+//		}
+//		update := make(map[peer.ID]*types.ProviderState)
+//		for peerID, records := range mm.cache {
+//			cidlist := make([]cid.Cid, 0)
+//			for _, r := range records {
+//				cidlist = append(cidlist, r.Cid)
+//			}
+//			update[peerID] = &types.ProviderState{Cidlist: cidlist}
+//		}
+//		if len(update) > 0 {
+//			log.Debugw("send update to state tree")
+//			mm.outStateTreeCh <- update
+//		}
+//		mm.cache = make(map[peer.ID][]*MetaRecord)
+//	}
+//}
 
 func (mm *MetaManager) GetMetaInCh() chan<- *MetaRecord {
 	return mm.recvCh
 }
 
-func (mm *MetaManager) GetUpdateOut() <-chan map[peer.ID]*types.ProviderState {
-	return mm.outStateTreeCh
-}
+//func (mm *MetaManager) GetUpdateOut() <-chan map[peer.ID]*types.ProviderState {
+//	return mm.outStateTreeCh
+//}
 
 func (mm *MetaManager) genCarForProviders(ctx context.Context) {
 	interval, err := time.ParseDuration(mm.backupCfg.BackupGenInterval)
@@ -227,7 +224,7 @@ func (mm *MetaManager) genCarForProviders(ctx context.Context) {
 
 func (mm *MetaManager) Close() {
 	mm.cncl()
-	close(mm.outStateTreeCh)
+	//close(mm.outStateTreeCh)
 	close(mm.backupCh)
 	close(mm.recvCh)
 }

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"github.com/ipld/go-ipld-prime/datamodel"
@@ -88,7 +87,7 @@ func NewMetadataWithLink(payload []byte, provider peer.ID, signKey crypto.PrivKe
 	return meta, nil
 }
 
-func MetadataLink(lsys ipld.LinkSystem, metadata *Metadata) (datamodel.Link, error) {
+func MetadataLink(lsys ipld.LinkSystem, metadata Meta) (datamodel.Link, error) {
 	mnode, err := metadata.ToNode()
 	if err != nil {
 		return cidlink.Link{}, err
@@ -101,29 +100,29 @@ func MetadataLink(lsys ipld.LinkSystem, metadata *Metadata) (datamodel.Link, err
 	return lnk, nil
 }
 
-func (m Metadata) AppendMetadata(previousID cid.Cid, provider peer.ID, payload []byte, signKey crypto.PrivKey) (*Metadata, error) {
-	if previousID == cid.Undef {
-		return nil, fmt.Errorf("cid is undefined")
-	}
+//func (m Metadata) AppendMetadata(previousID cid.Cid, provider peer.ID, payload []byte, signKey crypto.PrivKey) (*Metadata, error) {
+//	if previousID == cid.Undef {
+//		return nil, fmt.Errorf("cid is undefined")
+//	}
+//
+//	pnode := basicnode.NewBytes(payload)
+//	lk := ipld.Link(cidlink.Link{Cid: previousID})
+//
+//	metadata := &Metadata{
+//		PreviousID: &lk,
+//		Provider:   provider.String(),
+//		Payload:    pnode,
+//	}
+//	signature, err := SignWithPrivky(signKey, metadata)
+//	if err != nil {
+//		return nil, err
+//	}
+//	metadata.Signature = signature
+//
+//	return metadata, nil
+//}
 
-	pnode := basicnode.NewBytes(payload)
-	lk := ipld.Link(cidlink.Link{Cid: previousID})
-
-	metadata := &Metadata{
-		PreviousID: &lk,
-		Provider:   provider.String(),
-		Payload:    pnode,
-	}
-	signature, err := SignWithPrivky(signKey, metadata)
-	if err != nil {
-		return nil, err
-	}
-	metadata.Signature = signature
-
-	return metadata, nil
-}
-
-func (m Metadata) LinkContext(ctx context.Context) ipld.LinkContext {
+func (m *Metadata) LinkContext(ctx context.Context) ipld.LinkContext {
 	return ipld.LinkContext{
 		Ctx: context.WithValue(ctx, IsMetadataKey, LinkContextValue(true)),
 	}

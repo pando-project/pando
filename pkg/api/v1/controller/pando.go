@@ -1,19 +1,11 @@
 package controller
 
 import (
-	v1 "github.com/kenlabs/pando/pkg/api/v1"
 	"github.com/kenlabs/pando/pkg/api/v1/model"
-	"net/http"
 	"strings"
 )
 
 func (c *Controller) PandoInfo() (*model.PandoInfo, error) {
-
-	pandoInfo, err := c.Core.StateTree.GetPandoInfo()
-	if err != nil {
-		return nil, v1.NewError(err, http.StatusNotFound)
-	}
-
 	ipReplacer := func(multiAddress string, replaceIP string) string {
 		splitAddress := strings.Split(multiAddress, "/")
 		splitAddress[2] = replaceIP
@@ -21,7 +13,7 @@ func (c *Controller) PandoInfo() (*model.PandoInfo, error) {
 	}
 
 	return &model.PandoInfo{
-		PeerID: pandoInfo.PeerID,
+		PeerID: c.Core.LegsCore.Host.ID().String(),
 		Addresses: model.APIAddresses{
 			HttpAPI:      ipReplacer(c.Options.ServerAddress.HttpAPIListenAddress, c.Options.ServerAddress.ExternalIP),
 			GraphQLAPI:   ipReplacer(c.Options.ServerAddress.GraphqlListenAddress, c.Options.ServerAddress.ExternalIP),
