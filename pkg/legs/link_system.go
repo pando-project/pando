@@ -60,14 +60,16 @@ func MkLinkSystem(bs blockstore.Blockstore, core *Core, reg *registry.Registry) 
 				metadataPayload, _ := n.LookupByString("Payload")
 				log.Debugf("metadata:\n\tProvider: %v\n\tPayload-Type: %v\n",
 					metadataProviderStr, metadataPayload.Kind())
+
+				needCache := false
 				cacheNode, err := n.LookupByString("Cache")
-				if err != nil {
-					return err
+				if err == nil {
+					needCache, err = cacheNode.AsBool()
+					if err != nil {
+						return err
+					}
 				}
-				needCache, err := cacheNode.AsBool()
-				if err != nil {
-					return err
-				}
+
 				if core != nil && metadataPayload.Kind() == datamodel.Kind_Map && needCache {
 					dbNameNode, err := n.LookupByString("DatabaseName")
 					if err != nil {

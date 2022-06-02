@@ -145,17 +145,15 @@ func SignWithPrivateKey(privateKey crypto.PrivKey, meta *Metadata) ([]byte, erro
 func signMetadata(meta *Metadata) ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
 	m := &Metadata{
-		PreviousID:     meta.PreviousID,
-		Provider:       meta.Provider,
-		Cache:          meta.Cache,
-		DatabaseName:   meta.DatabaseName,
-		CollectionName: meta.CollectionName,
-		Payload:        meta.Payload,
+		PreviousID: meta.PreviousID,
+		Provider:   meta.Provider,
+		Payload:    meta.Payload,
 	}
 	n, err := m.ToNode()
 	if err != nil {
 		return nil, err
 	}
+
 	err = dagjson.Encode(n, buf)
 	if err != nil {
 		return nil, err
