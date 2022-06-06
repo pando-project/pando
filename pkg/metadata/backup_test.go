@@ -84,7 +84,7 @@ func TestCheckSuccess(t *testing.T) {
 			return true, nil
 		})
 		defer patch3.Reset()
-		_, err = metadata.NewBackupSys(cfg)
+		_, err := metadata.NewBackupSys(cfg)
 		So(err, ShouldBeNil)
 
 		err = genTmpCarFiles(tmpDir)
