@@ -3,7 +3,6 @@ version: 2.1
 orbs:
   codecov: codecov/codecov@3.2.0
   slack: circleci/slack@4.5.0
-  jira: circleci/jira@1.3.1
 
 jobs:
   unit-test:
@@ -66,15 +65,8 @@ workflows:
     jobs:
       - unit-test:
           name: unit-test
-          post-steps:
-            - jira/notify:
-                job_type: build
       - build-push:
           name: build-push
-          post-steps:
-            - jira/notify:
-                environment_type: production
-                job_type: deployment
           requires:
             - unit-test
           filters:
