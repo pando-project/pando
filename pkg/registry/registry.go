@@ -9,6 +9,7 @@ import (
 	"github.com/kenlabs/pando/pkg/registry/discovery"
 	"github.com/kenlabs/pando/pkg/registry/internal/syserr"
 	"github.com/kenlabs/pando/pkg/registry/policy"
+	"github.com/kenlabs/pando/pkg/util/log"
 	"net/http"
 	"path"
 	"sync"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
@@ -25,7 +25,7 @@ const (
 	providerKeyPath = "/registry/pinfo"
 )
 
-var log = logging.Logger("registry")
+var logger = log.NewSubsystemLogger()
 
 // Registry stores information about discovered providers
 type Registry struct {
@@ -113,7 +113,7 @@ func NewRegistry(ctx context.Context, cfg *option.Discovery, cfglevel *option.Ac
 	if err != nil {
 		return nil, err
 	}
-	log.Infow("loaded providers into registry", "count", count)
+	logger.Infow("loaded providers into registry", "count", count)
 
 	go r.run()
 	go r.runPollCheck(
@@ -173,18 +173,18 @@ func (r *Registry) Register(ctx context.Context, info *ProviderInfo) error {
 
 	// If provider have miner account, discover it
 	if info.DiscoveryAddr != "" {
-		log.Infow("found miner account, start discovering")
+		logger.Infow("found miner account, start discovering")
 		discoveredData, err := r.discoverer.Discover(context.Background(), info.AddrInfo.ID, info.DiscoveryAddr)
 		if err != nil {
-			log.Infof("discovering failed: %s", err.Error())
+			logger.Infof("discovering failed: %s", err.Error())
 			return fmt.Errorf("discovering failed: %s", err.Error())
 		}
 		info.AccountLevel, err = r.getAccountLevel(discoveredData.Balance)
 		if err != nil {
-			log.Warnf("falied to get the account level. %s", err.Error())
+			logger.Warnf("falied to get the account level. %s", err.Error())
 			return fmt.Errorf("falied to get the account level. %s", err.Error())
 		}
-		log.Debugf("discovering successed, peerID: %s, account balance: %s", info.AddrInfo.ID.String(), discoveredData.Balance.String())
+		logger.Debugf("discovering successed, peerID: %s, account balance: %s", info.AddrInfo.ID.String(), discoveredData.Balance.String())
 	}
 
 	errCh := make(chan error, 1)
@@ -197,7 +197,7 @@ func (r *Registry) Register(ctx context.Context, info *ProviderInfo) error {
 		return err
 	}
 
-	log.Infow("registered provider", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
+	logger.Infow("registered provider", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
 
 	return nil
 }
@@ -434,7 +434,7 @@ func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, las
 		return err
 	}
 
-	log.Debugw("Updated registered provider info", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
+	logger.Debugw("Updated registered provider info", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
 	return nil
 }
 func (r *Registry) pollProviders(interval, stopAfter time.Duration) {
@@ -460,7 +460,7 @@ func (r *Registry) pollProviders(interval, stopAfter time.Duration) {
 			}
 			if noContactTime > stopAfter {
 				// Too much time since last contact.
-				log.Warnw("Lost contact with provider's publisher", "publisher", info.Publisher, "provider", info.AddrInfo.ID, "since", info.lastContactTime)
+				logger.Warnw("Lost contact with provider's publisher", "publisher", info.Publisher, "provider", info.AddrInfo.ID, "since", info.lastContactTime)
 				// Remove the non-responsive publisher.
 				info = &ProviderInfo{
 					AddrInfo:        info.AddrInfo,
@@ -471,14 +471,14 @@ func (r *Registry) pollProviders(interval, stopAfter time.Duration) {
 					Publisher:       peer.ID(""),
 				}
 				if err = r.syncRegister(context.Background(), info); err != nil {
-					log.Errorw("Failed to update provider info", "err", err)
+					logger.Errorw("Failed to update provider info", "err", err)
 				}
 				continue
 			}
 			select {
 			case r.syncChan <- info:
 			default:
-				log.Debugw("Sync channel blocked, skipping auto-sync", "publisher", info.Publisher)
+				logger.Debugw("Sync channel blocked, skipping auto-sync", "publisher", info.Publisher)
 			}
 		}
 	}

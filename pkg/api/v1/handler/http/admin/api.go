@@ -2,12 +2,12 @@ package admin
 
 import (
 	"github.com/gin-gonic/gin"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/option"
+	"github.com/kenlabs/pando/pkg/util/log"
 )
 
-var logger = logging.Logger("v1AdminAPI")
+var logger = log.NewSubsystemLogger()
 
 type API struct {
 	router  *gin.Engine

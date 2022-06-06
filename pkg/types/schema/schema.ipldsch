@@ -3,6 +3,10 @@ type Metadata struct {
 	PreviousID nullable Link_Metadata
     # Provider ID of the metadata
     Provider String
+    # Cache switch
+    Cache optional Bool
+    # Collection name of the metadata
+    Collection optional String
 	# data
 	Payload   Any
 	# metadata signature.

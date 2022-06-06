@@ -6,6 +6,8 @@ import (
 	"fmt"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
+	"github.com/ipld/go-ipld-prime/datamodel"
+
 	//blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
 	_ "github.com/ipld/go-ipld-prime/codec/dagcbor"
@@ -41,7 +43,7 @@ func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld
 			codec := lnk.(cidlink.Link).Prefix().Codec
 			origBuf := buf.Bytes()
 
-			log := log.With("cid", c)
+			log := logger.With("cid", c)
 
 			// Decode the node to check its type.
 			n, err := decodeIPLDNode(codec, buf, basicnode.Prototype.Any)
@@ -58,14 +60,45 @@ func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld
 				metadataProvider, _ := n.LookupByString("Provider")
 				metadataProviderStr, _ := metadataProvider.AsString()
 				metadataPayload, _ := n.LookupByString("Payload")
-				metadataPayloadBytes, _ := metadataPayload.AsBytes()
-				log.Debugf("metadata:\n\tProvider: %v\n\tPayload: %v\n",
-					metadataProviderStr, string(metadataPayloadBytes))
+				metadataCache, err := n.LookupByString("Cache")
+				var cacheMetadata bool
+				if err == nil {
+					cacheMetadata, err = metadataCache.AsBool()
+					if err != nil {
+						return err
+					}
+				}
+				metadataCollection, err := n.LookupByString("Collection")
+				var metadataCollectionStr string
+				if err == nil {
+					metadataCollectionStr, err = metadataCollection.AsString()
+					if err != nil {
+						return err
+					}
+				}
+
+				log.Debugf("metadata:\n\tProvider: %v\n\tPayload-Kind: %v\n",
+					metadataProviderStr, metadataPayload.Kind())
+
 				block, err := blocks.NewBlockWithCid(origBuf, c)
 				if err != nil {
 					return err
 				}
 				if core != nil {
+					if metadataPayload.Kind() == datamodel.Kind_Map && cacheMetadata {
+						if len(metadataProviderStr) == 0 {
+							return fmt.Errorf("metadata provider should not be nil")
+						}
+						err = CommitPayloadToMetaCache(
+							metadataProviderStr,
+							metadataCollectionStr,
+							metadataPayload,
+							core.options.MetaCache.Client,
+						)
+						if err != nil {
+							return err
+						}
+					}
 					go core.SendRecvMeta(c, peerid)
 				}
 				if reg != nil {
@@ -119,21 +152,21 @@ func isMetadata(n ipld.Node) bool {
 func verifyMetadata(n ipld.Node) (*schema.Metadata, peer.ID, error) {
 	meta, err := schema.UnwrapMetadata(n)
 	if err != nil {
-		log.Errorw("Cannot decode metadata", "err", err)
+		logger.Errorw("Cannot decode metadata", "err", err)
 		return nil, peer.ID(""), err
 	}
 	// Verify metadata signature
 	signerID, err := schema.VerifyMetadata(meta)
 	if err != nil {
 		// stop exchange, verification of signature failed.
-		log.Errorw("Metadata signature verification failed", "err", err)
+		logger.Errorw("Metadata signature verification failed", "err", err)
 		return nil, peer.ID(""), err
 	}
 
 	// Get provider ID from metadata.
 	provID, err := providerFromMetadata(meta)
 	if err != nil {
-		log.Errorw("Cannot get provider from metadata", "err", err)
+		logger.Errorw("Cannot get provider from metadata", "err", err)
 		return nil, peer.ID(""), err
 	}
 
@@ -141,7 +174,7 @@ func verifyMetadata(n ipld.Node) (*schema.Metadata, peer.ID, error) {
 	// therefore approved, the metadata regardless of who
 	// published the metadata.
 	if signerID != provID {
-		log.Errorw("Metadata not signed by provider", "provider", provID, "signer", signerID)
+		logger.Errorw("Metadata not signed by provider", "provider", provID, "signer", signerID)
 		return nil, peer.ID(""), err
 	}
 

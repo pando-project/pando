@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/dgraph-io/badger/v3"
-	"github.com/ipfs/go-cid"
 	mutexDataStoreFactory "github.com/ipfs/go-datastore/sync"
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
 	logging "github.com/ipfs/go-log/v2"
@@ -19,11 +18,13 @@ import (
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/policy"
 	"github.com/kenlabs/pando/pkg/registry"
+	"github.com/kenlabs/pando/pkg/util/log"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	libp2pHost "github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/spf13/cobra"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"math"
 	"os"
 	"os/signal"
@@ -34,7 +35,7 @@ import (
 	"github.com/kenlabs/pando/pkg/system"
 )
 
-var log = logging.Logger("pando")
+var logger = log.NewSubsystemLogger()
 
 func DaemonCmd() *cobra.Command {
 	const failedError = "run daemon failed: \n\t%v\n"
@@ -46,6 +47,12 @@ func DaemonCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf(failedError, err)
 			}
+
+			mongoClient, err := connectMetaCache(Opt.MetaCache.Type, Opt.MetaCache.ConnectionURI)
+			if err != nil {
+				return fmt.Errorf(failedError, err)
+			}
+			Opt.MetaCache.Client = mongoClient
 
 			storeInstance, err := initStoreInstance()
 			if err != nil {
@@ -73,39 +80,6 @@ func DaemonCmd() *cobra.Command {
 				return fmt.Errorf(failedError, err)
 			}
 
-			// todo: test log for dealbot integration
-			go func() {
-				peerID, err := peer.Decode("12D3KooWNnK4gnNKmh6JUzRb34RqNcBahN5B8v18DsMxQ8mCqw81")
-				if err != nil {
-					log.Errorf("wrong dealbot peerid: %s", err.Error())
-					return
-				}
-				t := time.NewTicker(time.Minute)
-				for range t.C {
-					info := c.Registry.ProviderInfo(peerID)
-					if info == nil {
-						log.Debugf("dealbot not register")
-						continue
-					}
-					maddrs := p2pHost.Peerstore().Addrs(info[0].AddrInfo.ID)
-					for _, maddr := range maddrs {
-						log.Debugf("dealbot maddrs: %s", maddr.String())
-						syncedCid, err := c.LegsCore.LS.Sync(
-							context.Background(),
-							info[0].AddrInfo.ID,
-							cid.Undef,
-							nil,
-							maddr,
-						)
-						if err != nil {
-							log.Debugf("sync from dealbot failed(maddr: %s), error: %v", maddr, err)
-							continue
-						}
-						log.Debugf("sync from dealbot success, cid: %s", syncedCid.String())
-					}
-				}
-			}()
-
 			server.MustStartAllServers()
 
 			quit := make(chan os.Signal)
@@ -129,18 +103,14 @@ func setLoglevel() error {
 		return err
 	}
 	logging.SetAllLoggers(logLevel)
-	//err = logging.SetLogLevel("addrutil", "warn")
-	//if err != nil {
-	//	return err
-	//}
 	err = logging.SetLogLevel("basichost", "warn")
 	if err != nil {
 		return err
 	}
-	err = logging.SetLogLevel("meta-manager", "warn")
-	if err != nil {
-		return err
-	}
+	//err = logging.SetLogLevel("meta-manager", "warn")
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }
@@ -206,6 +176,7 @@ func initStoreInstance() (*core.StoreInstance, error) {
 		CacheStore:     cacheStore,
 		MutexDataStore: mutexDataStore,
 		PandoStore:     pandoStore,
+		MetadataCache:  Opt.MetaCache.Client,
 	}, nil
 }
 
@@ -213,7 +184,7 @@ func initP2PHost(privateKey crypto.PrivKey) (libp2pHost.Host, error) {
 	var p2pHost libp2pHost.Host
 	var err error
 
-	log.Info("initializing libp2p host...")
+	logger.Info("initializing libp2p host...")
 	if Opt.ServerAddress.P2PAddress == "" {
 		return nil, fmt.Errorf("valid p2p address")
 	}
@@ -224,8 +195,8 @@ func initP2PHost(privateKey crypto.PrivKey) (libp2pHost.Host, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("multiaddr is: %s", p2pHost.Addrs())
-	log.Debugf("peerID is: %s", p2pHost.ID())
+	logger.Debugf("multiaddr is: %s", p2pHost.Addrs())
+	logger.Debugf("peerID is: %s", p2pHost.ID())
 
 	return p2pHost, nil
 }
@@ -240,7 +211,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 
 	var lotusDiscoverer *lotus.Discoverer
 	if Opt.Discovery.LotusGateway != "" {
-		log.Infow("discovery using lotus", "gateway", Opt.Discovery.LotusGateway)
+		logger.Infow("discovery using lotus", "gateway", Opt.Discovery.LotusGateway)
 		// Create lotus client
 		c.LotusDiscover, err = lotus.NewDiscoverer(Opt.Discovery.LotusGateway)
 		if err != nil {
@@ -294,4 +265,23 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	c.LegsCore.SetRatelimiter(rateLimiter)
 
 	return c, nil
+}
+
+func connectMetaCache(storeType string, connectionURI string) (*mongo.Client, error) {
+	switch storeType {
+	case "mongodb":
+		clientOptions := options.Client().ApplyURI(connectionURI)
+		client, err := mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
+			return nil, err
+		}
+		err = client.Ping(context.TODO(), nil)
+		if err != nil {
+			return nil, err
+		}
+		return client, nil
+	default:
+		return nil, fmt.Errorf("metadata store type: %s not supported", storeType)
+	}
+
 }

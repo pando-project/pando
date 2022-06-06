@@ -17,6 +17,8 @@ type Meta interface {
 type Metadata struct {
 	PreviousID *ipld.Link
 	Provider   string
+	Cache      *bool
+	Collection *string
 	Payload    datamodel.Node
 	Signature  []byte
 }

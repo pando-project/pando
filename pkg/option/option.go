@@ -35,6 +35,7 @@ type DaemonOptions struct {
 	ServerAddress ServerAddress `yaml:"ServerAddress"`
 	DataStore     DataStore     `yaml:"DataStore"`
 	CacheStore    CacheStore    `yaml:"CacheStore"`
+	MetaCache     MetaCache     `yaml:"MetaCache"`
 	Discovery     Discovery     `yaml:"Discovery"`
 	AccountLevel  AccountLevel  `yaml:"AccountLevel"`
 	RateLimit     RateLimit     `yaml:"RateLimit"`
@@ -117,6 +118,13 @@ func New(root *cobra.Command) *DaemonOptions {
 	// options for cachestore
 	opt.flags.StringVar(&opt.CacheStore.Dir, "cachestore-dir", defaultCacheStoreDir,
 		"Directory of cachestore files.")
+
+	// options for metastore
+	opt.flags.StringVar(&opt.MetaCache.Type, "metacache", defaultMetaCacheType,
+		"Type of metastore, only support mongodb for now")
+
+	opt.flags.StringVar(&opt.MetaCache.ConnectionURI, "metacache-connection-uri", defaultMetaCacheConnectionURI,
+		"Connection URI of metacache")
 
 	// options for discovery
 	opt.flags.StringVar(&opt.Discovery.LotusGateway, "discovery-lotus-gateway", defaultLotusGateway,

@@ -5,7 +5,6 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	golegs "github.com/filecoin-project/go-legs"
 	"github.com/ipfs/go-cid"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-car/v2"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/traversal/selector"
@@ -44,8 +43,6 @@ func TestBackUpFile(t *testing.T) {
 	Convey("when send right request then get 200 response", t, func() {
 		patch := gomonkey.ApplyGlobalVar(&metadata.CheckInterval, time.Second*2)
 		defer patch.Reset()
-		err := logging.SetLogLevel("meta-manager", "debug")
-		So(err, ShouldBeNil)
 		cfg := &option.Backup{
 			EstuaryGateway:    metadata.DefaultEstGateway,
 			ShuttleGateway:    metadata.DefaultShuttleGateway,
@@ -57,7 +54,7 @@ func TestBackUpFile(t *testing.T) {
 		tmpDir := t.TempDir()
 		patch2 := gomonkey.ApplyGlobalVar(&metadata.BackupTmpPath, tmpDir)
 		defer patch2.Reset()
-		err = genTmpCarFiles(tmpDir)
+		err := genTmpCarFiles(tmpDir)
 		So(err, ShouldBeNil)
 
 		_, err = metadata.NewBackupSys(cfg)
@@ -71,8 +68,6 @@ func TestCheckSuccess(t *testing.T) {
 	Convey("test back up file successfully", t, func() {
 		patch := gomonkey.ApplyGlobalVar(&metadata.CheckInterval, time.Second*2)
 		defer patch.Reset()
-		err := logging.SetLogLevel("meta-manager", "debug")
-		So(err, ShouldBeNil)
 		cfg := &option.Backup{
 			EstuaryGateway:    metadata.DefaultEstGateway,
 			ShuttleGateway:    metadata.DefaultShuttleGateway,
@@ -89,7 +84,7 @@ func TestCheckSuccess(t *testing.T) {
 			return true, nil
 		})
 		defer patch3.Reset()
-		_, err = metadata.NewBackupSys(cfg)
+		_, err := metadata.NewBackupSys(cfg)
 		So(err, ShouldBeNil)
 
 		err = genTmpCarFiles(tmpDir)

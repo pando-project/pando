@@ -56,7 +56,7 @@ func (bs *BackupSystem) run() error {
 		for range time.NewTicker(backupInterval).C {
 			files, err := ioutil.ReadDir(BackupTmpPath)
 			if err != nil {
-				log.Errorf("wrong back up dir path: %s", BackupTmpPath)
+				logger.Errorf("wrong back up dir path: %s", BackupTmpPath)
 			}
 			for _, file := range files {
 				if file.IsDir() {
@@ -66,12 +66,12 @@ func (bs *BackupSystem) run() error {
 				_, err = bs.BackupToEstuary(path.Join(BackupTmpPath, file.Name()))
 				if err != nil {
 					//todo metrics
-					log.Warnf("failed back up, err : %s", err.Error())
+					logger.Warnf("failed back up, err : %s", err.Error())
 					continue
 				}
 				err = os.Remove(path.Join(BackupTmpPath, file.Name()))
 				if err != nil {
-					log.Error("failed to remove the backed up car file")
+					logger.Error("failed to remove the backed up car file")
 				}
 			}
 		}
@@ -100,12 +100,12 @@ func (bs *BackupSystem) checkDeal(checkInterval time.Duration) {
 			}
 			success, err := bs.checkDealForBackup(checkId)
 			if err != nil {
-				log.Errorf("failed to check deal status of content id : %d, err : %s", checkId, err.Error())
+				logger.Errorf("failed to check deal status of content id : %d, err : %s", checkId, err.Error())
 				continue
 			}
 			// delete from waitCheckList
 			if success {
-				log.Debugf("est : %d is successful to back up in filecoin!", checkId)
+				logger.Debugf("est : %d is successful to back up in filecoin!", checkId)
 				mux.Lock()
 				if waitCheckList[idx] == checkId {
 					if len(waitCheckList) > 1 {
@@ -133,12 +133,12 @@ func (bs *BackupSystem) checkDeal(checkInterval time.Duration) {
 func (bs *BackupSystem) checkDealForBackup(estID uint64) (bool, error) {
 	req, err := http.NewRequest("GET", bs.backupCfg.EstuaryGateway+"/content/status/"+strconv.FormatUint(estID, 10), nil)
 	if err != nil {
-		log.Error("failed to create request: %s", err.Error())
+		logger.Error("failed to create request: %s", err.Error())
 	}
 	req.Header.Set("Authorization", bs.apiKey)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Error("failed to send http request: %s", err.Error())
+		logger.Error("failed to send http request: %s", err.Error())
 		return false, err
 	}
 	defer func(Body io.ReadCloser) {
@@ -146,13 +146,13 @@ func (bs *BackupSystem) checkDealForBackup(estID uint64) (bool, error) {
 	}(res.Body)
 	body, e := io.ReadAll(res.Body)
 	if e != nil {
-		log.Error("failed to read response body")
+		logger.Error("failed to read response body")
 		return false, err
 	}
 	// wrong response
 	if res.StatusCode != 200 {
 		//err = httpclient.ReadError(res.StatusCode, body)
-		//log.Error(err.Error())
+		//logger.Error(err.Error())
 		return false, fmt.Errorf("fail response: %v", string(body))
 	}
 
@@ -164,7 +164,7 @@ func (bs *BackupSystem) checkDealForBackup(estID uint64) (bool, error) {
 
 	success, err := bs.checkDealStatus(resStruct)
 	if err != nil {
-		log.Errorf("failed to check the status of deal for file: %s, id: %d, err: %s", resStruct.Content.Name, estID, err.Error())
+		logger.Errorf("failed to check the status of deal for file: %s, id: %d, err: %s", resStruct.Content.Name, estID, err.Error())
 		return false, err
 	}
 	if success {
@@ -228,7 +228,7 @@ func (bs *BackupSystem) BackupToEstuary(filepath string) (uint64, error) {
 	}
 
 	bs.toCheck <- r.EstuaryId
-	log.Infof("back up %s to est successfully, estid : %d at time: %s", filepath, r.EstuaryId, time.Now().String())
+	logger.Infof("back up %s to est successfully, estid : %d at time: %s", filepath, r.EstuaryId, time.Now().String())
 
 	return r.EstuaryId, nil
 }

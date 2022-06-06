@@ -3,13 +3,13 @@ package metrics
 import (
 	"context"
 	"github.com/filecoin-project/go-indexer-core/metrics"
+	"github.com/kenlabs/pando/pkg/util/log"
 	"go.opencensus.io/tag"
 	"net/http"
 	"time"
 
 	"contrib.go.opencensus.io/exporter/prometheus"
 	coremetrics "github.com/filecoin-project/go-indexer-core/metrics"
-	logging "github.com/ipfs/go-log/v2"
 	promclient "github.com/prometheus/client_golang/prometheus"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
@@ -39,6 +39,8 @@ var (
 		"Time to fetch snapshot info", stats.UnitMilliseconds)
 	GetMetadataInclusionLatency = stats.Float64("get/metadata/inclusion_latency",
 		"Time to fetch meta inclusion", stats.UnitMilliseconds)
+	PostMetadataQueryLatency = stats.Float64("post/metadata/query_latency",
+		"Time to query metadata", stats.UnitMilliseconds)
 
 	// go-legs graph persistence
 	GraphPersistenceLatency = stats.Float64("sync/graph/persistence_latency",
@@ -56,6 +58,7 @@ var (
 		{Measure: GetMetadataListLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetMetadataSnapshotLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetMetadataInclusionLatency, Aggregation: view.Distribution(bounds...)},
+		{Measure: PostMetadataQueryLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GraphPersistenceLatency, Aggregation: view.Distribution(bounds...)},
 	}
 )
@@ -72,23 +75,23 @@ func APITimer(ctx context.Context, m *stats.Float64Measure) func() {
 	}
 }
 
-var log = logging.Logger("metrics")
+var logger = log.NewSubsystemLogger()
 
 // Handler creates an HTTP router for serving metric info
 func Handler(views []*view.View) http.Handler {
 	// Register default views
 	err := view.Register(builtinViews...)
 	if err != nil {
-		log.Errorf("cannot register metrics default views: %s", err)
+		logger.Errorf("cannot register metrics default views: %s", err)
 	}
 	// Register other views
 	err = view.Register(views...)
 	if err != nil {
-		log.Errorf("cannot register metrics views: %s", err)
+		logger.Errorf("cannot register metrics views: %s", err)
 	}
 	registry, ok := promclient.DefaultRegisterer.(*promclient.Registry)
 	if !ok {
-		log.Warnf("failed to export default prometheus registry; "+
+		logger.Warnf("failed to export default prometheus registry; "+
 			"some metrics will be unavailable; unexpected types: %T", promclient.DefaultRegisterer)
 	}
 	exporter, err := prometheus.NewExporter(prometheus.Options{
@@ -96,7 +99,7 @@ func Handler(views []*view.View) http.Handler {
 		Namespace: "pando",
 	})
 	if err != nil {
-		log.Errorf("could not create the prometheus stats exporter: %v", err)
+		logger.Errorf("could not create the prometheus stats exporter: %v", err)
 	}
 
 	return exporter

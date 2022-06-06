@@ -9,6 +9,7 @@ import (
 	"github.com/kenlabs/pando/pkg/lotus"
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/registry"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Core struct {
@@ -25,6 +26,7 @@ type StoreInstance struct {
 	//DataStore      *leveldb.Datastore
 	MutexDataStore *sync.MutexDatastore
 	//BlockStore     blockstore.Blockstore
-	PandoStore *store.PandoStore
-	CacheStore *badger.DB
+	PandoStore    *store.PandoStore
+	CacheStore    *badger.DB
+	MetadataCache *mongo.Client
 }

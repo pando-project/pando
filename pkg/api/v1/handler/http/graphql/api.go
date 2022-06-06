@@ -3,11 +3,11 @@ package graphql
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/graphql-go/graphql"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando/pkg/api/core"
+	"github.com/kenlabs/pando/pkg/util/log"
 )
 
-var logger = logging.Logger("v1GraphqlAPI")
+var logger = log.NewSubsystemLogger()
 
 type API struct {
 	router *gin.Engine

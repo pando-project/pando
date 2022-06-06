@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kenlabs/pando/pkg/api/v1/handler/p2p"
+	"github.com/kenlabs/pando/pkg/util/log"
 
 	//"github.com/kenlabs/pando/pkg/api/v1/handler/p2p"
 	"github.com/kenlabs/pando/pkg/api/v1/server/httpserver"
@@ -14,13 +15,12 @@ import (
 	_ "net/http/pprof"
 	"time"
 
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/option"
 	"github.com/kenlabs/pando/pkg/util/multiaddress"
 )
 
-var logger = logging.Logger("http-server")
+var logger = log.NewSubsystemLogger()
 
 type Server struct {
 	Opt  *option.DaemonOptions

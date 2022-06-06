@@ -7,11 +7,11 @@ import (
 	"fmt"
 	blocks "github.com/ipfs/go-block-format"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/multicodec"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
+	"github.com/kenlabs/pando/pkg/util/log"
 	"io"
 	"time"
 )
@@ -41,7 +41,7 @@ func isMetadata(n ipld.Node) bool {
 }
 
 func MkLinkSystem(bs blockstore.Blockstore, ch chan Status) ipld.LinkSystem {
-	log := logging.Logger("consumer-lsys")
+	logger := log.NewSubsystemLogger()
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.TrustedStorage = true
 	lsys.StorageReadOpener = func(lnkCtx ipld.LinkContext, lnk ipld.Link) (io.Reader, error) {
@@ -62,7 +62,7 @@ func MkLinkSystem(bs blockstore.Blockstore, ch chan Status) ipld.LinkSystem {
 			codec := lnk.(cidlink.Link).Prefix().Codec
 			origBuf := buf.Bytes()
 
-			log := log.With("cid", c)
+			log := logger.With("cid", c)
 
 			// Decode the node to check its type.
 			n, err := decodeIPLDNode(codec, buf, basicnode.Prototype.Any)
