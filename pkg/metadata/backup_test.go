@@ -55,7 +55,7 @@ func TestBackUpFile(t *testing.T) {
 		tmpDir := t.TempDir()
 		patch2 := gomonkey.ApplyGlobalVar(&metadata.BackupTmpPath, tmpDir)
 		defer patch2.Reset()
-		err = genTmpCarFiles(tmpDir)
+		err := genTmpCarFiles(tmpDir)
 		So(err, ShouldBeNil)
 
 		_, err = metadata.NewBackupSys(cfg)
