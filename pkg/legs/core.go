@@ -14,8 +14,8 @@ import (
 	"github.com/ipfs/go-graphsync"
 	gsimpl "github.com/ipfs/go-graphsync/impl"
 	gsnet "github.com/ipfs/go-graphsync/network"
-	//blockstore "github.com/ipfs/go-ipfs-blockstore"
-	logging "github.com/ipfs/go-log/v2"
+	"github.com/kenlabs/pando/pkg/util/log"
+
 	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/option"
@@ -29,7 +29,7 @@ import (
 	"time"
 )
 
-var log = logging.Logger("core")
+var logger = log.NewSubsystemLogger()
 
 const (
 	// SyncPrefix used to track the latest sync in datastore.
@@ -97,7 +97,7 @@ func NewLegsCore(ctx context.Context,
 	go c.watchSyncFinished(onSyncFin)
 	go c.autoSync()
 
-	log.Debugf("LegCore started and all hooks and linksystem registered")
+	logger.Debugf("LegCore started and all hooks and linksystem registered")
 
 	return c, nil
 }
@@ -152,7 +152,7 @@ func (c *Core) autoSync() {
 		go func(pubID, provID peer.ID, pubAddr multiaddr.Multiaddr) {
 			defer c.waitForPendingSyncs.Done()
 
-			log := log.With("publisher", pubID, "provider", provID, "addr", pubAddr)
+			log := logger.With("publisher", pubID, "provider", provID, "addr", pubAddr)
 			log.Info("Auto-syncing the latest meta-data with publisher")
 
 			_, err := c.LS.Sync(ctx, pubID, cid.Undef, nil, pubAddr)
@@ -185,7 +185,7 @@ func (c *Core) restoreLatestSync() error {
 		ent := r.Entry
 		_, lastCid, err := cid.CidFromBytes(ent.Value)
 		if err != nil {
-			log.Errorw("Failed to decode latest sync CID", "err", err)
+			logger.Errorw("Failed to decode latest sync CID", "err", err)
 			continue
 		}
 		if lastCid == cid.Undef {
@@ -193,19 +193,19 @@ func (c *Core) restoreLatestSync() error {
 		}
 		peerID, err := peer.Decode(strings.TrimPrefix(ent.Key, SyncPrefix))
 		if err != nil {
-			log.Errorw("Failed to decode peer ID of latest sync", "err", err)
+			logger.Errorw("Failed to decode peer ID of latest sync", "err", err)
 			continue
 		}
 
 		err = c.LS.SetLatestSync(peerID, lastCid)
 		if err != nil {
-			log.Errorw("Failed to set latest sync", "err", err, "peer", peerID)
+			logger.Errorw("Failed to set latest sync", "err", err, "peer", peerID)
 			continue
 		}
-		log.Debugw("Set latest sync", "provider", peerID, "cid", lastCid)
+		logger.Debugw("Set latest sync", "provider", peerID, "cid", lastCid)
 		count++
 	}
-	log.Infow("Loaded latest sync for providers", "count", count)
+	logger.Infow("Loaded latest sync for providers", "count", count)
 	return nil
 }
 
@@ -225,10 +225,10 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 		// Persist the latest sync
 		err := c.DS.Put(context.Background(), datastore.NewKey(SyncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
 		if err != nil {
-			log.Errorw("Error persisting latest sync", "err", err, "peer", syncFin.PeerID)
+			logger.Errorw("Error persisting latest sync", "err", err, "peer", syncFin.PeerID)
 			continue
 		}
-		log.Debugw("Persisted latest sync", "peer", syncFin.PeerID, "cid", syncFin.Cid)
+		logger.Debugw("Persisted latest sync", "peer", syncFin.PeerID, "cid", syncFin.Cid)
 
 	}
 	close(c.watchDone)
@@ -244,7 +244,7 @@ func (c *Core) SendRecvMeta(mcid cid.Cid, mpeer peer.ID) {
 		Time:       uint64(time.Now().Unix()),
 	}:
 	case _ = <-ctx.Done():
-		log.Errorf("failed to send metadata(cid: %s peerid: %s) to metamanager, timeout", mcid.String(), mpeer.String())
+		logger.Errorf("failed to send metadata(cid: %s peerid: %s) to metamanager, timeout", mcid.String(), mpeer.String())
 	}
 
 }

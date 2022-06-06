@@ -8,6 +8,9 @@ import (
 	storeError "github.com/kenlabs/PandoStore/pkg/error"
 	"github.com/kenlabs/PandoStore/pkg/types/cbortypes"
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"net/http"
 	"strconv"
 )
@@ -101,4 +104,27 @@ func (c *Controller) MetaInclusion(ctx context.Context, cidstr string) ([]byte, 
 	}
 
 	return res, nil
+}
+
+func (c *Controller) MetadataQuery(ctx context.Context, providerID string, queryStr string) (queryResult interface{}, err error) {
+	var bsonQuery bson.D
+	err = bson.UnmarshalExtJSON([]byte(queryStr), true, &bsonQuery)
+	if err != nil {
+		return nil, err
+	}
+	var resJson []bson.M
+	opts := options.RunCmd().SetReadPreference(readpref.Primary())
+	res, err := c.Core.StoreInstance.MetadataCache.Database(providerID).RunCommandCursor(
+		ctx,
+		bsonQuery,
+		opts,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err = res.All(ctx, &resJson); err != nil {
+		return nil, err
+	}
+
+	return resJson, nil
 }

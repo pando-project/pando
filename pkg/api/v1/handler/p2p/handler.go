@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gogo/protobuf/proto"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando/pkg/api/core"
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
 	"github.com/kenlabs/pando/pkg/api/v1/controller"
 	"github.com/kenlabs/pando/pkg/api/v1/server/libp2p"
 	pb "github.com/kenlabs/pando/pkg/api/v1/server/libp2p/proto"
 	"github.com/kenlabs/pando/pkg/option"
+	"github.com/kenlabs/pando/pkg/util/log"
 
 	"context"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -18,7 +18,7 @@ import (
 	"net/http"
 )
 
-var logger = logging.Logger("api/v1/controller/p2p")
+var logger = log.NewSubsystemLogger()
 
 // controller handles requests for the providers resource
 type libp2pHandler struct {

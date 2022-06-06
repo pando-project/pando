@@ -19,7 +19,7 @@ var recorder = dataTransferRecorder{
 }
 
 func onDataTransferComplete(event dt.Event, channelState dt.ChannelState) {
-	log.Debugf("transfer event: %s, cid: %s\n", dt.Events[event.Code], channelState.BaseCID())
+	logger.Debugf("transfer event: %s, cid: %s\n", dt.Events[event.Code], channelState.BaseCID())
 	if event.Code == dt.Open {
 		recorder.lock.Lock()
 		recorder.record[channelState.BaseCID()] =

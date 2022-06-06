@@ -9,10 +9,10 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/traversal/selector"
 	selectorparse "github.com/ipld/go-ipld-prime/traversal/selector/parse"
+	"github.com/kenlabs/pando/pkg/util/log"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando/pkg/option"
 	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-var log = logging.Logger("meta-manager")
+var logger = log.NewSubsystemLogger()
 
 var (
 	SnapShotDuration = time.Second * 5
@@ -44,10 +44,10 @@ func init() {
 		if os.IsNotExist(err) {
 			err = os.Mkdir(backupTmpDir, os.ModePerm)
 			if err != nil {
-				log.Errorf("failed to create backup dir:%s , err:%s", backupTmpDir, err.Error())
+				logger.Errorf("failed to create backup dir:%s , err:%s", backupTmpDir, err.Error())
 			}
 		} else {
-			log.Errorf("please set correct filepath, err : %s", err.Error())
+			logger.Errorf("please set correct filepath, err : %s", err.Error())
 		}
 	}
 	forceBackupTmpDir := path.Join(backupTmpDir, "force")
@@ -56,10 +56,10 @@ func init() {
 		if os.IsNotExist(err) {
 			err = os.Mkdir(forceBackupTmpDir, os.ModePerm)
 			if err != nil {
-				log.Errorf("failed to create backup dir:%s , err:%s", forceBackupTmpDir, err.Error())
+				logger.Errorf("failed to create backup dir:%s , err:%s", forceBackupTmpDir, err.Error())
 			}
 		} else {
-			log.Errorf("please set correct filepath, err : %s", err.Error())
+			logger.Errorf("please set correct filepath, err : %s", err.Error())
 		}
 	}
 	BackupTmpPath = backupTmpDir
@@ -155,7 +155,7 @@ func (mm *MetaManager) dealReceivedMeta() {
 //			update[peerID] = &types.ProviderState{Cidlist: cidlist}
 //		}
 //		if len(update) > 0 {
-//			log.Debugw("send update to state tree")
+//			logger.Debugw("send update to state tree")
 //			mm.outStateTreeCh <- update
 //		}
 //		mm.cache = make(map[peer.ID][]*MetaRecord)
@@ -173,7 +173,7 @@ func (mm *MetaManager) GetMetaInCh() chan<- *MetaRecord {
 func (mm *MetaManager) genCarForProviders(ctx context.Context) {
 	interval, err := time.ParseDuration(mm.backupCfg.BackupGenInterval)
 	if err != nil {
-		log.Errorf("invalid BackupGenInterval config: %s\n err:%s\n",
+		logger.Errorf("invalid BackupGenInterval config: %s\n err:%s\n",
 			mm.backupCfg.BackupGenInterval, err.Error())
 	}
 	go func() {
@@ -192,11 +192,11 @@ func (mm *MetaManager) genCarForProviders(ctx context.Context) {
 					if err == datastore.ErrNotFound {
 						continue
 					}
-					log.Errorf("failed to get last sync for provider:%s\n", info.AddrInfo.ID.String())
+					logger.Errorf("failed to get last sync for provider:%s\n", info.AddrInfo.ID.String())
 				}
 				_, lastSyncCid, err := cid.CidFromBytes(lastSync)
 				if err != nil {
-					log.Errorf("failed to decode cid for last sync for provider:%s\nerr:%s\n",
+					logger.Errorf("failed to decode cid for last sync for provider:%s\nerr:%s\n",
 						info.AddrInfo.ID.String(), err.Error())
 				}
 				if lastBackup == lastSyncCid {
@@ -207,14 +207,14 @@ func (mm *MetaManager) genCarForProviders(ctx context.Context) {
 				filepath := path.Join(BackupTmpPath, fname)
 				err = mm.ExportMetaCar(ctx, filepath, lastSyncCid, lastBackup)
 				if err != nil {
-					log.Errorf("failed to export backup car for provider:%s\nerr:%s",
+					logger.Errorf("failed to export backup car for provider:%s\nerr:%s",
 						info.AddrInfo.ID.String(), err.Error())
 					continue
 				}
-				log.Infof("generate car file for backup successfully, filename: %s at time: %s", fname, time.Now().String())
+				logger.Infof("generate car file for backup successfully, filename: %s at time: %s", fname, time.Now().String())
 				err = mm.registry.RegisterOrUpdate(ctx, info.AddrInfo.ID, lastSyncCid, peer.ID(""), false)
 				if err != nil {
-					log.Errorf("failed to update provider info for backup cid, err:%s\n", err.Error())
+					logger.Errorf("failed to update provider info for backup cid, err:%s\n", err.Error())
 				}
 
 			}
@@ -232,14 +232,14 @@ func (mm *MetaManager) Close() {
 func (mm *MetaManager) ExportMetaCar(ctx context.Context, filepath string, root cid.Cid, lastBackup cid.Cid) error {
 	f, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		log.Errorf("open file error : %s", err.Error())
+		logger.Errorf("open file error : %s", err.Error())
 		return err
 	}
 	defer func(f *os.File) {
 		if f != nil {
 			err := f.Close()
 			if err != nil {
-				log.Warnf("close car file failed, %v", err)
+				logger.Warnf("close car file failed, %v", err)
 			}
 		}
 	}(f)
@@ -252,7 +252,7 @@ func (mm *MetaManager) ExportMetaCar(ctx context.Context, filepath string, root 
 
 	_, err = car.TraverseV1(ctx, mm.ls, root, ss, f)
 	if err != nil {
-		log.Errorf("failed to export meta backup car, err:%s\n", err.Error())
+		logger.Errorf("failed to export meta backup car, err:%s\n", err.Error())
 		return err
 	}
 	return nil
