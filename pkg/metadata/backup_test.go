@@ -44,8 +44,6 @@ func TestBackUpFile(t *testing.T) {
 	Convey("when send right request then get 200 response", t, func() {
 		patch := gomonkey.ApplyGlobalVar(&metadata.CheckInterval, time.Second*2)
 		defer patch.Reset()
-		err := logging.SetLogLevel("meta-manager", "debug")
-		So(err, ShouldBeNil)
 		cfg := &option.Backup{
 			EstuaryGateway:    metadata.DefaultEstGateway,
 			ShuttleGateway:    metadata.DefaultShuttleGateway,

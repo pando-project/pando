@@ -3,7 +3,6 @@ package metadata_test
 import (
 	"context"
 	"github.com/ipfs/go-cid"
-	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando/pkg/legs"
 	. "github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/test/mock"
@@ -15,8 +14,6 @@ import (
 func TestReceiveRecordAndOutUpdate(t *testing.T) {
 	Convey("test metadata manager", t, func() {
 		pando, err := mock.NewPandoMock()
-		So(err, ShouldBeNil)
-		err = logging.SetLogLevel("meta-manager", "debug")
 		So(err, ShouldBeNil)
 		lys := legs.MkLinkSystem(pando.PS, nil, nil)
 
