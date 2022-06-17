@@ -11,16 +11,16 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	dtsync "github.com/ipfs/go-datastore/sync"
 	"github.com/ipfs/go-graphsync"
 	gsimpl "github.com/ipfs/go-graphsync/impl"
 	gsnet "github.com/ipfs/go-graphsync/network"
-	"github.com/kenlabs/pando/pkg/util/log"
-
 	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/option"
 	"github.com/kenlabs/pando/pkg/policy"
 	"github.com/kenlabs/pando/pkg/registry"
+	"github.com/kenlabs/pando/pkg/util/log"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
@@ -109,7 +109,7 @@ func (c *Core) initSub(ctx context.Context, h host.Host, ds datastore.Batching, 
 	gs := gsimpl.New(context.Background(), gsNet, lnkSys)
 	tp := gstransport.NewTransport(h.ID(), gs)
 
-	dtManager, err := dt.NewDataTransfer(datastore.NewMapDatastore(), dtNet, tp)
+	dtManager, err := dt.NewDataTransfer(dtsync.MutexWrap(datastore.NewMapDatastore()), dtNet, tp)
 	if err != nil {
 		return nil, nil, err
 	}
