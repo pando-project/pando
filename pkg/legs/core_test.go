@@ -8,8 +8,8 @@ import (
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/sync"
 	logging "github.com/ipfs/go-log/v2"
-	"github.com/kenlabs/PandoStore/pkg/config"
-	"github.com/kenlabs/PandoStore/pkg/store"
+	"github.com/kenlabs/pando-store/pkg/config"
+	"github.com/kenlabs/pando-store/pkg/store"
 	"github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/pkg/option"
 	"github.com/kenlabs/pando/test/mock"
@@ -156,6 +156,7 @@ func TestSyncDataFromPando(t *testing.T) {
 		////bs := blockstore.NewBlockstore(mds)
 		ps, err := store.NewStoreFromDatastore(context.Background(), mds, &config.StoreConfig{
 			SnapShotInterval: "1s",
+			CacheSize:        config.DefaultCacheSize,
 		})
 		So(err, ShouldBeNil)
 		lsys := legs.MkLinkSystem(ps, nil, nil)

@@ -15,7 +15,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/multicodec"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
-	"github.com/kenlabs/PandoStore/pkg/store"
+	"github.com/kenlabs/pando-store/pkg/store"
 	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/kenlabs/pando/pkg/types/schema"
 	"github.com/libp2p/go-libp2p-core/peer"

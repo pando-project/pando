@@ -23,7 +23,7 @@ require (
 	github.com/ipfs/go-blockservice v0.3.0
 	github.com/ipfs/go-cid v0.2.0
 	github.com/ipfs/go-datastore v0.5.1
-	github.com/ipfs/go-ds-leveldb v0.5.0
+	github.com/ipfs/go-ds-leveldb v0.5.1-0.20220627104637-a59ecb1f64df
 	github.com/ipfs/go-graphsync v0.13.1
 	github.com/ipfs/go-ipfs-blockstore v1.2.0
 	github.com/ipfs/go-ipfs-exchange-offline v0.2.0
@@ -60,10 +60,9 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require (
-	github.com/kenlabs/PandoStore v0.0.0-20220602103330-4804a8e13640
-	go.mongodb.org/mongo-driver v1.7.3
-)
+require go.mongodb.org/mongo-driver v1.7.3
+
+require github.com/kenlabs/pando-store v0.0.0-20220713094941-fedf3b6a8578
 
 require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect

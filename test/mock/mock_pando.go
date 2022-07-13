@@ -6,8 +6,8 @@ import (
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
-	"github.com/kenlabs/PandoStore/pkg/config"
-	"github.com/kenlabs/PandoStore/pkg/store"
+	"github.com/kenlabs/pando-store/pkg/config"
+	"github.com/kenlabs/pando-store/pkg/store"
 	"github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/option"
@@ -48,6 +48,7 @@ func NewPandoMock() (*PandoMock, error) {
 	}
 	//bs := blockstore.NewBlockstore(mds)
 	ps, err := store.NewStoreFromDatastore(ctx, ds, &config.StoreConfig{
+		CacheSize:        config.DefaultCacheSize,
 		SnapShotInterval: "5s",
 	})
 	if err != nil {

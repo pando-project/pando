@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/ipfs/go-cid"
-	"github.com/kenlabs/PandoStore/pkg/snapshotstore"
+	"github.com/kenlabs/pando-store/pkg/snapshotstore"
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
 	"github.com/kenlabs/pando/pkg/util/cids"
 	. "github.com/smartystreets/goconvey/convey"
