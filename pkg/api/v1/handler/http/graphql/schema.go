@@ -2,8 +2,8 @@ package graphql
 
 import (
 	"fmt"
-	"github.com/kenlabs/PandoStore/pkg/statestore/registry"
-	"github.com/kenlabs/PandoStore/pkg/types/cbortypes"
+	"github.com/kenlabs/pando-store/pkg/statestore/registry"
+	"github.com/kenlabs/pando-store/pkg/types/cbortypes"
 	"strings"
 
 	"github.com/graphql-go/graphql"

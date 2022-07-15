@@ -19,8 +19,8 @@ import (
 	"github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/kenlabs/PandoStore/pkg/config"
-	"github.com/kenlabs/PandoStore/pkg/store"
+	"github.com/kenlabs/pando-store/pkg/config"
+	"github.com/kenlabs/pando-store/pkg/store"
 	link "github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/sdk/pkg"
 	"github.com/libp2p/go-libp2p"
@@ -201,8 +201,8 @@ func (c *DAGConsumer) Sync(nextCid cid.Cid, selector ipld.Node) (cid.Cid, error)
 }
 
 func (c *DAGConsumer) Start(pandoAddr string, pandoPeerID string, providerPeerID string, sel ipld.Node) error {
-	//logging.SetAllLoggers(logging.LevelDebug)
-	//err := logging.SetLogLevel("addrutil", "warn")
+	//log.SetAllLoggers(log.LevelDebug)
+	//err := log.SetLogLevel("graphsync", "warn")
 	//if err != nil {
 	//	return err
 	//}
