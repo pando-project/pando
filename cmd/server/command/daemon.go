@@ -166,6 +166,7 @@ func initStoreInstance() (*core.StoreInstance, error) {
 
 	pandoStore, err := store.NewStoreFromDatastore(context.Background(), mutexDataStore, &config.StoreConfig{
 		SnapShotInterval: Opt.DataStore.SnapShotInterval,
+		CacheSize:        config.DefaultCacheSize,
 	})
 	if err != nil {
 		return nil, err
