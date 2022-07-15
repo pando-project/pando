@@ -18,6 +18,7 @@ func (a *API) registerMetadata() {
 	{
 		metadata.GET("/list", a.metadataList)
 		metadata.GET("/snapshot", a.metadataSnapshot)
+		metadata.GET("/inclusion", a.metaInclusion)
 		metadata.POST("/query", a.metadataQuery)
 	}
 }
@@ -50,6 +51,22 @@ func (a *API) metadataSnapshot(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, types.NewOKResponse("metadataSnapshot found", snapshot))
 
+}
+
+func (a *API) metaInclusion(ctx *gin.Context) {
+	record := metrics.APITimer(context.Background(), metrics.GetMetadataInclusionLatency)
+	defer record()
+
+	cidQuery := ctx.Query("cid")
+
+	inclusion, err := a.controller.MetaInclusion(ctx, cidQuery)
+	if err != nil {
+		logger.Error(fmt.Sprintf("get metaInclusion failed: %v", err))
+		HandleError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, types.NewOKResponse("metaInclusion found", inclusion))
 }
 
 type MetadataQueryRequestBody struct {
