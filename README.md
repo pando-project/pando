@@ -34,9 +34,10 @@ However, there are nice properties of having this sort of metadata ecosystem mor
 ## Integrate with Pando
 ### As a Provider
 Pando uses [go-legs](https://github.com/filecoin-project/go-legs) to synchronize IPLD data from providers.
-We will develop an SDK for you to integrate with Pando in a more efficient way in the future (maybe a week).
-For now, you have to initialize go-legs instance on their own and publish IPLD data to the topic `/pando/v0.0.1`
-which Pando subscribes.
+
+Now we have an [SDK](https://github.com/kenlabs/pando/tree/main/sdk) for you to integrate with Pando server. This is just a simple version. We are building a more efficient client for you.
+
+The topic Pando subscribes is `/pando/v0.0.1`.
 
 #### Prerequisite
 Pando accepts IPLD data from metadata providers with the following required IPLD children nodes:
@@ -56,8 +57,29 @@ Make sure you correctly link your chained metadata using PreviousID node.
 #### Integration process
 The provider integration is recommended to follow the steps below:
 
-1. Create a provider instance with Pando SDK, then connect to Pando, initialize a metadata instance and append new metadata if you need.
-2. Push the latest metadata instance.
+1. Create a provider instance with Pando SDK
+   ```go
+   func NewMetaProvider(privateKeyStr string, pandoAPI string, connectTimeout time.Duration, pushTimeout time.Duration) (*MetaProvider, error)
+   ```
+
+2. Then connect to Pando
+
+   ```go
+   func (p *MetaProvider) ConnectPando(peerAddress string, peerID string) error
+   ```
+
+3. Create your metadata
+   ```go
+   func (p *MetaProvider) NewMetadata(payload []byte) (*schema.Metadata, error)
+   
+   func (p *MetaProvider) NewMetadataWithLink(payload []byte, link datamodel.Link) (*schema.Metadata, error) 
+   ```
+
+4. Push the latest metadata instance.
+
+   ```go
+   func (p *MetaProvider) Push(metadata schema.Meta) (cid.Cid, error)
+   ```
 
 Check out [these examples](https://github.com/kenlabs/pando/tree/main/example) for more details.
 
@@ -65,11 +87,46 @@ Check out [these examples](https://github.com/kenlabs/pando/tree/main/example) f
 To fetch metadata/snapshot status and content via GraphQL API, 
 [click here to get a try and dig more](https://pando-graphql.kencloud.com/).
 
+#### Integration process
+
+The provider integration is recommended to follow the steps below:
+
+1. Create a consumer instance with Pando SDK
+
+   ```go
+   func NewDAGConsumer(privateKeyStr string, pandoAPI string, connectTimeout time.Duration, lsys *ipld.LinkSystem, syncTimeout time.Duration) (*DAGConsumer, error) 
+   ```
+
+2. Then connect to Pando
+
+   ```go
+   func (c *DAGConsumer) ConnectPando(peerAddress string, peerID string) error
+   ```
+
+3. Get latest head cid from Pando
+   ```go
+   func (c *DAGConsumer) GetLatestHead(providerPeerID string) (cid.Cid, error)
+   ```
+
+4. Sync the data
+
+   ```go
+   func (c *DAGConsumer) Sync(nextCid cid.Cid, selector ipld.Node) (cid.Cid, error)
+   ```
+
+Optionally, you can combine the 2, 3, 4 steps into one step: 
+
+```go
+func (c *DAGConsumer) Start(pandoAddr string, pandoPeerID string, providerPeerID string, sel ipld.Node) error
+```
+
 Check out [consumer examples](https://github.com/kenlabs/pando/tree/main/example/consumer/dag) on how to consume Pando data.
 
 ## Getting Started
 ### How Pando persists providers data
-TBD
+We have a project called `pando-store` to persist provider’s data.
+
+For more details, please refer to [pando-store](https://github.com/kenlabs/pando-store).
 
 ### Build Pando Server and Client
 Git clone this repo, and run `make`, that's all. The binaries will be built at `bin`.
