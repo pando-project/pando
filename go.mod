@@ -62,7 +62,7 @@ require (
 
 require go.mongodb.org/mongo-driver v1.7.3
 
-require github.com/kenlabs/pando-store v0.0.0-20220713094941-fedf3b6a8578
+require github.com/kenlabs/pando-store v0.0.0-20220719142022-c8f1ed0f5135
 
 require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
