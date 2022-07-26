@@ -17,10 +17,7 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/kenlabs/PandoStore/pkg/config"
-	"github.com/kenlabs/PandoStore/pkg/store"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
-	"github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/pkg/types/schema"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -114,8 +111,8 @@ func NewMockProvider(p *PandoMock) (*ProviderMock, error) {
 	pk := srcHost.Peerstore().PrivKey(srcHost.ID())
 	srcDatastore := dssync.MutexWrap(datastore.NewMapDatastore())
 	srcBlockstore := blockstore.NewBlockstore(srcDatastore)
-	srcPandoStore, err := store.NewStoreFromDatastore(context.Background(), srcDatastore, &config.StoreConfig{SnapShotInterval: "60m"})
-	srcLinkSystem := legs.MkLinkSystem(srcPandoStore, nil, nil)
+	//srcPandoStore, err := store.NewStoreFromDatastore(context.Background(), srcDatastore, &config.StoreConfig{SnapShotInterval: "60m"})
+	srcLinkSystem := basicLinkSystem(srcBlockstore)
 	dags := merkledag.NewDAGService(blockservice.New(srcBlockstore, offline.Exchange(srcBlockstore)))
 	legsPublisher, err := dtsync.NewPublisher(srcHost, srcDatastore, srcLinkSystem, topic)
 	if err != nil {

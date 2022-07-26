@@ -15,7 +15,7 @@ import (
 
 const (
 	privateKeyStr  = "CAESQAycIStrQXBoxgf2pEazDLoZbL8WCLX5GIb69dl4x2mJMpukCAPbzq1URPtKen4Bpxfz9et2exWhfAfZ/RG30ts="
-	pandoAddr      = "/ip4/52.14.211.248/tcp/9013"
+	pandoAddr      = "/ip4/127.0.0.1/tcp/9002"
 	pandoPeerID    = "12D3KooWNU48MUrPEoYh77k99RbskgftfmSm3CdkonijcM5VehS9"
 	providerPeerID = "12D3KooWNnK4gnNKmh6JUzRb34RqNcBahN5B8v18DsMxQ8mCqw81"
 )
@@ -23,7 +23,7 @@ const (
 const (
 	connectTimeout = time.Minute
 	syncTimeout    = 10 * time.Minute
-	syncDepth      = 100
+	syncDepth      = 0
 )
 
 func main() {
@@ -45,6 +45,7 @@ func main() {
 				success += 1
 			}
 			successRate := success / total
+			fmt.Printf("total job numbers: %d\n", int(total))
 			fmt.Println("success rate: ", successRate)
 		}
 	}()
@@ -64,7 +65,7 @@ func main() {
 	if syncDepth == 0 {
 		sel = nil
 	} else {
-		sel = golegs.ExploreRecursiveWithStopNode(selector.RecursionLimitDepth(10), nil, nil)
+		sel = golegs.ExploreRecursiveWithStopNode(selector.RecursionLimitDepth(syncDepth), nil, nil)
 	}
 
 	err = consumer.Start(pandoAddr, pandoPeerID, providerPeerID, sel)

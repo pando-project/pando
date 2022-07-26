@@ -8,7 +8,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore/sync"
 	"github.com/ipfs/go-log/v2"
-	"github.com/kenlabs/PandoStore/pkg/types/cbortypes"
+	"github.com/kenlabs/pando-store/pkg/types/cbortypes"
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/api/types"
 	"github.com/kenlabs/pando/pkg/util/cids"

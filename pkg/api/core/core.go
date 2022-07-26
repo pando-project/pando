@@ -4,7 +4,7 @@ import (
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ipfs/go-datastore/sync"
 	"github.com/ipld/go-ipld-prime"
-	"github.com/kenlabs/PandoStore/pkg/store"
+	"github.com/kenlabs/pando-store/pkg/store"
 	"github.com/kenlabs/pando/pkg/legs"
 	"github.com/kenlabs/pando/pkg/lotus"
 	"github.com/kenlabs/pando/pkg/metadata"

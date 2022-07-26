@@ -191,6 +191,9 @@ func (s *Server) MustStartAllServers() {
 func (s *Server) StopAllServers() error {
 	g := errgroup.Group{}
 	g.Go(func() error {
+		return s.Core.StoreInstance.PandoStore.Close()
+	})
+	g.Go(func() error {
 		return s.StopAdminServer()
 	})
 	g.Go(func() error {
