@@ -24,7 +24,7 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 			So(err, ShouldBeNil)
 			provider, err := mock.NewMockProvider(pando)
 			So(err, ShouldBeNil)
-			err = pando.Registry.RegisterOrUpdate(context.Background(), provider.ID, cid.Undef, provider.ID, false)
+			err = pando.Registry.RegisterOrUpdate(context.Background(), provider.ID, cid.Undef, provider.ID, cid.Undef, false)
 			So(err, ShouldBeNil)
 			cid1, err := provider.SendMeta(true)
 			So(err, ShouldBeNil)
@@ -48,6 +48,9 @@ func TestReceiveRecordAndOutUpdate(t *testing.T) {
 
 			time.Sleep(time.Second * 5)
 			update, _, err := pando.PS.SnapShotStore().GetSnapShotByHeight(ctx, 0)
+			providerInfo := pando.Registry.AllProviderInfo()
+			So(len(providerInfo), ShouldEqual, 1)
+			So(providerInfo[0].LatestMeta, ShouldResemble, cid3)
 			So(err, ShouldBeNil)
 			So(update.PrevSnapShot, ShouldEqual, "")
 			So(len(update.Update[provider.ID.String()].MetaList), ShouldEqual, 3)

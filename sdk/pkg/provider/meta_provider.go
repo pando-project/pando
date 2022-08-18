@@ -77,6 +77,7 @@ func NewMetaProvider(privateKeyStr string, pandoAPI string, connectTimeout time.
 	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
 	ps, err := store.NewStoreFromDatastore(context.Background(), storageCore.MutexDatastore, &config.StoreConfig{
 		SnapShotInterval: "9999h",
+		CacheSize:        config.DefaultCacheSize,
 	})
 	if err != nil {
 		return nil, err

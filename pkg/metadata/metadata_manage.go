@@ -212,7 +212,7 @@ func (mm *MetaManager) genCarForProviders(ctx context.Context) {
 					continue
 				}
 				logger.Infof("generate car file for backup successfully, filename: %s at time: %s", fname, time.Now().String())
-				err = mm.registry.RegisterOrUpdate(ctx, info.AddrInfo.ID, lastSyncCid, peer.ID(""), false)
+				err = mm.registry.RegisterOrUpdate(ctx, info.AddrInfo.ID, lastSyncCid, peer.ID(""), cid.Undef, false)
 				if err != nil {
 					logger.Errorf("failed to update provider info for backup cid, err:%s\n", err.Error())
 				}

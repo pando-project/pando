@@ -20,6 +20,7 @@ type providerInfo struct {
 	privateKey  string
 	addresses   []string
 	miner       string
+	name        string
 	onlyEnvelop bool
 }
 
@@ -48,7 +49,7 @@ func registerCmd() *cobra.Command {
 				return err
 			}
 
-			data, err := model.MakeRegisterRequest(peerID, privateKey, registerInfo.addresses, registerInfo.miner)
+			data, err := model.MakeRegisterRequest(peerID, privateKey, registerInfo.addresses, registerInfo.miner, registerInfo.name)
 			if err != nil {
 				return err
 			}
@@ -91,6 +92,8 @@ func (f *providerInfo) setFlags(cmd *cobra.Command) {
 		"address array of provider")
 	cmd.Flags().StringVar(&f.miner, "miner", "",
 		"miner of provider")
+	cmd.Flags().StringVar(&f.name, "name", "",
+		"name of provider")
 	cmd.Flags().BoolVarP(&f.onlyEnvelop, "only-envelop", "e", false,
 		"only generate envelop body")
 }

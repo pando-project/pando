@@ -57,6 +57,8 @@ type Registry struct {
 type ProviderInfo struct {
 	// AddrInfo contains an account.ID and set of Multiaddr addresses.
 	AddrInfo peer.AddrInfo
+	// Name is set by provider when register
+	Name string
 	// DiscoveryAddr is the address that is used for discovery of the provider.
 	DiscoveryAddr string
 	// AccountLevel is the level according to the filecoin miner account balance
@@ -64,7 +66,9 @@ type ProviderInfo struct {
 	// Publisher is the ID of the peer that published the provider info.
 	Publisher peer.ID `json:",omitempty"`
 
-	lastContactTime time.Time
+	LatestMeta cid.Cid
+
+	LastContactTime time.Time
 
 	LastBackupMeta cid.Cid
 }
@@ -374,7 +378,7 @@ func (r *Registry) Authorized(peerID peer.ID) (bool, error) {
 
 // RegisterOrUpdate attempts to register an unregistered provider, or updates
 // the addresses and latest meta data of an already registered provider.
-func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, lastBackup cid.Cid, publisherID peer.ID, contact bool) error {
+func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, lastBackup cid.Cid, publisherID peer.ID, metaID cid.Cid, contact bool) error {
 	var fullRegister bool
 	// Check that the provider has been discovered and validated
 	infos := r.ProviderInfo(providerID)
@@ -395,7 +399,8 @@ func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, las
 			},
 			DiscoveryAddr:   info.DiscoveryAddr,
 			LastBackupMeta:  info.LastBackupMeta,
-			lastContactTime: info.lastContactTime,
+			LastContactTime: info.LastContactTime,
+			LatestMeta:      info.LatestMeta,
 			AccountLevel:    info.AccountLevel,
 			Publisher:       publisherID,
 		}
@@ -411,11 +416,15 @@ func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, las
 
 	if contact {
 		now := time.Now()
-		info.lastContactTime = now
+		info.LastContactTime = now
 	}
 
 	if lastBackup != cid.Undef {
 		info.LastBackupMeta = lastBackup
+	}
+
+	if metaID != cid.Undef {
+		info.LatestMeta = metaID
 	}
 
 	// If there is a new providerID or publisherID then do a full Register that
@@ -437,6 +446,7 @@ func (r *Registry) RegisterOrUpdate(ctx context.Context, providerID peer.ID, las
 	logger.Debugw("Updated registered provider info", "id", info.AddrInfo.ID, "addrs", info.AddrInfo.Addrs)
 	return nil
 }
+
 func (r *Registry) pollProviders(interval, stopAfter time.Duration) {
 	stopAfter += stopAfter
 	r.actions <- func() {
@@ -447,27 +457,27 @@ func (r *Registry) pollProviders(interval, stopAfter time.Duration) {
 				// No publisher.
 				continue
 			}
-			if info.lastContactTime.IsZero() {
+			if info.LastContactTime.IsZero() {
 				// There has been no contact since startup.  Poll during next
 				// call to this function if no updated for provider.
-				info.lastContactTime = now.Add(-interval)
+				info.LastContactTime = now.Add(-interval)
 				continue
 			}
-			noContactTime := now.Sub(info.lastContactTime)
+			noContactTime := now.Sub(info.LastContactTime)
 			if noContactTime < interval {
 				// Not enough time since last contact.
 				continue
 			}
 			if noContactTime > stopAfter {
 				// Too much time since last contact.
-				logger.Warnw("Lost contact with provider's publisher", "publisher", info.Publisher, "provider", info.AddrInfo.ID, "since", info.lastContactTime)
+				logger.Warnw("Lost contact with provider's publisher", "publisher", info.Publisher, "provider", info.AddrInfo.ID, "since", info.LastContactTime)
 				// Remove the non-responsive publisher.
 				info = &ProviderInfo{
 					AddrInfo:        info.AddrInfo,
 					DiscoveryAddr:   info.DiscoveryAddr,
 					LastBackupMeta:  info.LastBackupMeta,
 					AccountLevel:    info.AccountLevel,
-					lastContactTime: info.lastContactTime,
+					LastContactTime: info.LastContactTime,
 					Publisher:       peer.ID(""),
 				}
 				if err = r.syncRegister(context.Background(), info); err != nil {

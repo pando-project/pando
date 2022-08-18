@@ -40,7 +40,7 @@ func TestPollProvider(t *testing.T) {
 			t.Fatal("bad provider ID:", err)
 		}
 
-		err = r.RegisterOrUpdate(ctx, peerID, cid.Undef, peerID, true)
+		err = r.RegisterOrUpdate(ctx, peerID, cid.Undef, peerID, cid.Undef, true)
 		if err != nil {
 			t.Fatal("failed to register directly:", err)
 		}

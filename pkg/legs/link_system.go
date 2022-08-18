@@ -103,7 +103,7 @@ func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld
 				}
 				if reg != nil {
 					go func(p peer.ID) {
-						err = reg.RegisterOrUpdate(lctx.Ctx, p, cid.Undef, peer.ID(""), true)
+						err = reg.RegisterOrUpdate(lctx.Ctx, p, cid.Undef, peer.ID(""), c, true)
 						if err != nil {
 							log.Errorf("failed to register new provider, err: %v", err)
 						}

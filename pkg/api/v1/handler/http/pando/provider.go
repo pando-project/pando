@@ -69,7 +69,8 @@ func (a *API) listProviderInfo(ctx *gin.Context) {
 		HandleError(ctx, err)
 		return
 	}
-	writeProviderInfo(ctx, info)
+	//writeProviderInfo(ctx, info)
+	ctx.JSON(http.StatusOK, types.NewOKResponse("OK", info))
 
 }
 
