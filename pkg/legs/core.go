@@ -222,14 +222,34 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 			continue
 		}
 
+		err := c.CS.View(func(txn *badger.Txn) error {
+			_, err := txn.Get(syncFin.Cid.Bytes())
+			return err
+		})
+		if err == nil {
+			logger.Debugf("cid %s exists, ignore", syncFin.Cid.String())
+			continue
+		} else if err != badger.ErrKeyNotFound {
+			logger.Warnf("an error occured when get cid %s from the cache: %v",
+				syncFin.Cid.String(), err)
+		}
+		// Save viewed cid
+		err = c.CS.Update(func(txn *badger.Txn) error {
+			e := badger.NewEntry(syncFin.Cid.Bytes(), []byte("")).WithTTL(c.backupGenInterval)
+			return txn.SetEntry(e)
+		})
+		if err != nil {
+			logger.Warnf("cache cid %s failed, error: %v", syncFin.Cid.String(), err)
+		}
+		logger.Debugf("Cached latest sync cid: %s", syncFin.Cid.String())
+
 		// Persist the latest sync
-		err := c.DS.Put(context.Background(), datastore.NewKey(SyncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
+		err = c.DS.Put(context.Background(), datastore.NewKey(SyncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
 		if err != nil {
 			logger.Errorw("Error persisting latest sync", "err", err, "peer", syncFin.PeerID)
 			continue
 		}
 		logger.Debugw("Persisted latest sync", "peer", syncFin.PeerID, "cid", syncFin.Cid)
-
 	}
 	close(c.watchDone)
 }
