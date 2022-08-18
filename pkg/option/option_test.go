@@ -66,6 +66,11 @@ func TestOptions(t *testing.T) {
 			So(opt.ServerAddress.P2PAddress, ShouldEqual, "/ip4/0.0.0.0/tcp/8003")
 			So(opt.RateLimit.Bandwidth, ShouldEqual, 146.81)
 			So(opt.Backup.APIKey, ShouldEqual, "EST0933b58d-65f9-470d-bb08-72aed39339f1ARY")
+
+			err = os.RemoveAll(opt.PandoRoot)
+			if err != nil {
+				t.Error(err)
+			}
 		})
 
 		Convey("return error if privateKey / peerID is invalid", func() {
@@ -83,10 +88,6 @@ func TestOptions(t *testing.T) {
 			So(peerIDInvalid, ShouldBeEmpty)
 		})
 
-		err := os.RemoveAll(opt.PandoRoot)
-		if err != nil {
-			t.Error(err)
-		}
 	})
 }
 
