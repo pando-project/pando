@@ -270,46 +270,6 @@ Show information of Pando server
 
 ```
 
-### /pando/subscribe
-Let Pando subscribe a topic with provider to start metadata synchronization
-```shell
-./pando-client -a http://127.0.0.1:9000 pando subscribe --provider-peerid 12D3KooWSS3sEujyAXB9SWUvVtQZmxH6vTi9NitqaaRQoUjeEk3M
-
-{
- "code": 200,
- "message": "subscribe success",
- "Data": null
-}
-
-```
-
-### /provider/register
-Provider should be registered before using Pando service
-```shell
-./pando-client -a http://127.0.0.1:9000 provider register \
-  --peer-id 12D3KooWBckWLKiYoUX4k3HTrbrSe4DD5SPNTKgP6vKTva1NaRkJ \
-  --private-key CAESQLypOCKYR7HGwVl4ngNhEqMZ7opchNOUA4Qc1QDpxsARGr2pWUgkXFXKU27TgzIHXqw0tXaUVx2GIbUuLitq22c= \
-  --addresses /ip4/127.0.0.1/tcp/9999
-
-{
- "code": 200,
- "message": "register success",
- "Data": null
-}
-
-```
-
-to generate an envelop-data only, run:
-```shell
-./pando-client -a http://127.0.0.1:9000 provider register \
-  --only-envelop \
-  --peer-id 12D3KooWBckWLKiYoUX4k3HTrbrSe4DD5SPNTKgP6vKTva1NaRkJ \
-  --private-key CAESQLypOCKYR7HGwVl4ngNhEqMZ7opchNOUA4Qc1QDpxsARGr2pWUgkXFXKU27TgzIHXqw0tXaUVx2GIbUuLitq22c= \
-  --addresses /ip4/127.0.0.1/tcp/9999
-  
-envelop data saved at ./envelop.data
-```
-
 ### /metadata/list
 List all cids of metadata snapshots
 ```shell
