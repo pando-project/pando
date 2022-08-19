@@ -7,6 +7,7 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/kenlabs/pando/pkg/metrics"
 
 	//blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
@@ -109,6 +110,7 @@ func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld
 						}
 					}(peerid)
 				}
+				metrics.Counter(lctx.Ctx, metrics.ProviderPayloadCount, peerid.String(), 1)()
 				return ps.Store(lctx.Ctx, c, block.RawData(), peerid, nil)
 			}
 			block, err := blocks.NewBlockWithCid(origBuf, c)

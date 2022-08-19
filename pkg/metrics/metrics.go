@@ -45,6 +45,14 @@ var (
 	// go-legs graph persistence
 	GraphPersistenceLatency = stats.Float64("sync/graph/persistence_latency",
 		"Time to persistence DAG", stats.UnitMilliseconds)
+
+	// notifications count updated by provider
+	ProviderNotificationCount = stats.Int64("sync/notification/count",
+		"Provider notifications count", stats.UnitDimensionless)
+
+	// payload count received from provider
+	ProviderPayloadCount = stats.Int64("sync/payload/count",
+		"Provider payload count", stats.UnitDimensionless)
 )
 
 // Views
@@ -60,6 +68,8 @@ var (
 		{Measure: GetMetadataInclusionLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: PostMetadataQueryLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GraphPersistenceLatency, Aggregation: view.Distribution(bounds...)},
+		{Measure: ProviderNotificationCount, Aggregation: view.Count()},
+		{Measure: ProviderPayloadCount, Aggregation: view.Count()},
 	}
 )
 
@@ -71,6 +81,17 @@ func APITimer(ctx context.Context, m *stats.Float64Measure) func() {
 			ctx,
 			stats.WithTags(tag.Insert(metrics.Method, "api")),
 			stats.WithMeasurements(m.M(coremetrics.MsecSince(start))),
+		)
+	}
+}
+
+// Counter t=>[tag], c=>[count variable]
+func Counter(ctx context.Context, m *stats.Int64Measure, t string, c int64) func() {
+	return func() {
+		_ = stats.RecordWithOptions(
+			ctx,
+			stats.WithTags(tag.Insert(metrics.Method, t)),
+			stats.WithMeasurements(m.M(c)),
 		)
 	}
 }
