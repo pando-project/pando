@@ -883,16 +883,6 @@ github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8
 github.com/kami-zh/go-capturer v0.0.0-20171211120116-e492ea43421d/go.mod h1:P2viExyCEfeWGU259JnaQ34Inuec4R38JCyBx2edgD0=
 github.com/karrick/godirwalk v1.8.0/go.mod h1:H5KPZjojv4lE+QYImBI8xVtrBRgYrIVsaRPx4tDPEn4=
 github.com/karrick/godirwalk v1.10.3/go.mod h1:RoGL9dQei4vP9ilrpETWE8CLOZ1kiN0LhBygSwrAsHA=
-github.com/kenlabs/pando-store v0.0.0-20220713084842-1663e011e251 h1:EGTF8iiZOFzThxd90rAOu9+RTRyJdkJRd0o0nouOC2k=
-github.com/kenlabs/pando-store v0.0.0-20220713084842-1663e011e251/go.mod h1:v447OWTmYI7hwzrbOmT0ioTgyeiWpY4wa1RwiipikkM=
-github.com/kenlabs/pando-store v0.0.0-20220713092026-a6f9882f9f4a h1:rQzJ6tCba+OvtjND0b0x6+c/qWkClOlixjQTeCYY+jo=
-github.com/kenlabs/pando-store v0.0.0-20220713092026-a6f9882f9f4a/go.mod h1:v447OWTmYI7hwzrbOmT0ioTgyeiWpY4wa1RwiipikkM=
-github.com/kenlabs/pando-store v0.0.0-20220713094941-fedf3b6a8578 h1:pxE/aLOAuOBvigFikNKGVkxFLFk3uG8x2HE0Y361+Vw=
-github.com/kenlabs/pando-store v0.0.0-20220713094941-fedf3b6a8578/go.mod h1:v447OWTmYI7hwzrbOmT0ioTgyeiWpY4wa1RwiipikkM=
-github.com/kenlabs/pando-store v0.0.0-20220719101740-fccdd23db524 h1:VAPxpvGLEGM6wMBfTYQnwiSqjKEib4RNRby/1oU24G0=
-github.com/kenlabs/pando-store v0.0.0-20220719101740-fccdd23db524/go.mod h1:v447OWTmYI7hwzrbOmT0ioTgyeiWpY4wa1RwiipikkM=
-github.com/kenlabs/pando-store v0.0.0-20220719104944-a0e99faf686f h1:RYZM+r5LZlgNdvL0tYwCkmG7p6nFXNiwW6aMA9PFoqg=
-github.com/kenlabs/pando-store v0.0.0-20220719104944-a0e99faf686f/go.mod h1:v447OWTmYI7hwzrbOmT0ioTgyeiWpY4wa1RwiipikkM=
 github.com/kenlabs/pando-store v0.0.0-20220719142022-c8f1ed0f5135 h1:6jxBPYdoGjevj1JeDzoe6FYG361wECpeXzu9Le8Jvcs=
 github.com/kenlabs/pando-store v0.0.0-20220719142022-c8f1ed0f5135/go.mod h1:v447OWTmYI7hwzrbOmT0ioTgyeiWpY4wa1RwiipikkM=
 github.com/kenlabs/speedtest-go v1.1.5 h1:mKwFB1rbf4gdzlc0CIMqHvCf2jjaLqwLgAOne2hpTDM=
