@@ -356,11 +356,11 @@ func (r *Registry) loadPersistedProviders(ctx context.Context) (int, error) {
 
 // Check if the peer is trusted by policy, or if it has been previously
 // verified and registered as a provider.
-func (r *Registry) Authorized(peerID peer.ID) (bool, error) {
+func (r *Registry) Authorized(peerID peer.ID) bool {
 	allowed, trusted := r.policy.Check(peerID)
 
 	if !allowed {
-		return false, nil
+		return false
 	}
 
 	// Peer is allowed but not trusted, see if it is a registered provider.
@@ -370,10 +370,10 @@ func (r *Registry) Authorized(peerID peer.ID) (bool, error) {
 			_, ok := r.providers[peerID]
 			regOk <- ok
 		}
-		return <-regOk, nil
+		return <-regOk
 	}
 
-	return true, nil
+	return true
 }
 
 // RegisterOrUpdate attempts to register an unregistered provider, or updates
