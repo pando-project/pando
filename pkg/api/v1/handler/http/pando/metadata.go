@@ -16,7 +16,7 @@ import (
 func (a *API) registerMetadata() {
 	metadata := a.router.Group("/metadata")
 	{
-			metadata.GET("/list", a.metadataList)
+		metadata.GET("/list", a.metadataList)
 		metadata.GET("/snapshot", a.metadataSnapshot)
 		metadata.GET("/inclusion", a.metaInclusion)
 		metadata.POST("/query", a.metadataQuery)
