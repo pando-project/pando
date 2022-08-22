@@ -19,13 +19,13 @@ func TestRegisterRequest(t *testing.T) {
 	addrs := []string{"/ip4/127.0.0.1/tcp/9999"}
 	Convey("test create and load register request", t, func() {
 		So(err, ShouldBeNil)
-		data, err := model.MakeRegisterRequest(peerID, privKey, addrs, account)
+		data, err := model.MakeRegisterRequest(peerID, privKey, addrs, account, "provider1")
 		So(err, ShouldBeNil)
 		peerRec, err := model.ReadRegisterRequest(data)
 		So(err, ShouldBeNil)
 		seq0 := peerRec.Seq
 		// register again
-		data, err = model.MakeRegisterRequest(peerID, privKey, addrs, account)
+		data, err = model.MakeRegisterRequest(peerID, privKey, addrs, account, "provider2")
 		So(err, ShouldBeNil)
 		peerRec, err = model.ReadRegisterRequest(data)
 		So(err, ShouldBeNil)
@@ -39,7 +39,7 @@ func TestRegisterRequest(t *testing.T) {
 				return nil, errors.New("failed seal")
 			})
 			defer patch.Reset()
-			_, err := model.MakeRegisterRequest(peerID, privKey, addrs, account)
+			_, err := model.MakeRegisterRequest(peerID, privKey, addrs, account, "provider1")
 			So(err, ShouldResemble, fmt.Errorf("could not sign request: failed seal"))
 		})
 		Convey("failed marshal the register", func() {
@@ -47,7 +47,7 @@ func TestRegisterRequest(t *testing.T) {
 				return nil, errors.New("failed")
 			})
 			defer patch.Reset()
-			_, err := model.MakeRegisterRequest(peerID, privKey, addrs, account)
+			_, err := model.MakeRegisterRequest(peerID, privKey, addrs, account, "provider2")
 			So(err, ShouldResemble, fmt.Errorf("could not marshal request register: failed"))
 		})
 	})

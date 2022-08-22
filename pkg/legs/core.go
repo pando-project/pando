@@ -17,6 +17,7 @@ import (
 	gsnet "github.com/ipfs/go-graphsync/network"
 	"github.com/kenlabs/pando-store/pkg/store"
 	"github.com/kenlabs/pando/pkg/metadata"
+	"github.com/kenlabs/pando/pkg/metrics"
 	"github.com/kenlabs/pando/pkg/option"
 	"github.com/kenlabs/pando/pkg/policy"
 	"github.com/kenlabs/pando/pkg/registry"
@@ -222,6 +223,14 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 			continue
 		}
 
+		exist, _ := c.checkCidCached(syncFin.Cid)
+		if exist {
+			// seen cid before, skip
+			continue
+		}
+
+		metrics.Counter(context.Background(), metrics.ProviderNotificationCount, syncFin.PeerID.String(), 1)()
+
 		// Persist the latest sync
 		err := c.DS.Put(context.Background(), datastore.NewKey(SyncPrefix+syncFin.PeerID.String()), syncFin.Cid.Bytes())
 		if err != nil {
@@ -229,7 +238,6 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 			continue
 		}
 		logger.Debugw("Persisted latest sync", "peer", syncFin.PeerID, "cid", syncFin.Cid)
-
 	}
 	close(c.watchDone)
 }
@@ -247,4 +255,30 @@ func (c *Core) SendRecvMeta(mcid cid.Cid, mpeer peer.ID) {
 		logger.Errorf("failed to send metadata(cid: %s peerid: %s) to metamanager, timeout", mcid.String(), mpeer.String())
 	}
 
+}
+
+func (c *Core) checkCidCached(mcid cid.Cid) (bool, error) {
+	err := c.CS.View(func(txn *badger.Txn) error {
+		_, err := txn.Get(mcid.Bytes())
+		return err
+	})
+	if err == nil {
+		logger.Debugf("cid %s exists, ignore", mcid.String())
+		return true, nil
+	} else if err != badger.ErrKeyNotFound {
+		logger.Warnf("an error occured when get cid %s from the cache: %v",
+			mcid.String(), err)
+		return false, err
+	}
+	// Save viewed cid
+	err = c.CS.Update(func(txn *badger.Txn) error {
+		e := badger.NewEntry(mcid.Bytes(), []byte("")).WithTTL(c.backupGenInterval)
+		return txn.SetEntry(e)
+	})
+	if err != nil {
+		logger.Warnf("cache cid %s failed, error: %v", mcid.String(), err)
+		return false, err
+	}
+	logger.Debugf("Cached latest sync cid: %s", mcid.String())
+	return false, nil
 }
