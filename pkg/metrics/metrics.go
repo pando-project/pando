@@ -57,8 +57,9 @@ var (
 
 // Views
 var (
-	bounds       = []float64{0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 1000, 2000, 5000}
-	builtinViews = []*view.View{
+	providerTagKey, _ = tag.NewKey("provider")
+	bounds            = []float64{0, 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 1000, 2000, 5000}
+	builtinViews      = []*view.View{
 		{Measure: PostProviderRegisterLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetProviderHeadLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GetRegisteredProviderInfoLatency, Aggregation: view.Distribution(bounds...)},
@@ -68,8 +69,8 @@ var (
 		{Measure: GetMetadataInclusionLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: PostMetadataQueryLatency, Aggregation: view.Distribution(bounds...)},
 		{Measure: GraphPersistenceLatency, Aggregation: view.Distribution(bounds...)},
-		{Measure: ProviderNotificationCount, Aggregation: view.Count()},
-		{Measure: ProviderPayloadCount, Aggregation: view.Count()},
+		{Measure: ProviderNotificationCount, Aggregation: view.Count(), TagKeys: []tag.Key{providerTagKey}},
+		{Measure: ProviderPayloadCount, Aggregation: view.Count(), TagKeys: []tag.Key{providerTagKey}},
 	}
 )
 
@@ -90,7 +91,7 @@ func Counter(ctx context.Context, m *stats.Int64Measure, t string, c int64) func
 	return func() {
 		_ = stats.RecordWithOptions(
 			ctx,
-			stats.WithTags(tag.Insert(metrics.Method, t)),
+			stats.WithTags(tag.Insert(providerTagKey, t)),
 			stats.WithMeasurements(m.M(c)),
 		)
 	}
