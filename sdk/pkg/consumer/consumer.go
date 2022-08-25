@@ -73,7 +73,10 @@ func NewDAGConsumer(privateKeyStr string, pandoAPI string, connectTimeout time.D
 	datastore, err := leveldb.NewDatastore("", nil)
 	storageCore.MutexDatastore = datastoreSync.MutexWrap(datastore)
 	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
-	storageCore.PandoStore, err = store.NewStoreFromDatastore(context.Background(), storageCore.MutexDatastore, &config.StoreConfig{SnapShotInterval: "999m"})
+	storageCore.PandoStore, err = store.NewStoreFromDatastore(context.Background(), storageCore.MutexDatastore, &config.StoreConfig{
+		SnapShotInterval: "999m",
+		CacheSize:        config.DefaultCacheSize,
+	})
 
 	var linksystem ipld.LinkSystem
 	if lsys == nil {

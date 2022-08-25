@@ -30,6 +30,8 @@ type RegisterRequest struct {
 	// Addrs contains the public addresses of the account this record pertains to.
 	Addrs []string
 
+	Name string
+
 	// Seq is a monotonically-increasing sequence counter that's used to order
 	// PeerRecords in time. The interval between Seq values is unspecified,
 	// but newer PeerRecords MUST have a greater Seq value than older records
@@ -75,18 +77,14 @@ func (r *RegisterRequest) MarshalRecord() ([]byte, error) {
 
 // MakeRegisterRequest creates a signed peer.PeerRecord as a register request
 // and marshals this into bytes
-func MakeRegisterRequest(providerID peer.ID, privateKey crypto.PrivKey, addrs []string, account string) ([]byte, error) {
-	//if len(addrs) == 0 {
-	//	return nil, errors.New("missing address")
-	//}
+func MakeRegisterRequest(providerID peer.ID, privateKey crypto.PrivKey, addrs []string, account string, name string) ([]byte, error) {
 
 	rec := &RegisterRequest{}
 	rec.PeerID = providerID
 	rec.Addrs = addrs
 	rec.Seq = peer.TimestampSeq()
-	if account != "" {
-		rec.MinerAccount = account
-	}
+	rec.MinerAccount = account
+	rec.Name = name
 
 	return makeRequestEnvelop(rec, privateKey)
 }

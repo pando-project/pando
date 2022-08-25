@@ -7,6 +7,7 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/datamodel"
+	"github.com/kenlabs/pando/pkg/metrics"
 
 	//blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
@@ -103,12 +104,13 @@ func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld
 				}
 				if reg != nil {
 					go func(p peer.ID) {
-						err = reg.RegisterOrUpdate(lctx.Ctx, p, cid.Undef, peer.ID(""), true)
+						err = reg.RegisterOrUpdate(lctx.Ctx, p, cid.Undef, peer.ID(""), c, true)
 						if err != nil {
-							log.Errorf("failed to register new provider, err: %v", err)
+							log.Errorf("failed to register or update provider, err: %v", err)
 						}
 					}(peerid)
 				}
+				metrics.Counter(lctx.Ctx, metrics.ProviderPayloadCount, peerid.String(), 1)()
 				return ps.Store(lctx.Ctx, c, block.RawData(), peerid, nil)
 			}
 			block, err := blocks.NewBlockWithCid(origBuf, c)
