@@ -210,7 +210,6 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	linkSystem := legs.MkLinkSystem(c.StoreInstance.PandoStore, nil, nil)
 	c.LinkSystem = &linkSystem
 
-	var lotusDiscoverer *lotus.Discoverer
 	if Opt.Discovery.LotusGateway != "" {
 		logger.Infow("discovery using lotus", "gateway", Opt.Discovery.LotusGateway)
 		// Create lotus client
@@ -221,7 +220,7 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	}
 
 	c.Registry, err = registry.NewRegistry(context.Background(), &Opt.Discovery, &Opt.AccountLevel,
-		storeInstance.MutexDataStore, lotusDiscoverer)
+		storeInstance.MutexDataStore, c.LotusDiscover)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create provider registryInstance: %v", err)
 	}
