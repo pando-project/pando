@@ -176,7 +176,7 @@ func (r *Registry) Register(ctx context.Context, info *ProviderInfo) error {
 	}
 
 	// If provider have miner account, discover it
-	if info.DiscoveryAddr != "" {
+	if r.discoverer != nil && info.DiscoveryAddr != "" {
 		logger.Infow("found miner account, start discovering")
 		discoveredData, err := r.discoverer.Discover(context.Background(), info.AddrInfo.ID, info.DiscoveryAddr)
 		if err != nil {
