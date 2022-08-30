@@ -48,19 +48,19 @@ func TestMetadataList(t *testing.T) {
 				"bafy2bzaceabnw5lnqxytayqjqm5e5sjrlqxtht3lnitfyrv6weyup7zxw2dyc",
 			}
 
-			testCidList, err := cids.DecodeCidStrList(testCidListStr)
+			testCidList, err := cids.DecodeAndPadSnapShotList(testCidListStr)
 			data, err := json.Marshal(testCidList)
 			if err != nil {
 				t.Error(err)
 			}
 			patch := gomonkey.ApplyMethodFunc(reflect.TypeOf(mockAPI.controller),
-				"MetadataList",
+				"SnapShotList",
 				func() ([]byte, error) {
 					return data, nil
 				})
 			defer patch.Reset()
 
-			mockAPI.metadataList(testContext)
+			mockAPI.snapShotList(testContext)
 			respBody, err := ioutil.ReadAll(responseRecorder.Result().Body)
 			if err != nil {
 				t.Error(err)
@@ -90,12 +90,12 @@ func TestMetadataList(t *testing.T) {
 
 		Convey("Given an monkey error, should return a monkey error resp", func() {
 			patch := gomonkey.ApplyMethodFunc(reflect.TypeOf(mockAPI.controller),
-				"MetadataList",
+				"SnapShotList",
 				func() ([]byte, error) {
 					return nil, fmt.Errorf("monkey error")
 				})
 			defer patch.Reset()
-			mockAPI.metadataList(testContext)
+			mockAPI.snapShotList(testContext)
 			respBody, err := ioutil.ReadAll(responseRecorder.Result().Body)
 			if err != nil {
 				t.Error(err)

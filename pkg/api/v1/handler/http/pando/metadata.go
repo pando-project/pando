@@ -16,20 +16,20 @@ import (
 func (a *API) registerMetadata() {
 	metadata := a.router.Group("/metadata")
 	{
-		metadata.GET("/list", a.metadataList)
+		metadata.GET("/list", a.snapShotList)
 		metadata.GET("/snapshot", a.metadataSnapshot)
 		metadata.GET("/inclusion", a.metaInclusion)
 		metadata.POST("/query", a.metadataQuery)
 	}
 }
 
-func (a *API) metadataList(ctx *gin.Context) {
+func (a *API) snapShotList(ctx *gin.Context) {
 	record := metrics.APITimer(context.Background(), metrics.GetMetadataListLatency)
 	defer record()
 
-	snapCidList, err := a.controller.MetadataList()
+	snapCidList, err := a.controller.SnapShotList()
 	if err != nil {
-		logger.Error(fmt.Sprintf("metadataList metadataSnapshot failed: %v", err))
+		logger.Error(fmt.Sprintf("snapShotList metadataSnapshot failed: %v", err))
 		HandleError(ctx, err)
 		return
 	}
@@ -45,7 +45,7 @@ func (a *API) metadataSnapshot(ctx *gin.Context) {
 
 	snapshot, err := a.controller.MetadataSnapShot(ctx, snapshotCidQuery, heightQuery)
 	if err != nil {
-		logger.Error(fmt.Sprintf("metadataList metadataSnapshot failed: %v", err))
+		logger.Error(fmt.Sprintf("snapShotList metadataSnapshot failed: %v", err))
 		HandleError(ctx, err)
 		return
 	}
