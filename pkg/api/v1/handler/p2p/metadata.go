@@ -16,7 +16,7 @@ type SnapShotQuery struct {
 }
 
 func (h *libp2pHandler) metadataList(ctx context.Context, p peer.ID, msg *pb.PandoMessage) ([]byte, error) {
-	data, err := h.controller.MetadataList()
+	data, err := h.controller.SnapShotList()
 	return data, err
 }
 

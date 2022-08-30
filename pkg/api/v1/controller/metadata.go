@@ -15,7 +15,7 @@ import (
 	"strconv"
 )
 
-func (c *Controller) MetadataList() ([]byte, error) {
+func (c *Controller) SnapShotList() ([]byte, error) {
 	res, err := c.Core.StoreInstance.PandoStore.SnapShotStore().GetSnapShotList(context.Background())
 	if err != nil {
 		return nil, v1.NewError(err, http.StatusInternalServerError)
