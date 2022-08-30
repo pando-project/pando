@@ -47,7 +47,7 @@ func TestMetadataList(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			So(actualMetaDataList, ShouldResemble, testMetadataList)
+			So(&actualMetaDataList, ShouldResemble, testMetadataList)
 		})
 
 		Convey("when GetSnapShotCidList returns an error, should returns that error with code 500", func() {

@@ -83,7 +83,7 @@ func TestMetadataList(t *testing.T) {
 				t.Error(err)
 			}
 
-			So(respCidList, ShouldResemble, testCidList)
+			So(&respCidList, ShouldResemble, testCidList)
 			So(resp.Code, ShouldEqual, http.StatusOK)
 			So(resp.Message, ShouldEqual, "OK")
 		})
