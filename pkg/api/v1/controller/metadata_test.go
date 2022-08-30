@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/agiledragon/gomonkey/v2"
-	"github.com/ipfs/go-cid"
 	"github.com/kenlabs/pando-store/pkg/snapshotstore"
 	"github.com/kenlabs/pando-store/pkg/types/store"
 	v1 "github.com/kenlabs/pando/pkg/api/v1"
@@ -43,9 +42,11 @@ func TestMetadataList(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			var actualMetaDataList []cid.Cid
+			var actualMetaDataList store.SnapShotList
 			err = json.Unmarshal(actualMetaDataListBytes, &actualMetaDataList)
-
+			if err != nil {
+				t.Error(err)
+			}
 			So(actualMetaDataList, ShouldResemble, testMetadataList)
 		})
 

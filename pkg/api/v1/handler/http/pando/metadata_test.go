@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/gin-gonic/gin"
-	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore/sync"
 	"github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando-store/pkg/types/cbortypes"
+	"github.com/kenlabs/pando-store/pkg/types/store"
 	"github.com/kenlabs/pando/pkg/api/core"
 	"github.com/kenlabs/pando/pkg/api/types"
 	"github.com/kenlabs/pando/pkg/util/cids"
@@ -77,7 +77,7 @@ func TestMetadataList(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			var respCidList []cid.Cid
+			var respCidList store.SnapShotList
 			err = json.Unmarshal(respDataBytes, &respCidList)
 			if err != nil {
 				t.Error(err)
