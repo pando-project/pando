@@ -31,7 +31,7 @@ require (
 	github.com/ipfs/go-ipld-format v0.4.0
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/ipfs/go-merkledag v0.6.0
-	github.com/ipld/go-car/v2 v2.1.1
+	github.com/ipld/go-car/v2 v2.4.0
 	github.com/ipld/go-ipld-prime v0.16.0
 	//github.com/ipld/go-ipld-prime v0.14.4
 	github.com/libp2p/go-libp2p v0.20.1
@@ -41,7 +41,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/montanaflynn/stats v0.6.6
 	github.com/multiformats/go-multiaddr v0.5.0
-	github.com/multiformats/go-multicodec v0.4.1
+	github.com/multiformats/go-multicodec v0.5.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/showwin/speedtest-go v1.1.4
