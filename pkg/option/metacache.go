@@ -4,7 +4,7 @@ import "go.mongodb.org/mongo-driver/mongo"
 
 const (
 	defaultMetaCacheType          = "mongodb"
-	defaultMetaCacheConnectionURI = "mongodb://52.14.211.248:27018"
+	defaultMetaCacheConnectionURI = "mongodb://47.88.56.82:27018"
 )
 
 type MetaCache struct {
