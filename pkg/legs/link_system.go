@@ -8,6 +8,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/kenlabs/pando/pkg/metrics"
+	"go.opentelemetry.io/otel/trace"
 
 	//blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/ipld/go-ipld-prime"
@@ -20,8 +21,11 @@ import (
 	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/kenlabs/pando/pkg/types/schema"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"go.opentelemetry.io/otel"
 	"io"
 )
+
+var TracerName = "LinkSystem"
 
 func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld.LinkSystem {
 	lsys := cidlink.DefaultLinkSystem()
@@ -38,8 +42,16 @@ func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld
 		return bytes.NewBuffer(block), nil
 	}
 	lsys.StorageWriteOpener = func(lctx ipld.LinkContext) (io.Writer, ipld.BlockWriteCommitter, error) {
+		ctx, span := otel.Tracer(TracerName).Start(lctx.Ctx, "StorageWriteOpener")
+		defer func(sp trace.Span) {
+			span.End()
+			logger.Warnf("span end")
+		}(span)
 		buf := bytes.NewBuffer(nil)
 		return buf, func(lnk ipld.Link) error {
+			writeOpenerCtx, writeOpenerSpan := otel.Tracer(TracerName).Start(ctx, "StorageWriteCommitter")
+			defer writeOpenerSpan.End()
+
 			c := lnk.(cidlink.Link).Cid
 			codec := lnk.(cidlink.Link).Prefix().Codec
 			origBuf := buf.Bytes()
@@ -53,7 +65,7 @@ func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld
 				return errors.New("bad ipld data")
 			}
 			if isMetadata(n) {
-				log.Infow("Received metadata")
+				log.Infof("Received metadata(%s)\n", c.String())
 				_, peerid, err := verifyMetadata(n)
 				if err != nil {
 					return err
@@ -90,15 +102,18 @@ func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld
 						if len(metadataProviderStr) == 0 {
 							return fmt.Errorf("metadata provider should not be nil")
 						}
-						err = CommitPayloadToMetaCache(
-							metadataProviderStr,
-							metadataCollectionStr,
-							metadataPayload,
-							core.options.MetaCache.Client,
-						)
-						if err != nil {
-							return err
-						}
+						go func() {
+							err := CommitPayloadToMetaCache(
+								writeOpenerCtx,
+								metadataProviderStr,
+								metadataCollectionStr,
+								metadataPayload,
+								core.options.MetaCache.Client,
+							)
+							if err != nil {
+								log.Warn(err)
+							}
+						}()
 					}
 					go core.SendRecvMeta(c, peerid)
 				}

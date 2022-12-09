@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/ipfs/go-datastore/sync"
 	"github.com/ipld/go-ipld-prime"
@@ -10,6 +11,7 @@ import (
 	"github.com/kenlabs/pando/pkg/metadata"
 	"github.com/kenlabs/pando/pkg/registry"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Core struct {
@@ -20,6 +22,9 @@ type Core struct {
 	LegsCore      *legs.Core
 	StoreInstance *StoreInstance
 	LinkSystem    *ipld.LinkSystem
+
+	TraceCtx  *context.Context
+	TraceSpan *trace.Span
 }
 
 type StoreInstance struct {

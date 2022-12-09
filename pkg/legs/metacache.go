@@ -7,9 +7,12 @@ import (
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/codec/dagjson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.opentelemetry.io/otel"
 )
 
-func CommitPayloadToMetaCache(providerID string, collectionName string, data ipld.Node, client *mongo.Client) error {
+func CommitPayloadToMetaCache(ctx context.Context, providerID string, collectionName string, data ipld.Node, client *mongo.Client) error {
+	_, span := otel.Tracer(TracerName).Start(ctx, "CommitPayloadToMetaCache(Mongo)")
+	defer span.End()
 	dataBuffer := bytes.NewBuffer(nil)
 	err := dagjson.Encode(data, dataBuffer)
 	if err != nil {

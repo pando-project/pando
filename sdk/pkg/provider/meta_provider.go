@@ -5,11 +5,17 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	dt "github.com/filecoin-project/go-data-transfer"
+	dtImpl "github.com/filecoin-project/go-data-transfer/impl"
+	dtnetwork "github.com/filecoin-project/go-data-transfer/network"
+	gstransport "github.com/filecoin-project/go-data-transfer/transport/graphsync"
 	"github.com/filecoin-project/go-legs"
 	"github.com/filecoin-project/go-legs/dtsync"
 	"github.com/go-resty/resty/v2"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
+	gsimpl "github.com/ipfs/go-graphsync/impl"
+	gsnet "github.com/ipfs/go-graphsync/network"
 	"github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
@@ -22,6 +28,7 @@ import (
 	"net/url"
 
 	datastoreSync "github.com/ipfs/go-datastore/sync"
+	dtSync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	link "github.com/kenlabs/pando/pkg/legs"
@@ -29,19 +36,22 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"time"
 )
 
 type core struct {
 	MutexDatastore *datastoreSync.MutexDatastore
-	Blockstore     blockstore.Blockstore
+	BlockStore     blockstore.Blockstore
 	LinkSys        ipld.LinkSystem
+	PandoStore     *store.PandoStore
 }
 
 type MetaProvider struct {
 	Host           host.Host
 	PrivateKey     crypto.PrivKey
 	LegsPublisher  legs.Publisher
+	DtManager      dt.Manager
 	Core           *core
 	HttpClient     *resty.Client
 	ConnectTimeout time.Duration
@@ -74,7 +84,7 @@ func NewMetaProvider(privateKeyStr string, pandoAPI string, connectTimeout time.
 	storageCore := &core{}
 	ds, err := leveldb.NewDatastore("", nil)
 	storageCore.MutexDatastore = datastoreSync.MutexWrap(ds)
-	storageCore.Blockstore = blockstore.NewBlockstore(storageCore.MutexDatastore)
+	storageCore.BlockStore = blockstore.NewBlockstore(storageCore.MutexDatastore)
 	ps, err := store.NewStoreFromDatastore(context.Background(), storageCore.MutexDatastore, &config.StoreConfig{
 		SnapShotInterval: "9999h",
 		CacheSize:        config.DefaultCacheSize,
@@ -82,10 +92,10 @@ func NewMetaProvider(privateKeyStr string, pandoAPI string, connectTimeout time.
 	if err != nil {
 		return nil, err
 	}
+	storageCore.PandoStore = ps
 
 	storageCore.LinkSys = link.MkLinkSystem(ps, nil, nil)
-	legsPublisher, err := dtsync.NewPublisher(providerHost, storageCore.MutexDatastore, storageCore.LinkSys, topic)
-
+	//legsPublisher, err := dtsync.NewPublisher(providerHost, storageCore.MutexDatastore, storageCore.LinkSys, topic)
 	_, err = url.Parse(pandoAPI)
 	if err != nil {
 		return nil, err
@@ -93,10 +103,25 @@ func NewMetaProvider(privateKeyStr string, pandoAPI string, connectTimeout time.
 	httpClient := resty.New().SetBaseURL(pandoAPI).SetTimeout(connectTimeout).SetDebug(false)
 	time.Sleep(2 * time.Second)
 
+	dtNet := dtnetwork.NewFromLibp2pHost(providerHost)
+	gsNet := gsnet.NewFromLibp2pHost(providerHost)
+	gs := gsimpl.New(context.Background(), gsNet, storageCore.LinkSys)
+	tp := gstransport.NewTransport(providerHost.ID(), gs)
+	dtManager, err := dtImpl.NewDataTransfer(dtSync.MutexWrap(datastore.NewMapDatastore()), dtNet, tp)
+	legsPublisher, err := dtsync.NewPublisherFromExisting(dtManager, providerHost, topic, storageCore.LinkSys,
+		dtsync.AllowPeer(func(id peer.ID) bool {
+			return true
+		}))
+	err = dtManager.Start(context.Background())
+	if err != nil {
+		logger.Errorf("start datasync manager failed. %s", err.Error())
+	}
+
 	return &MetaProvider{
 		Host:           providerHost,
 		PrivateKey:     privateKey,
 		LegsPublisher:  legsPublisher,
+		DtManager:      dtManager,
 		HttpClient:     httpClient,
 		Core:           storageCore,
 		ConnectTimeout: connectTimeout,
@@ -122,6 +147,14 @@ func (p *MetaProvider) Close() error {
 
 func (p *MetaProvider) NewMetadata(payload []byte) (*schema.Metadata, error) {
 	return schema.NewMetaWithBytesPayload(payload, p.Host.ID(), p.PrivateKey)
+}
+
+func (p *MetaProvider) NewMetadataWithPayload(payload datamodel.Node, cache *bool, collection *string) (*schema.Metadata, error) {
+	return schema.NewMetaWithPayloadNode(payload, p.Host.ID(), p.PrivateKey, nil, cache, collection)
+}
+
+func (p *MetaProvider) NewMetadataWithPayloadLink(payload datamodel.Node, cache *bool, collection *string, link datamodel.Link) (*schema.Metadata, error) {
+	return schema.NewMetaWithPayloadNode(payload, p.Host.ID(), p.PrivateKey, &link, cache, collection)
 }
 
 func (p *MetaProvider) NewMetadataWithLink(payload []byte, link datamodel.Link) (*schema.Metadata, error) {

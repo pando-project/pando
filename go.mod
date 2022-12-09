@@ -53,7 +53,7 @@ require (
 	go.elastic.co/apm/module/apmhttp v1.15.0
 	go.opencensus.io v0.23.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20220429121018-84afa8d3f7b3
+	golang.org/x/sys v0.0.0-20220919091848-fb04ddd9f9c8
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	google.golang.org/protobuf v1.28.0
@@ -62,7 +62,13 @@ require (
 
 require go.mongodb.org/mongo-driver v1.7.3
 
-require github.com/kenlabs/pando-store v0.0.0-20220830091510-f352ae77d56b
+require (
+	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
+	github.com/kenlabs/pando-store v0.0.0-20220830091510-f352ae77d56b
+	go.opentelemetry.io/otel v1.11.1
+	go.opentelemetry.io/otel/exporters/jaeger v1.11.1
+	go.opentelemetry.io/otel/sdk v1.11.1
+)
 
 require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
@@ -248,8 +254,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	go.elastic.co/apm v1.15.0 // indirect
 	go.elastic.co/fastjson v1.1.0 // indirect
-	go.opentelemetry.io/otel v1.7.0 // indirect
-	go.opentelemetry.io/otel/trace v1.7.0 // indirect
+	go.opentelemetry.io/otel/trace v1.11.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect

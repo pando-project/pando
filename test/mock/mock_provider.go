@@ -94,7 +94,7 @@ func (p *ProviderMock) genMetaWithLinkPayload(prev datamodel.Link) (*schema.Meta
 	if err != nil {
 		return nil, cid.Undef, err
 	}
-	meta, err = schema.NewMetaWithPayloadNode(basicnode.NewLink(lnk), p.ID, p.pk, prev)
+	meta, err = schema.NewMetaWithPayloadNode(basicnode.NewLink(lnk), p.ID, p.pk, &prev, nil, nil)
 	if err != nil {
 		return nil, cid.Undef, fmt.Errorf("failed to create meta: %s", err.Error())
 	}

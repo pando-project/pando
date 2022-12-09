@@ -43,15 +43,19 @@ func NewMetaWithBytesPayload(payload []byte, provider peer.ID, signKey crypto.Pr
 	return meta, nil
 }
 
-func NewMetaWithPayloadNode(payload datamodel.Node, provider peer.ID, signKey crypto.PrivKey, prev datamodel.Link) (*Metadata, error) {
+func NewMetaWithPayloadNode(payload datamodel.Node,
+	provider peer.ID,
+	signKey crypto.PrivKey,
+	prev *datamodel.Link,
+	cache *bool,
+	collection *string,
+) (*Metadata, error) {
 	meta := &Metadata{
-		Provider: provider.String(),
-		Payload:  payload,
-	}
-	if prev == nil {
-		meta.PreviousID = nil
-	} else {
-		meta.PreviousID = &prev
+		PreviousID: prev,
+		Provider:   provider.String(),
+		Payload:    payload,
+		Cache:      cache,
+		Collection: collection,
 	}
 
 	sig, err := SignWithPrivky(signKey, meta)

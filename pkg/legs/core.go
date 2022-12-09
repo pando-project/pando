@@ -243,7 +243,7 @@ func (c *Core) watchSyncFinished(onSyncFin <-chan golegs.SyncFinished) {
 }
 
 func (c *Core) SendRecvMeta(mcid cid.Cid, mpeer peer.ID) {
-	ctx, cncl := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cncl := context.WithTimeout(context.Background(), time.Minute*10)
 	defer cncl()
 	select {
 	case c.recvMetaCh <- &metadata.MetaRecord{

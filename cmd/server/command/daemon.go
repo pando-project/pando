@@ -25,6 +25,11 @@ import (
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/sdk/resource"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 	"math"
 	"os"
 	"os/signal"
@@ -47,6 +52,23 @@ func DaemonCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf(failedError, err)
 			}
+
+			tracerProvider, err := newTraceProvider("http://127.0.0.1:14268/api/traces")
+			if err != nil {
+				return err
+			}
+			otel.SetTracerProvider(tracerProvider)
+			ctx := context.Background()
+
+			defer func(ctx context.Context) {
+				if err := tracerProvider.Shutdown(ctx); err != nil {
+					logger.Fatal(err)
+				}
+			}(ctx)
+
+			_, span := otel.Tracer("testTracerInDaemon").Start(context.Background(), "testSpanInDaemon")
+			logger.Warnf("testTracerSpan logged")
+			span.End()
 
 			mongoClient, err := connectMetaCache(Opt.MetaCache.Type, Opt.MetaCache.ConnectionURI)
 			if err != nil {
@@ -75,18 +97,18 @@ func DaemonCmd() *cobra.Command {
 				return fmt.Errorf(failedError, err)
 			}
 
-			server, err := server.NewAPIServer(Opt, c)
+			apiServer, err := server.NewAPIServer(Opt, c)
 			if err != nil {
 				return fmt.Errorf(failedError, err)
 			}
 
-			server.MustStartAllServers()
+			apiServer.MustStartAllServers()
 
 			quit := make(chan os.Signal)
 			signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 			<-quit
 			fmt.Println("Shutting down servers...")
-			err = server.StopAllServers()
+			err = apiServer.StopAllServers()
 			if err != nil {
 				return err
 			}
@@ -104,6 +126,7 @@ func setLoglevel() error {
 	}
 	logging.SetAllLoggers(logLevel)
 	err = logging.SetLogLevel("basichost", "warn")
+	err = logging.SetLogLevel("registry", "warn")
 	if err != nil {
 		return err
 	}
@@ -238,7 +261,8 @@ func initCore(storeInstance *core.StoreInstance, p2pHost libp2pHost.Host) (*core
 	if err != nil {
 		return nil, err
 	}
-	c.LegsCore, err = legs.NewLegsCore(context.Background(),
+	c.LegsCore, err = legs.NewLegsCore(
+		context.Background(),
 		p2pHost,
 		storeInstance.MutexDataStore,
 		storeInstance.CacheStore,
@@ -284,4 +308,22 @@ func connectMetaCache(storeType string, connectionURI string) (*mongo.Client, er
 		return nil, fmt.Errorf("metadata store type: %s not supported", storeType)
 	}
 
+}
+
+func newTraceProvider(url string) (*tracesdk.TracerProvider, error) {
+	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
+	logger.Warn(exporter.MarshalLog())
+	if err != nil {
+		return nil, err
+	}
+
+	traceProvider := tracesdk.NewTracerProvider(
+		tracesdk.WithBatcher(exporter),
+		tracesdk.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceVersionKey.String("v0.0.1"),
+			semconv.ServiceNameKey.String("Pando"))),
+	)
+
+	return traceProvider, nil
 }
