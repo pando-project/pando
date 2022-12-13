@@ -816,8 +816,9 @@ github.com/ipfs/go-verifcid v0.0.1 h1:m2HI7zIuR5TFyQ1b79Da5N9dnnCP1vcu2QqawmWlK2
 github.com/ipfs/go-verifcid v0.0.1/go.mod h1:5Hrva5KBeIog4A+UpqlaIU+DEstipcJYQQZc0g37pY0=
 github.com/ipld/go-car v0.1.0 h1:AaIEA5ITRnFA68uMyuIPYGM2XXllxsu8sNjFJP797us=
 github.com/ipld/go-car v0.1.0/go.mod h1:RCWzaUh2i4mOEkB3W45Vc+9jnS/M6Qay5ooytiBHl3g=
-github.com/ipld/go-car/v2 v2.1.1 h1:saaKz4nC0AdfCGHLYKeXLGn8ivoPC54fyS55uyOLKwA=
 github.com/ipld/go-car/v2 v2.1.1/go.mod h1:+2Yvf0Z3wzkv7NeI69i8tuZ+ft7jyjPYIWZzeVNeFcI=
+github.com/ipld/go-car/v2 v2.4.0 h1:8jI6/iKlyLqRZzLz31jFWTqKvslaVzFsin305sOuqNQ=
+github.com/ipld/go-car/v2 v2.4.0/go.mod h1:zjpRf0Jew9gHqSvjsKVyoq9OY9SWoEKdYCQUKVaaPT0=
 github.com/ipld/go-codec-dagpb v1.3.0/go.mod h1:ga4JTU3abYApDC3pZ00BC2RSvC3qfBb9MSJkMLSwnhA=
 github.com/ipld/go-codec-dagpb v1.3.1/go.mod h1:ErNNglIi5KMur/MfFE/svtgQthzVvf+43MrzLbpcIZY=
 github.com/ipld/go-codec-dagpb v1.4.0 h1:VqADPIFng8G4vz5EQytmmcx/2gEgOHfBuw/kIuCgDAY=
@@ -884,10 +885,8 @@ github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8
 github.com/kami-zh/go-capturer v0.0.0-20171211120116-e492ea43421d/go.mod h1:P2viExyCEfeWGU259JnaQ34Inuec4R38JCyBx2edgD0=
 github.com/karrick/godirwalk v1.8.0/go.mod h1:H5KPZjojv4lE+QYImBI8xVtrBRgYrIVsaRPx4tDPEn4=
 github.com/karrick/godirwalk v1.10.3/go.mod h1:RoGL9dQei4vP9ilrpETWE8CLOZ1kiN0LhBygSwrAsHA=
-github.com/kenlabs/pando-store v0.0.0-20220719142022-c8f1ed0f5135 h1:6jxBPYdoGjevj1JeDzoe6FYG361wECpeXzu9Le8Jvcs=
-github.com/kenlabs/pando-store v0.0.0-20220719142022-c8f1ed0f5135/go.mod h1:v447OWTmYI7hwzrbOmT0ioTgyeiWpY4wa1RwiipikkM=
-github.com/kenlabs/pando-store v0.0.0-20220830085630-bd3ae61b753a h1:LUrLqEdASVOn1p53ebQIcqqiG2dlv4poJ6GSkJlYgIk=
-github.com/kenlabs/pando-store v0.0.0-20220830085630-bd3ae61b753a/go.mod h1:v447OWTmYI7hwzrbOmT0ioTgyeiWpY4wa1RwiipikkM=
+github.com/kenlabs/pando v0.0.0-20220831095041-200cca451ed3 h1:DS1HBnT/czRw01yLtryTVL6nxIQ8+WA1HCXC8TGZQQU=
+github.com/kenlabs/pando v0.0.0-20220831095041-200cca451ed3/go.mod h1:IplnFq8sswPl1MYwAEMlf3M0xzKUBhl+bksgJC6Vq18=
 github.com/kenlabs/pando-store v0.0.0-20220830091510-f352ae77d56b h1:7ggj5rdusgXW0RbKW8DKYA2Dm1DzIoeMPK7+XfRoANU=
 github.com/kenlabs/pando-store v0.0.0-20220830091510-f352ae77d56b/go.mod h1:v447OWTmYI7hwzrbOmT0ioTgyeiWpY4wa1RwiipikkM=
 github.com/kenlabs/speedtest-go v1.1.5 h1:mKwFB1rbf4gdzlc0CIMqHvCf2jjaLqwLgAOne2hpTDM=
@@ -1380,8 +1379,9 @@ github.com/multiformats/go-multibase v0.0.3/go.mod h1:5+1R4eQrT3PkYZ24C3W2Ue2tPw
 github.com/multiformats/go-multicodec v0.3.0/go.mod h1:qGGaQmioCDh+TeFOnxrbU0DaIPw8yFgAZgFG0V7p1qQ=
 github.com/multiformats/go-multicodec v0.3.1-0.20210902112759-1539a079fd61/go.mod h1:1Hj/eHRaVWSXiSNNfcEPcwZleTmdNP81xlxDLnWU9GQ=
 github.com/multiformats/go-multicodec v0.3.1-0.20211210143421-a526f306ed2c/go.mod h1:1Hj/eHRaVWSXiSNNfcEPcwZleTmdNP81xlxDLnWU9GQ=
-github.com/multiformats/go-multicodec v0.4.1 h1:BSJbf+zpghcZMZrwTYBGwy0CPcVZGWiC72Cp8bBd4R4=
 github.com/multiformats/go-multicodec v0.4.1/go.mod h1:1Hj/eHRaVWSXiSNNfcEPcwZleTmdNP81xlxDLnWU9GQ=
+github.com/multiformats/go-multicodec v0.5.0 h1:EgU6cBe/D7WRwQb1KmnBvU7lrcFGMggZVTPtOW9dDHs=
+github.com/multiformats/go-multicodec v0.5.0/go.mod h1:DiY2HFaEp5EhEXb/iYzVAunmyX/aSFMxq2KMKfWEues=
 github.com/multiformats/go-multihash v0.0.1/go.mod h1:w/5tugSrLEbWqlcgJabL3oHFKTwfvkofsjW2Qa1ct4U=
 github.com/multiformats/go-multihash v0.0.5/go.mod h1:lt/HCbqlQwlPBz7lv0sQCdtfcMtlJvakRUn/0Ual8po=
 github.com/multiformats/go-multihash v0.0.8/go.mod h1:YSLudS+Pi8NHE7o6tb3D8vrpKa63epEDmG8nTduyAew=

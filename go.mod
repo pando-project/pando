@@ -31,7 +31,7 @@ require (
 	github.com/ipfs/go-ipld-format v0.4.0
 	github.com/ipfs/go-log/v2 v2.5.1
 	github.com/ipfs/go-merkledag v0.6.0
-	github.com/ipld/go-car/v2 v2.1.1
+	github.com/ipld/go-car/v2 v2.4.0
 	github.com/ipld/go-ipld-prime v0.16.0
 	//github.com/ipld/go-ipld-prime v0.14.4
 	github.com/libp2p/go-libp2p v0.20.1
@@ -41,7 +41,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/montanaflynn/stats v0.6.6
 	github.com/multiformats/go-multiaddr v0.5.0
-	github.com/multiformats/go-multicodec v0.4.1
+	github.com/multiformats/go-multicodec v0.5.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/showwin/speedtest-go v1.1.4
@@ -62,7 +62,10 @@ require (
 
 require go.mongodb.org/mongo-driver v1.7.3
 
-require github.com/kenlabs/pando-store v0.0.0-20220830091510-f352ae77d56b
+require (
+	github.com/kenlabs/pando v0.0.0-20220831095041-200cca451ed3
+	github.com/kenlabs/pando-store v0.0.0-20220830091510-f352ae77d56b
+)
 
 require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
@@ -103,7 +106,6 @@ require (
 	github.com/filecoin-project/go-statestore v0.2.0 // indirect
 	github.com/filecoin-project/specs-actors v0.9.14 // indirect
 	github.com/filecoin-project/specs-actors/v2 v2.3.5 // indirect
-	github.com/filecoin-project/specs-actors/v3 v3.1.1 // indirect
 	github.com/flynn/noise v1.0.0 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
@@ -147,7 +149,6 @@ require (
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-ipfs-ds-help v1.1.0 // indirect
 	github.com/ipfs/go-ipfs-exchange-interface v0.1.0 // indirect
-	github.com/ipfs/go-ipfs-files v0.0.9 // indirect
 	github.com/ipfs/go-ipfs-pq v0.0.2 // indirect
 	github.com/ipfs/go-ipfs-util v0.0.2 // indirect
 	github.com/ipfs/go-ipld-legacy v0.1.1 // indirect
@@ -178,10 +179,7 @@ require (
 	github.com/libp2p/go-libp2p-gostream v0.3.1 // indirect
 	github.com/libp2p/go-libp2p-peerstore v0.7.0 // indirect
 	github.com/libp2p/go-libp2p-pubsub v0.7.0 // indirect
-	github.com/libp2p/go-libp2p-record v0.1.3 // indirect
 	github.com/libp2p/go-libp2p-resource-manager v0.3.0 // indirect
-	github.com/libp2p/go-libp2p-tls v0.4.1 // indirect
-	github.com/libp2p/go-libp2p-yamux v0.9.1 // indirect
 	github.com/libp2p/go-nat v0.1.0 // indirect
 	github.com/libp2p/go-netroute v0.2.0 // indirect
 	github.com/libp2p/go-openssl v0.0.7 // indirect
@@ -239,7 +237,6 @@ require (
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	github.com/urfave/cli/v2 v2.5.1 // indirect
-	github.com/warpfork/go-testmark v0.9.0 // indirect
 	github.com/whyrusleeping/multiaddr-filter v0.0.0-20160516205228-e903e4adabd7 // indirect
 	github.com/whyrusleeping/timecache v0.0.0-20160911033111-cfcb2f1abfee // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
