@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	peerHelper "github.com/kenlabs/pando/pkg/util/peer"
+	peerHelper "github.com/pando-project/pando/pkg/util/peer"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	pandoSdk "github.com/kenlabs/pando/sdk/pkg/provider"
+	pandoSdk "github.com/pando-project/pando/sdk/pkg/provider"
 )
 
 const (
@@ -52,7 +52,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("pushed 2 nodes: \n\t%s\n\t%s\n", metadata1Cid.String(), metadata2Cid.String())
+	fmt.Printf("pushed 2 nodes: \n\t%s\n\t%s\n", metadata1Cid, metadata2Cid.String())
 
 	//time.Sleep(20 * time.Second)
 

@@ -3,10 +3,10 @@ package model
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/record"
+	"github.com/pando-project/pando/pkg/registry"
 )
 
 func makeRequestEnvelop(rec record.Record, privateKey crypto.PrivKey) ([]byte, error) {

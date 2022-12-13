@@ -2,8 +2,8 @@ package policy
 
 import (
 	"fmt"
-	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/pando-project/pando/pkg/registry"
 	"golang.org/x/time/rate"
 	"math"
 	"sync"

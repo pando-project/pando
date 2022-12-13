@@ -2,7 +2,7 @@ package command
 
 import (
 	"fmt"
-	"github.com/kenlabs/pando/pkg/system"
+	"github.com/pando-project/pando/pkg/system"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 	"os"

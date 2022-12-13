@@ -3,7 +3,7 @@ package policy
 import (
 	"errors"
 	"fmt"
-	"github.com/kenlabs/pando/pkg/option"
+	"github.com/pando-project/pando/pkg/option"
 	"sync"
 
 	"github.com/libp2p/go-libp2p-core/peer"

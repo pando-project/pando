@@ -1,4 +1,4 @@
-module github.com/kenlabs/pando
+module github.com/pando-project/pando
 
 go 1.17
 

@@ -3,10 +3,10 @@ package legs
 import (
 	"fmt"
 	"github.com/agiledragon/gomonkey/v2"
-	"github.com/kenlabs/pando/pkg/account"
-	"github.com/kenlabs/pando/pkg/policy"
-	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/pando-project/pando/pkg/account"
+	"github.com/pando-project/pando/pkg/policy"
+	"github.com/pando-project/pando/pkg/registry"
 	. "github.com/smartystreets/goconvey/convey"
 	"golang.org/x/time/rate"
 	"reflect"

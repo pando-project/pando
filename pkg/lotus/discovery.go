@@ -2,8 +2,8 @@ package lotus
 
 import (
 	"context"
-	"github.com/kenlabs/pando/pkg/registry"
-	"github.com/kenlabs/pando/pkg/registry/discovery"
+	"github.com/pando-project/pando/pkg/registry"
+	"github.com/pando-project/pando/pkg/registry/discovery"
 	"math/big"
 	"net/url"
 

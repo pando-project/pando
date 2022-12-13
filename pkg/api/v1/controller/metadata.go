@@ -7,7 +7,7 @@ import (
 	"github.com/ipfs/go-cid"
 	storeError "github.com/kenlabs/pando-store/pkg/error"
 	"github.com/kenlabs/pando-store/pkg/types/cbortypes"
-	v1 "github.com/kenlabs/pando/pkg/api/v1"
+	v1 "github.com/pando-project/pando/pkg/api/v1"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"

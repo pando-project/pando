@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	peerHelper "github.com/kenlabs/pando/pkg/util/peer"
-	consumerSdk "github.com/kenlabs/pando/sdk/pkg/consumer"
+	peerHelper "github.com/pando-project/pando/pkg/util/peer"
+	consumerSdk "github.com/pando-project/pando/sdk/pkg/consumer"
 	"time"
 )
 

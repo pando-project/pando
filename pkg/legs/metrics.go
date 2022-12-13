@@ -4,7 +4,7 @@ import (
 	"context"
 	dt "github.com/filecoin-project/go-data-transfer"
 	"github.com/ipfs/go-cid"
-	"github.com/kenlabs/pando/pkg/metrics"
+	"github.com/pando-project/pando/pkg/metrics"
 	"sync"
 )
 

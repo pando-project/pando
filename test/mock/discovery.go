@@ -3,11 +3,11 @@ package mock
 import (
 	"context"
 	"errors"
-	"github.com/kenlabs/pando/pkg/option"
-	"github.com/kenlabs/pando/pkg/registry"
-	"github.com/kenlabs/pando/pkg/registry/discovery"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
+	"github.com/pando-project/pando/pkg/option"
+	"github.com/pando-project/pando/pkg/registry"
+	"github.com/pando-project/pando/pkg/registry/discovery"
 	"math/big"
 	"time"
 )

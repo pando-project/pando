@@ -2,7 +2,7 @@ package pando
 
 import (
 	"fmt"
-	"github.com/kenlabs/pando/cmd/client/command/api"
+	"github.com/pando-project/pando/cmd/client/command/api"
 	"github.com/spf13/cobra"
 )
 

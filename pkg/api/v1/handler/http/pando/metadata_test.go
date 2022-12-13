@@ -1,6 +1,7 @@
 package pando
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/agiledragon/gomonkey/v2"
@@ -8,13 +9,11 @@ import (
 	"github.com/ipfs/go-datastore/sync"
 	"github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando-store/pkg/types/cbortypes"
-	"github.com/kenlabs/pando/pkg/api/core"
-	"github.com/kenlabs/pando/pkg/api/types"
-	"github.com/kenlabs/pando/pkg/util/cids"
-	"github.com/kenlabs/pando/test/mock"
+	"github.com/pando-project/pando/pkg/api/core"
+	"github.com/pando-project/pando/pkg/api/types"
+	"github.com/pando-project/pando/pkg/util/cids"
+	"github.com/pando-project/pando/test/mock"
 	. "github.com/smartystreets/goconvey/convey"
-
-	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"

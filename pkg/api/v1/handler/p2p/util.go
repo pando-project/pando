@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	v1 "github.com/kenlabs/pando/pkg/api/v1"
+	v1 "github.com/pando-project/pando/pkg/api/v1"
 	"net/http"
 )
 

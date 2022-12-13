@@ -2,7 +2,7 @@ package pando
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kenlabs/pando/docs"
+	"github.com/pando-project/pando/docs"
 	"net/http"
 )
 

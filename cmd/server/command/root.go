@@ -1,8 +1,8 @@
 package command
 
 import (
-	"github.com/kenlabs/pando/pkg/option"
-	"github.com/kenlabs/pando/pkg/system"
+	"github.com/pando-project/pando/pkg/option"
+	"github.com/pando-project/pando/pkg/system"
 	"github.com/spf13/cobra"
 )
 

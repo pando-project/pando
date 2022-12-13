@@ -2,9 +2,9 @@ package option
 
 import (
 	"fmt"
-	"github.com/kenlabs/pando/pkg/version"
 	"github.com/mitchellh/go-homedir"
 	"github.com/mitchellh/mapstructure"
+	"github.com/pando-project/pando/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"

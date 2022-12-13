@@ -3,21 +3,21 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/kenlabs/pando/pkg/api/v1/handler/p2p"
-	"github.com/kenlabs/pando/pkg/util/log"
+	"github.com/pando-project/pando/pkg/api/v1/handler/p2p"
+	"github.com/pando-project/pando/pkg/util/log"
 
-	//"github.com/kenlabs/pando/pkg/api/v1/handler/p2p"
-	"github.com/kenlabs/pando/pkg/api/v1/server/httpserver"
-	"github.com/kenlabs/pando/pkg/api/v1/server/libp2p"
+	//"github.com/pando-project/pando/pkg/api/v1/handler/p2p"
+	"github.com/pando-project/pando/pkg/api/v1/server/httpserver"
+	"github.com/pando-project/pando/pkg/api/v1/server/libp2p"
 	"go.elastic.co/apm/module/apmhttp"
 	"golang.org/x/sync/errgroup"
 	"net/http"
 	_ "net/http/pprof"
 	"time"
 
-	"github.com/kenlabs/pando/pkg/api/core"
-	"github.com/kenlabs/pando/pkg/option"
-	"github.com/kenlabs/pando/pkg/util/multiaddress"
+	"github.com/pando-project/pando/pkg/api/core"
+	"github.com/pando-project/pando/pkg/option"
+	"github.com/pando-project/pando/pkg/util/multiaddress"
 )
 
 var logger = log.NewSubsystemLogger()

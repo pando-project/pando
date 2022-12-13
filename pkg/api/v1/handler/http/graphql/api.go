@@ -3,8 +3,8 @@ package graphql
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/graphql-go/graphql"
-	"github.com/kenlabs/pando/pkg/api/core"
-	"github.com/kenlabs/pando/pkg/util/log"
+	"github.com/pando-project/pando/pkg/api/core"
+	"github.com/pando-project/pando/pkg/util/log"
 )
 
 var logger = log.NewSubsystemLogger()

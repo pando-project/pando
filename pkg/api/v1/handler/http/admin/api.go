@@ -2,9 +2,9 @@ package admin
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kenlabs/pando/pkg/api/core"
-	"github.com/kenlabs/pando/pkg/option"
-	"github.com/kenlabs/pando/pkg/util/log"
+	"github.com/pando-project/pando/pkg/api/core"
+	"github.com/pando-project/pando/pkg/option"
+	"github.com/pando-project/pando/pkg/util/log"
 )
 
 var logger = log.NewSubsystemLogger()

@@ -8,7 +8,7 @@ info:
     url: https://join.slack.com/t/ken-labs/shared_invite/zt-ylfrwtl2-H4ZyLCzw94wfiuC7VtAy~A
   license:
     name: "Apache 2.0 and MIT"
-    url: "https://github.com/kenlabs/pando"
+    url: "https://github.com/pando-project/pando"
 host: "pando.kencloud.com:9011"
 basePath: "/"
 
@@ -289,4 +289,4 @@ definitions:
         type: object
 externalDocs:
   description: "Find out more about Pando"
-  url: "https://github.com/kenlabs/pando"
+  url: "https://github.com/pando-project/pando"

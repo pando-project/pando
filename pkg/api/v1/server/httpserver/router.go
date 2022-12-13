@@ -2,13 +2,13 @@ package httpserver
 
 import (
 	"github.com/gin-gonic/gin"
-	v1Admin "github.com/kenlabs/pando/pkg/api/v1/handler/http/admin"
-	v1Graphql "github.com/kenlabs/pando/pkg/api/v1/handler/http/graphql"
-	"github.com/kenlabs/pando/pkg/api/v1/handler/http/pando"
-	"github.com/kenlabs/pando/pkg/option"
+	v1Admin "github.com/pando-project/pando/pkg/api/v1/handler/http/admin"
+	v1Graphql "github.com/pando-project/pando/pkg/api/v1/handler/http/graphql"
+	"github.com/pando-project/pando/pkg/api/v1/handler/http/pando"
+	"github.com/pando-project/pando/pkg/option"
 
-	"github.com/kenlabs/pando/pkg/api/core"
-	"github.com/kenlabs/pando/pkg/api/middleware"
+	"github.com/pando-project/pando/pkg/api/core"
+	"github.com/pando-project/pando/pkg/api/middleware"
 )
 
 func NewAdminRouter(core *core.Core, opt *option.DaemonOptions) *gin.Engine {

@@ -1,9 +1,9 @@
 package mock
 
 import (
-	"github.com/kenlabs/pando/pkg/option"
 	ic "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/pando-project/pando/pkg/option"
 )
 
 var TestProviderIdentity = option.Identity{

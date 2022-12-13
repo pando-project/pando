@@ -3,14 +3,14 @@ package pando
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/kenlabs/pando/pkg/api/core"
-	v1 "github.com/kenlabs/pando/pkg/api/v1"
-	"github.com/kenlabs/pando/pkg/api/v1/controller"
-	"github.com/kenlabs/pando/pkg/option"
-	"github.com/kenlabs/pando/pkg/util/log"
+	"github.com/pando-project/pando/pkg/api/core"
+	v1 "github.com/pando-project/pando/pkg/api/v1"
+	"github.com/pando-project/pando/pkg/api/v1/controller"
+	"github.com/pando-project/pando/pkg/option"
+	"github.com/pando-project/pando/pkg/util/log"
 	"net/http"
 
-	"github.com/kenlabs/pando/pkg/api/types"
+	"github.com/pando-project/pando/pkg/api/types"
 )
 
 var logger = log.NewSubsystemLogger()

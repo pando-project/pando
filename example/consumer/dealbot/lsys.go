@@ -11,7 +11,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/multicodec"
 	"github.com/ipld/go-ipld-prime/node/basicnode"
-	"github.com/kenlabs/pando/pkg/util/log"
+	"github.com/pando-project/pando/pkg/util/log"
 	"io"
 	"time"
 )

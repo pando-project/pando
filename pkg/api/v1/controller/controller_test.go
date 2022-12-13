@@ -3,9 +3,9 @@ package controller
 import (
 	"github.com/ipfs/go-datastore/sync"
 	"github.com/ipfs/go-log/v2"
-	"github.com/kenlabs/pando/pkg/api/core"
-	"github.com/kenlabs/pando/pkg/option"
-	"github.com/kenlabs/pando/test/mock"
+	"github.com/pando-project/pando/pkg/api/core"
+	"github.com/pando-project/pando/pkg/option"
+	"github.com/pando-project/pando/test/mock"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )

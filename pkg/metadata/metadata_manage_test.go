@@ -3,9 +3,9 @@ package metadata_test
 import (
 	"context"
 	"github.com/ipfs/go-cid"
-	"github.com/kenlabs/pando/pkg/legs"
-	. "github.com/kenlabs/pando/pkg/metadata"
-	"github.com/kenlabs/pando/test/mock"
+	"github.com/pando-project/pando/pkg/legs"
+	. "github.com/pando-project/pando/pkg/metadata"
+	"github.com/pando-project/pando/test/mock"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 	"time"

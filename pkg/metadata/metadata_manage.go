@@ -9,13 +9,13 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/traversal/selector"
 	selectorparse "github.com/ipld/go-ipld-prime/traversal/selector/parse"
-	"github.com/kenlabs/pando/pkg/util/log"
+	"github.com/pando-project/pando/pkg/util/log"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
-	"github.com/kenlabs/pando/pkg/option"
-	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/pando-project/pando/pkg/option"
+	"github.com/pando-project/pando/pkg/registry"
 	"os"
 	"path"
 

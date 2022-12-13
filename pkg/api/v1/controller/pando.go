@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/kenlabs/pando/pkg/api/v1/model"
+	"github.com/pando-project/pando/pkg/api/v1/model"
 	"strings"
 )
 

@@ -5,8 +5,8 @@ import (
 	coremetrics "github.com/filecoin-project/go-indexer-core/metrics"
 	"github.com/gin-gonic/gin"
 	adapter "github.com/gwatts/gin-adapter"
-	"github.com/kenlabs/pando/pkg/api/types"
-	"github.com/kenlabs/pando/pkg/metrics"
+	"github.com/pando-project/pando/pkg/api/types"
+	"github.com/pando-project/pando/pkg/metrics"
 	"net/http"
 )
 
@@ -37,4 +37,3 @@ func (a *API) pandoInfo(ctx *gin.Context) {
 func (a *API) pandoHealthCheck(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "Good")
 }
-

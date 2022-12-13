@@ -23,7 +23,8 @@ import (
 	"github.com/kenlabs/pando-store/pkg/config"
 	"github.com/kenlabs/pando-store/pkg/store"
 	store2 "github.com/kenlabs/pando-store/pkg/types/store"
-	"github.com/kenlabs/pando/pkg/types/schema"
+	"github.com/libp2p/go-libp2p"
+	"github.com/pando-project/pando/pkg/types/schema"
 	"net/http"
 	"net/url"
 
@@ -31,12 +32,11 @@ import (
 	dtSync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	link "github.com/kenlabs/pando/pkg/legs"
-	"github.com/kenlabs/pando/sdk/pkg"
-	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
+	link "github.com/pando-project/pando/pkg/legs"
+	"github.com/pando-project/pando/sdk/pkg"
 	"time"
 )
 

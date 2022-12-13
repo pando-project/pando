@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
-	v1 "github.com/kenlabs/pando/pkg/api/v1"
-	"github.com/kenlabs/pando/pkg/api/v1/model"
-	"github.com/kenlabs/pando/pkg/legs"
-	"github.com/kenlabs/pando/pkg/registry"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
+	v1 "github.com/pando-project/pando/pkg/api/v1"
+	"github.com/pando-project/pando/pkg/api/v1/model"
+	"github.com/pando-project/pando/pkg/legs"
+	"github.com/pando-project/pando/pkg/registry"
 	"net/http"
 )
 

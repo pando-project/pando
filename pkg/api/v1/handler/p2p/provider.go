@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1 "github.com/kenlabs/pando/pkg/api/v1"
-	"github.com/kenlabs/pando/pkg/api/v1/model"
-	pb "github.com/kenlabs/pando/pkg/api/v1/server/libp2p/proto"
 	"github.com/libp2p/go-libp2p-core/peer"
+	v1 "github.com/pando-project/pando/pkg/api/v1"
+	"github.com/pando-project/pando/pkg/api/v1/model"
+	pb "github.com/pando-project/pando/pkg/api/v1/server/libp2p/proto"
 	"net/http"
 )
 

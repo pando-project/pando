@@ -3,14 +3,14 @@ package provider
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/kenlabs/pando/pkg/api/v1/model"
+	"github.com/pando-project/pando/pkg/api/v1/model"
 	"os"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/spf13/cobra"
 
-	"github.com/kenlabs/pando/cmd/client/command/api"
+	"github.com/pando-project/pando/cmd/client/command/api"
 )
 
 const registerPath = "/register"

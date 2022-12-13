@@ -3,7 +3,7 @@ package metrics
 import (
 	"context"
 	"github.com/filecoin-project/go-indexer-core/metrics"
-	"github.com/kenlabs/pando/pkg/util/log"
+	"github.com/pando-project/pando/pkg/util/log"
 	"go.opencensus.io/tag"
 	"net/http"
 	"time"

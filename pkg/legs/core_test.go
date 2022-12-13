@@ -10,12 +10,13 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/kenlabs/pando-store/pkg/config"
 	"github.com/kenlabs/pando-store/pkg/store"
-	"github.com/kenlabs/pando/pkg/legs"
-	"github.com/kenlabs/pando/pkg/option"
-	"github.com/kenlabs/pando/test/mock"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/pando-project/pando/pkg/legs"
+	"github.com/pando-project/pando/pkg/option"
+	"github.com/pando-project/pando/test/mock"
 	. "github.com/smartystreets/goconvey/convey"
+
 	"testing"
 	"time"
 )

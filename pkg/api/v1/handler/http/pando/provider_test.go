@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/gin-gonic/gin"
-	"github.com/kenlabs/pando/pkg/api/types"
+	"github.com/pando-project/pando/pkg/api/types"
 	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
 	"net/http"
