@@ -44,7 +44,6 @@ func MkLinkSystem(ps *store.PandoStore, core *Core, reg *registry.Registry) ipld
 		ctx, span := otel.Tracer(TracerName).Start(lctx.Ctx, "StorageWriteOpener")
 		defer func(sp trace.Span) {
 			span.End()
-			logger.Warnf("span end")
 		}(span)
 		buf := bytes.NewBuffer(nil)
 		return buf, func(lnk ipld.Link) error {
