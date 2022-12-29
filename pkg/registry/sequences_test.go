@@ -2,10 +2,10 @@ package registry
 
 import (
 	"errors"
-	. "github.com/smartystreets/goconvey/convey"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSequence(t *testing.T) {
