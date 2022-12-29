@@ -3,24 +3,26 @@ package registry
 import (
 	"errors"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
 func TestSequence(t *testing.T) {
-	Convey("test sequence", t, func() {
+	t.Run("test sequence", func(t *testing.T) {
+		asserts := assert.New(t)
 		sq := newSequences(time.Second * 5)
 		err := sq.check("dsadsa", uint64(time.Now().Add(-time.Second*6).UnixNano()))
-		So(err, ShouldResemble, errors.New("sequence too small"))
+		asserts.Equal(errors.New("sequence too small"), err)
 		err = sq.check("dsadsa", uint64(time.Now().Add(-time.Second*3).UnixNano()))
-		So(err, ShouldBeNil)
+		asserts.Nil(err)
 		err = sq.check("dsadsa", uint64(time.Now().Add(-time.Second*4).UnixNano()))
-		So(err, ShouldResemble, errors.New("sequence less than or equal to last seen"))
+		asserts.Equal(errors.New("sequence less than or equal to last seen"), err)
 		time.Sleep(time.Second * 5)
 		err = sq.check("dsadsa2", uint64(time.Now().Add(-time.Second*4).UnixNano()))
-		So(err, ShouldBeNil)
+		asserts.Nil(err)
 		sq.retire()
-		So(len(sq.seqs), ShouldEqual, 1)
+		asserts.Equal(1, len(sq.seqs))
 	})
 
 }

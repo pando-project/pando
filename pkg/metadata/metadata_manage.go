@@ -27,42 +27,22 @@ var logger = log.NewSubsystemLogger()
 
 var (
 	SnapShotDuration = time.Second * 5
-	BackupTmpDirName = "ttmp"
+	BackupTmpDirName = "pando"
 	BackupTmpPath    string
 	BackFileName     = "backup-%s-%d.car"
 	syncPrefix       = "/sync/"
 )
 
 func init() {
-	pwd, err := os.Getwd()
+	var err error
+	BackupTmpPath, err = os.MkdirTemp("", "pando-temp")
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
-	backupTmpDir := path.Join(pwd, BackupTmpDirName)
-	_, err = os.Stat(backupTmpDir)
+	err = os.RemoveAll(BackupTmpPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			err = os.Mkdir(backupTmpDir, os.ModePerm)
-			if err != nil {
-				logger.Errorf("failed to create backup dir:%s , err:%s", backupTmpDir, err.Error())
-			}
-		} else {
-			logger.Errorf("please set correct filepath, err : %s", err.Error())
-		}
+		return
 	}
-	forceBackupTmpDir := path.Join(backupTmpDir, "force")
-	_, err = os.Stat(forceBackupTmpDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			err = os.Mkdir(forceBackupTmpDir, os.ModePerm)
-			if err != nil {
-				logger.Errorf("failed to create backup dir:%s , err:%s", forceBackupTmpDir, err.Error())
-			}
-		} else {
-			logger.Errorf("please set correct filepath, err : %s", err.Error())
-		}
-	}
-	BackupTmpPath = backupTmpDir
 }
 
 type MetaManager struct {

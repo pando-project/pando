@@ -3,12 +3,12 @@ package option
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDuration(t *testing.T) {
-	Convey("TestDuration", t, func() {
-		Convey("Test Duration helper functions", func() {
+	t.Run("TestDuration", func(t *testing.T) {
+		t.Run("Test Duration helper functions", func(t *testing.T) {
 			duration := Duration(0)
 			durationText := "1s"
 			err := duration.UnmarshalText([]byte(durationText))
@@ -19,8 +19,9 @@ func TestDuration(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			So(durationBytes, ShouldResemble, []byte(durationText))
-			So(duration.String(), ShouldEqual, durationText)
+			asserts := assert.New(t)
+			asserts.Equal([]byte(durationText), durationBytes)
+			asserts.Equal(durationText, duration.String())
 		})
 	})
 }

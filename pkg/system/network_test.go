@@ -1,13 +1,12 @@
 package system
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
 
 func Test_TestInternetSpeed(t *testing.T) {
 	t.SkipNow()
-	Convey("Test TestInternetSpeed", t, func() {
+	t.Run("Test TestInternetSpeed", func(t *testing.T) {
 		downloadSpeed, err := TestInternetSpeed(true)
 		if err != nil {
 			t.Error(err)
@@ -19,7 +18,7 @@ func Test_TestInternetSpeed(t *testing.T) {
 }
 
 //func Test_SpeedTestError(t *testing.T) {
-//	Convey("Test SpeedTest error handle", t, func() {
+//	t.Run("Test SpeedTest error handle", t, func(t *testing.T) {
 //		patch := gomonkey.ApplyFunc(speedtest.FetchUserInfo, func() (*speedtest.User, error) {
 //			return nil, fmt.Errorf("unknown error")
 //		})

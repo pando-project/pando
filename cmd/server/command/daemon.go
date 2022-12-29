@@ -3,6 +3,24 @@ package command
 import (
 	"context"
 	"fmt"
+	"go.opentelemetry.io/otel"
+	"math"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+	"time"
+
+	"github.com/pando-project/pando/pkg/api/core"
+	"github.com/pando-project/pando/pkg/api/v1/server"
+	"github.com/pando-project/pando/pkg/legs"
+	"github.com/pando-project/pando/pkg/lotus"
+	"github.com/pando-project/pando/pkg/metadata"
+	"github.com/pando-project/pando/pkg/policy"
+	"github.com/pando-project/pando/pkg/registry"
+	"github.com/pando-project/pando/pkg/system"
+	"github.com/pando-project/pando/pkg/util/log"
+
 	"github.com/dgraph-io/badger/v3"
 	mutexDataStoreFactory "github.com/ipfs/go-datastore/sync"
 	dataStoreFactory "github.com/ipfs/go-ds-leveldb"
@@ -14,30 +32,13 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	libp2pHost "github.com/libp2p/go-libp2p-core/host"
-	"github.com/pando-project/pando/pkg/api/core"
-	"github.com/pando-project/pando/pkg/api/v1/server"
-	"github.com/pando-project/pando/pkg/legs"
-	"github.com/pando-project/pando/pkg/lotus"
-	"github.com/pando-project/pando/pkg/metadata"
-	"github.com/pando-project/pando/pkg/policy"
-	"github.com/pando-project/pando/pkg/registry"
-	"github.com/pando-project/pando/pkg/util/log"
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
-	"math"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"syscall"
-	"time"
-
-	"github.com/pando-project/pando/pkg/system"
 )
 
 var logger = log.NewSubsystemLogger()
@@ -48,27 +49,13 @@ func DaemonCmd() *cobra.Command {
 		Use:   "daemon",
 		Short: "start pando server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := setLoglevel()
-			if err != nil {
+			if err := setLoglevel(); err != nil {
 				return fmt.Errorf(failedError, err)
 			}
 
-			tracerProvider, err := newTraceProvider("http://127.0.0.1:14268/api/traces")
-			if err != nil {
+			if err := injectOTELSpanTracer(); err != nil {
 				return err
 			}
-			otel.SetTracerProvider(tracerProvider)
-			ctx := context.Background()
-
-			defer func(ctx context.Context) {
-				if err := tracerProvider.Shutdown(ctx); err != nil {
-					logger.Fatal(err)
-				}
-			}(ctx)
-
-			_, span := otel.Tracer("testTracerInDaemon").Start(context.Background(), "testSpanInDaemon")
-			logger.Warnf("testTracerSpan logged")
-			span.End()
 
 			mongoClient, err := connectMetaCache(Opt.MetaCache.Type, Opt.MetaCache.ConnectionURI)
 			if err != nil {
@@ -308,6 +295,26 @@ func connectMetaCache(storeType string, connectionURI string) (*mongo.Client, er
 		return nil, fmt.Errorf("metadata store type: %s not supported", storeType)
 	}
 
+}
+func injectOTELSpanTracer() error {
+	tracerProvider, err := newTraceProvider("http://127.0.0.1:14268/api/traces")
+	if err != nil {
+		return err
+	}
+	otel.SetTracerProvider(tracerProvider)
+	ctx := context.Background()
+
+	defer func(ctx context.Context) {
+		if err := tracerProvider.Shutdown(ctx); err != nil {
+			logger.Fatal(err)
+		}
+	}(ctx)
+
+	_, span := otel.Tracer("testTracerInDaemon").Start(context.Background(), "testSpanInDaemon")
+	logger.Warnf("testTracerSpan logged")
+	span.End()
+
+	return nil
 }
 
 func newTraceProvider(url string) (*tracesdk.TracerProvider, error) {

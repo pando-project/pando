@@ -1,13 +1,13 @@
 package option
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
 func TestDiscoveryFormat(t *testing.T) {
-	Convey("test discovery format", t, func() {
+	t.Run("test discovery format", func(t *testing.T) {
 		durationText := "1s"
 		ds := &Discovery{
 			PollInterval:   durationText,
@@ -15,10 +15,11 @@ func TestDiscoveryFormat(t *testing.T) {
 			Timeout:        durationText,
 		}
 		d := ds.PollIntervalInDurationFormat()
-		So(d, ShouldResemble, Duration(time.Second))
+		asserts := assert.New(t)
+		asserts.Equal(Duration(time.Second), d)
 		d = ds.RediscoverWaitInDurationFormat()
-		So(d, ShouldResemble, Duration(time.Second))
+		asserts.Equal(Duration(time.Second), d)
 		d = ds.TimeoutInDurationFormat()
-		So(d, ShouldResemble, Duration(time.Second))
+		asserts.Equal(Duration(time.Second), d)
 	})
 }

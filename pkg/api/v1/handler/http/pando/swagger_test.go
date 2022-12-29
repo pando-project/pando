@@ -1,17 +1,18 @@
 package pando
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/pando-project/pando/docs"
-	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/pando-project/pando/docs"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSwaggerSpecs(t *testing.T) {
-	Convey("TestSwaggerSpecs", t, func() {
+	t.Run("TestSwaggerSpecs", func(t *testing.T) {
 		responseRecorder := httptest.NewRecorder()
 		testContext, _ := gin.CreateTestContext(responseRecorder)
 
@@ -24,6 +25,6 @@ func TestSwaggerSpecs(t *testing.T) {
 			t.Error(err)
 		}
 
-		So(respBody, ShouldResemble, docs.SwaggerSpecs)
+		assert.Equal(t, docs.SwaggerSpecs, respBody)
 	})
 }

@@ -1,16 +1,16 @@
 package system
 
 import (
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/peer"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateIdentity(t *testing.T) {
-	Convey("TestCreateIdentity", t, func() {
-		Convey("return a peerID and a privateKey which should be matched with each other", func() {
+	t.Run("TestCreateIdentity", func(t *testing.T) {
+		t.Run("return a peerID and a privateKey which should be matched with each other", func(t *testing.T) {
 			peerIDStr, privateKeyStr, err := CreateIdentity()
 
 			peerID, err := peer.Decode(peerIDStr)
@@ -26,8 +26,7 @@ func TestCreateIdentity(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-
-			So(peerID.MatchesPrivateKey(privateKey), ShouldBeTrue)
+			assert.True(t, peerID.MatchesPrivateKey(privateKey))
 		})
 	})
 }

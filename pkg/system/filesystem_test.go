@@ -5,38 +5,39 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsDirWritable(t *testing.T) {
-	Convey("TestIsDirWritable", t, func() {
-		Convey("return false, pathIsEmptyErr if dir is empty", func() {
+	t.Run("TestIsDirWritable", func(t *testing.T) {
+		asserts := assert.New(t)
+		t.Run("return false, pathIsEmptyErr if dir is empty", func(t *testing.T) {
 			writable, err := IsDirWritable("")
-			So(writable, ShouldBeFalse)
-			So(err, ShouldResemble, fmt.Errorf(pathIsEmptyErr))
+			asserts.False(writable)
+			asserts.Equal(fmt.Errorf(pathIsEmptyErr), err)
 		})
 
-		Convey("return false, pathNotExistsErr if path does not exist", func() {
+		t.Run("return false, pathNotExistsErr if path does not exist", func(t *testing.T) {
 			notExistsPath := "/helloPando"
 			writable, err := IsDirWritable("/helloPando")
-			So(writable, ShouldBeFalse)
-			So(err, ShouldResemble, fmt.Errorf(pathNotExistsErr, notExistsPath))
+			asserts.False(writable)
+			asserts.Equal(fmt.Errorf(pathNotExistsErr, notExistsPath), err)
 		})
 
-		Convey("return false, notDirectoryErr if path is not a directory", func() {
+		t.Run("return false, notDirectoryErr if path is not a directory", func(t *testing.T) {
 			notDirectoryPath := "/bin/sh"
 			writable, err := IsDirWritable(notDirectoryPath)
-			So(writable, ShouldBeFalse)
-			So(err, ShouldResemble, fmt.Errorf(notDirectoryErr, notDirectoryPath))
+			asserts.False(writable)
+			asserts.Equal(fmt.Errorf(notDirectoryErr, notDirectoryPath), err)
 		})
 
-		Convey("return true, nil if path is really writable", func() {
+		t.Run("return true, nil if path is really writable", func(t *testing.T) {
 			writable, err := IsDirWritable("/tmp")
-			So(writable, ShouldBeTrue)
-			So(err, ShouldBeNil)
+			asserts.True(writable)
+			asserts.Nil(err)
 		})
 
-		Convey("return false, nil if path is not writable", func() {
+		t.Run("return false, nil if path is not writable", func(t *testing.T) {
 			notWritableDir := "/tmp/not-writable"
 			err := os.Mkdir(notWritableDir, 0000)
 			if err != nil {
@@ -44,8 +45,8 @@ func TestIsDirWritable(t *testing.T) {
 			}
 
 			writable, err := IsDirWritable(notWritableDir)
-			So(writable, ShouldBeFalse)
-			So(err, ShouldBeNil)
+			asserts.False(writable)
+			asserts.Nil(err)
 
 			err = os.Remove(notWritableDir)
 			if err != nil {
@@ -56,62 +57,64 @@ func TestIsDirWritable(t *testing.T) {
 }
 
 func TestIsFileExists(t *testing.T) {
-	Convey("TestIsFileExists", t, func() {
-		Convey("return false, pathIsEmptyErr if file is empty", func() {
+	t.Run("TestIsFileExists", func(t *testing.T) {
+		asserts := assert.New(t)
+		t.Run("return false, pathIsEmptyErr if file is empty", func(t *testing.T) {
 			exists, err := IsFileExists("")
-			So(exists, ShouldBeFalse)
-			So(err, ShouldResemble, fmt.Errorf(pathIsEmptyErr))
+			asserts.False(exists)
+			asserts.Equal(fmt.Errorf(pathIsEmptyErr), err)
 		})
 
-		Convey("return false, nil if file does not exist", func() {
+		t.Run("return false, nil if file does not exist", func(t *testing.T) {
 			notExistFile := "/hello-pando"
 			exists, err := IsFileExists(notExistFile)
-			So(exists, ShouldBeFalse)
-			So(err, ShouldBeNil)
+			asserts.False(exists)
+			asserts.Nil(err)
 		})
 
-		Convey("return false, notFileErr if path is not a file", func() {
+		t.Run("return false, notFileErr if path is not a file", func(t *testing.T) {
 			notFilePath := "/tmp"
 			exists, err := IsFileExists(notFilePath)
-			So(exists, ShouldBeFalse)
-			So(err, ShouldResemble, fmt.Errorf(notFileErr, notFilePath))
+			asserts.False(exists)
+			asserts.Equal(fmt.Errorf(notFileErr, notFilePath), err)
 		})
 
-		Convey("return true, nil if file does exist", func() {
+		t.Run("return true, nil if file does exist", func(t *testing.T) {
 			existFilePath := "/bin/sh"
 			exists, err := IsFileExists(existFilePath)
-			So(exists, ShouldBeTrue)
-			So(err, ShouldBeNil)
+			asserts.True(exists)
+			asserts.Nil(err)
 		})
 	})
 }
 
 func TestIsDirExists(t *testing.T) {
-	Convey("TestIsDirExists", t, func() {
-		Convey("return false, pathIsEmptyErr if path is empty", func() {
+	t.Run("TestIsDirExists", func(t *testing.T) {
+		asserts := assert.New(t)
+		t.Run("return false, pathIsEmptyErr if path is empty", func(t *testing.T) {
 			exists, err := IsDirExists("")
-			So(exists, ShouldBeFalse)
-			So(err, ShouldResemble, fmt.Errorf(pathIsEmptyErr))
+			asserts.False(exists)
+			asserts.Equal(fmt.Errorf(pathIsEmptyErr), err)
 		})
 
-		Convey("return false, nil if dir does not exist", func() {
+		t.Run("return false, nil if dir does not exist", func(t *testing.T) {
 			exists, err := IsDirExists("/hello-pando")
-			So(exists, ShouldBeFalse)
-			So(err, ShouldBeNil)
+			asserts.False(exists)
+			asserts.Nil(err)
 		})
 
-		Convey("return false, notDirectoryErr if path is not a directory", func() {
+		t.Run("return false, notDirectoryErr if path is not a directory", func(t *testing.T) {
 			notDirectoryPath := "/bin/sh"
 			exists, err := IsDirExists(notDirectoryPath)
-			So(exists, ShouldBeFalse)
-			So(err, ShouldResemble, fmt.Errorf(notDirectoryErr, notDirectoryPath))
+			asserts.False(exists)
+			asserts.Equal(fmt.Errorf(notDirectoryErr, notDirectoryPath), err)
 		})
 
-		Convey("return true, nil if dir does exist", func() {
+		t.Run("return true, nil if dir does exist", func(t *testing.T) {
 			directoryPath := "/tmp"
 			exists, err := IsDirExists(directoryPath)
-			So(exists, ShouldBeTrue)
-			So(err, ShouldBeNil)
+			asserts.True(exists)
+			asserts.Nil(err)
 		})
 	})
 }

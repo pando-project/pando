@@ -2,20 +2,21 @@ package registry
 
 import (
 	"context"
+	"testing"
+	"time"
+
+	"github.com/pando-project/pando/pkg/option"
+
 	"github.com/ipfs/go-cid"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/pando-project/pando/pkg/option"
-	. "github.com/smartystreets/goconvey/convey"
-	"testing"
-	"time"
 )
 
 var MockAclCfg = option.AccountLevel{Threshold: []int{1, 10, 99}}
 var trustedID = "12D3KooWK7CTS7cyWi51PeNE3cTjS2F2kDCZaQVU4A5xBmb9J1do"
 
 func TestPollProvider(t *testing.T) {
-	Convey("test poll provider", t, func() {
+	t.Run("test poll provider", func(t *testing.T) {
 		cfg := &option.Discovery{
 			Policy: option.Policy{
 				Allow: true,

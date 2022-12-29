@@ -3,8 +3,6 @@ package middleware
 import (
 	"bytes"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	. "github.com/smartystreets/goconvey/convey"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -12,10 +10,13 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWithLoggerFormatter(t *testing.T) {
-	Convey("TestWithLoggerFormatter", t, func() {
+	t.Run("TestWithLoggerFormatter", func(t *testing.T) {
 		logOutput := bytes.NewBuffer([]byte{})
 		router := gin.New()
 		router.GET("/", WithLoggerFormatter(logOutput), func(ctx *gin.Context) {
@@ -35,18 +36,19 @@ func TestWithLoggerFormatter(t *testing.T) {
 		}
 
 		localIP := net.ParseIP(logSlice[0])
-		So(localIP, ShouldNotBeNil)
+		asserts := assert.New(t)
+		asserts.NotNil(localIP)
 
 		_, err = time.Parse(time.RFC3339, logSlice[2][1:len(logSlice[2])-1])
-		So(err, ShouldBeNil)
+		asserts.Nil(err)
 
-		So(logSlice[3], ShouldEqual, http.MethodGet)
+		asserts.Equal(http.MethodGet, logSlice[3])
 
 		httpMajorVersion, httpMinorVersion, ok := http.ParseHTTPVersion(logSlice[5])
-		So(ok, ShouldEqual, true)
-		So(httpMajorVersion, ShouldEqual, 1)
-		So(httpMinorVersion, ShouldEqual, 1)
+		asserts.Equal(true, ok)
+		asserts.Equal(1, httpMajorVersion)
+		asserts.Equal(1, httpMinorVersion)
 
-		So(logSlice[6], ShouldEqual, strconv.Itoa(http.StatusOK))
+		asserts.Equal(strconv.Itoa(http.StatusOK), logSlice[6])
 	})
 }

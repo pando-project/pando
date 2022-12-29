@@ -1,15 +1,16 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
-	. "github.com/smartystreets/goconvey/convey"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWithCorsAllowAllOrigin(t *testing.T) {
-	Convey("TestWithCorsAllowAllOrigin", t, func() {
+	t.Run("TestWithCorsAllowAllOrigin", func(t *testing.T) {
 		router := gin.New()
 		router.GET("/", gin.Logger(), WithCorsAllowAllOrigin(), func(ctx *gin.Context) {
 			ctx.Data(http.StatusOK, "text/plain", nil)
@@ -26,6 +27,6 @@ func TestWithCorsAllowAllOrigin(t *testing.T) {
 			t.Error(err)
 		}
 
-		So(resp.Header.Get("Access-Control-Allow-Origin"), ShouldEqual, "*")
+		assert.Equal(t, "*", resp.Header.Get("Access-Control-Allow-Origin"))
 	})
 }

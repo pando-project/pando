@@ -1,12 +1,13 @@
 package json
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPrettyJsonStr(t *testing.T) {
-	Convey("TestPrettyJsonStr", t, func() {
+	t.Run("TestPrettyJsonStr", func(t *testing.T) {
 		testStruct := struct {
 			Name   string
 			Age    int8
@@ -28,6 +29,6 @@ func TestPrettyJsonStr(t *testing.T) {
 			t.Errorf(err.Error())
 		}
 
-		ShouldEqual(prettyStr, expectStr)
+		assert.Equal(t, expectStr, prettyStr)
 	})
 }

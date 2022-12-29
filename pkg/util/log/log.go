@@ -1,8 +1,9 @@
 package log
 
 import (
-	"github.com/ipfs/go-log/v2"
 	"runtime"
+
+	"github.com/ipfs/go-log/v2"
 )
 
 func NewSubsystemLogger() *log.ZapEventLogger {
@@ -10,4 +11,8 @@ func NewSubsystemLogger() *log.ZapEventLogger {
 	callerName := runtime.FuncForPC(pc).Name()
 
 	return log.Logger(callerName)
+}
+
+func NewSubsystemLoggerWithName(name string) *log.ZapEventLogger {
+	return log.Logger(name)
 }

@@ -1,21 +1,21 @@
 package types
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 )
 
 func TestNewErrorResponse(t *testing.T) {
-	Convey("Test NewErrorResponse", t, func() {
+	t.Run("Test NewErrorResponse", func(t *testing.T) {
 		testErrorResp := NewErrorResponse(http.StatusBadRequest, "bad request")
-		ShouldResemble(testErrorResp, &ResponseJson{Code: http.StatusBadRequest, Message: "bad request"})
+		assert.Equal(t, &ResponseJson{Code: http.StatusBadRequest, Message: "bad request"}, testErrorResp)
 	})
 }
 
 func TestNewOKResponse(t *testing.T) {
-	Convey("Test NewOKResponse", t, func() {
+	t.Run("Test NewOKResponse", func(t *testing.T) {
 		testOKResp := NewOKResponse("ok", nil)
-		ShouldResemble(testOKResp, &ResponseJson{Code: http.StatusOK, Message: "ok", Data: nil})
+		assert.Equal(t, &ResponseJson{Code: http.StatusOK, Message: "ok", Data: nil}, testOKResp)
 	})
 }
